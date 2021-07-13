@@ -1,0 +1,2910 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="copyright" content="Kay Sievers, kay@vrfy.org">
+  <meta name="license" content="Apache-2.0">
+  <meta name="revised" content="2021-07-11">
+  <meta name="rating" content="safe for kids">
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <title>Versio Duo - Device Configuration</title>
+  <meta name="description" content="WebMIDI Device Configuration">
+  <link rel="canonical" href="https://versioduo.com/configure">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="thumbnail" content="icons/logo.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="css/bulma.min.css">
+  <link rel="stylesheet" href="css/bulma-addons.css">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <script src="js/bulma.js"></script>
+  <script src="js/V2MIDI.js"></script>
+  <script src="js/V2Log.js"></script>
+  <style>
+    html {
+      scroll-padding-top: 3.25rem;
+      scroll-behavior: smooth;
+      overflow: auto;
+    }
+
+    body {
+      font-family: 'DIN 1451', sans-serif;
+    }
+
+    /* Avoid blue-colored Home/Brand */
+    a.navbar-home:focus {
+      color: hsl(0, 0%, 29%);
+    }
+
+    /* Do not mess with the DIN font, fake bold looks really ugly */
+    .title {
+      font-weight: 400;
+    }
+
+    section {
+      background-color: hsl(0, 0%, 92%);
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+    }
+
+    section:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .subsection {
+      margin-top: 2rem;
+    }
+
+    .inactive {
+      pointer-events: none;
+    }
+
+    .button-keyboard {
+      font-size: min(1rem, 1.8vw);
+      height: 2.5rem;
+      width: 100%;
+    }
+
+    .button-field {
+      width: 6rem;
+    }
+
+    .button-text {
+      width: 8rem;
+    }
+
+    .input-number {
+      width: 4.5rem;
+    }
+
+    .log {
+      height: 12rem;
+      overflow: auto;
+      background-color: white;
+      padding: 1rem;
+    }
+  </style>
+</head>
+
+<body class="has-navbar-fixed-top">
+  <nav class="navbar is-fixed-top" aria-label="navigation">
+    <div class="container">
+      <div class="navbar-brand">
+        <a class="navbar-home navbar-item is-size-4" href="#">
+          <img class="mr-2" src="icons/logo.png" alt="Logo">
+          <h1>
+            Versio Duo
+          </h1>
+        </a>
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div class="navbar-menu">
+        <div class="navbar-start">
+          <a class="navbar-item" href="#input">
+            MIDI In
+          </a>
+          <a class="navbar-item" href="#output">
+            MIDI Out
+          </a>
+          <a class="navbar-item" href="#configuration">
+            Configuration
+          </a>
+          <a class="navbar-item" href="#test">
+            Test
+          </a>
+          <a class="navbar-item" href="#log">
+            Log
+          </a>
+        </div>
+
+        <div class="navbar-end">
+          <a class="navbar-item" href="https://github.com/versioduo/" title="Source Code" target="software">
+            <span class="icon">
+              <i class="fab fa-github"></i>
+            </span>
+          </a>
+          <a class="navbar-item" href="https://versioduo.com" title="versioduo.com" target="home">
+            <span class="icon">
+              <i class="fas fa-home"></i>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <script>
+    'use strict';
+
+    // The MIDI system connection and message handling.
+    const MIDI = new class extends V2MIDI {
+      deviceInput = null;
+      deviceOutput = null;
+
+      #timeout = null;
+      #sequence = 0;
+
+      print(line) {
+        Log.print('<b>' + this.deviceInput.name + '</b>: ' + line);
+      }
+
+      printDevice(line) {
+        Log.print('<b>' + this.deviceInput.name + '</b> (' + this.deviceInput.id + ', ' + this.deviceOutput.id + '): ' + line);
+      }
+
+      // Print available MIDI ports. Their names might be different on different
+      // operating systems.
+      printStatus() {
+        this.forEachDevice((inputPort, outputPort) => {
+          let what = (inputPort && inputPort == this.deviceInput) ? 'Connected to' : 'Found';
+          if (inputPort && outputPort)
+            Log.print(what + ' <b>' + inputPort.name + '</b> (' + inputPort.id + ', ' + outputPort.id + ')');
+
+          else if (inputPort)
+            Log.print(what + ' <b>' + inputPort.name + '</b> (' + inputPort.id + ', –)');
+
+          else if (outputPort)
+            Log.print(what + ' <b>' + outputPort.name + '</b> (–, ' + outputPort.id + ')');
+        });
+      }
+
+      // Disconnect the current device.
+      disconnectDevice() {
+        if (!this.deviceInput)
+          return;
+
+        this.printDevice('Disconnecting');
+
+        if (this.#timeout) {
+          clearTimeout(this.#timeout);
+          this.#timeout = null;
+        }
+        this.deviceInput.onmidimessage = null;
+        this.deviceInput.close();
+        this.deviceInput = null;
+        this.deviceOutput.close();
+        this.deviceOutput = null;
+
+        Device.disconnect();
+      }
+
+      // Incoming MIDI messages.
+      handleMessage(message) {
+        if (message.currentTarget != this.deviceInput) {
+          Log.print('Unknown target, ignoring incoming message');
+          return;
+        }
+
+        // Incoming SysEx messages.
+        const handleSystemExclusive = (message) => {
+          const json = new TextDecoder().decode(message);
+          let data;
+
+          try {
+            data = JSON.parse(json);
+
+          } catch (error) {
+            this.printDevice('Received unknown message format');
+            return;
+          }
+
+          if (!data['com.versioduo.device']) {
+            this.printDevice('Received data for unknown interface');
+            return;
+          }
+
+          if (this.#timeout) {
+            clearTimeout(this.#timeout);
+            this.#timeout = null;
+          }
+
+          Device.handleReply(data['com.versioduo.device']);
+        }
+
+        const type = V2MIDI.Status.getType(message.data[0]);
+        const channel = V2MIDI.Status.getChannel(message.data[0]);
+
+        switch (type) {
+          case V2MIDI.Status.noteOn: {
+            const note = message.data[1];
+            const velocity = message.data[2];
+            if (velocity > 0)
+              this.print('Received <b>NoteOn</b> <i>' +
+                V2MIDI.Note.name(note) + '(' + note + ')</i> with velocity ' + velocity + ' on channel <i>#' + (channel + 1)) + '</i>';
+
+            else
+              this.print('Received <b>NoteOff</b> <i>' +
+                V2MIDI.Note.name(note) + '(' + note + ')</i> on channel #' + (channel + 1));
+
+            Output.updateNote(channel, note, velocity);
+            break;
+          }
+
+          case V2MIDI.Status.noteOff: {
+            const note = message.data[1];
+            const velocity = message.data[2];
+            this.print('Received <b>NoteOff</b> <i>' +
+              V2MIDI.Note.name(note) + '(' + note + ')</i> with velocity ' + velocity + ' on channel #' + (channel + 1));
+            Output.updateNote(channel, note, 0);
+            break;
+          }
+
+          case V2MIDI.Status.aftertouch: {
+            const note = message.data[1];
+            const pressure = message.data[2];
+            this.print('Received <b>Aftertouch</b> for note <i>' + V2MIDI.Note.name(note) + '(' + note + ')</i>' + ' with pressure <i>' + pressure + '</i> on channel <i>#' + (channel + 1) + '</i>');
+            Output.updateNoteAftertouch(channel, note, pressure);
+            break;
+          }
+
+          case V2MIDI.Status.controlChange: {
+            const controller = message.data[1];
+            const value = message.data[2];
+            this.print('Received <b>ControlChange</b> <i>' + controller +
+              '</i> with value <i>' + value + '</i> on channel <i>#' + (channel + 1) + '</i>');
+            Output.updateController(channel, controller, value);
+            break;
+          }
+
+          case V2MIDI.Status.aftertouchChannel: {
+            const value = message.data[1];
+            this.print('Received <b>Aftertouch Channel</b> with value <i>' + value + '</i> on channel <i>#' + (channel + 1) + '</i>');
+            break;
+          }
+
+          case V2MIDI.Status.systemExclusive: {
+            this.print('Received <b>SystemExclusive</b> length=' + message.data.length);
+
+            // 0x7d == MIDI private/research ID.
+            if (message.data[1] == 0x7d)
+              handleSystemExclusive(message.data.slice(2, -1));
+            break;
+          }
+        }
+      }
+
+      // Connect or switch to a device. We always need the matching pair of
+      // 'input' and 'output' device.
+      connectDevice(id) {
+        this.disconnectDevice();
+
+        const input = this.system.inputs.get(id);
+        if (!input) {
+          Log.print('Unable to find input port <b>' + id + '</b>');
+          return;
+        }
+
+        // Find the corresponding output port.
+        const output = this.findOutputPort(input);
+        if (!output) {
+          Log.print('Unable to find output port for <b>' + input.id + '</b>');
+          return;
+        }
+
+        // Give this connection attempt a #sequence number, so we can 'cancel'
+        // the promise which might be resolved later, when a new connection
+        // attempt is already submitted from the user interface.
+        this.#sequence++;
+        let sequence = this.#sequence;
+
+        // Try to open the input device.
+        input.open().then(() => {
+          if (sequence != this.#sequence)
+            return;
+
+          // We got the input, try to open the corresponding output device.
+          output.open().then(() => {
+            if (sequence != this.#sequence)
+              return;
+
+            // We have input and output.
+            this.deviceInput = input;
+            this.deviceOutput = output;
+
+            // Dispatch incoming messages.
+            this.deviceInput.onmidimessage = this.handleMessage.bind(this);
+
+            // Request information from device.
+            Device.sendGetAll();
+          });
+        });
+
+        this.#timeout = setTimeout(() => {
+          this.#timeout = null;
+          Log.print('Unable to connect to device <b>' + input.name + '</b>');
+          this.disconnectDevice();
+        }, 2000);
+
+        return true;
+      }
+
+      setup() {
+        super.setup((error) => {
+          if (error) {
+            Log.print(error);
+            Device.banner.error(error);
+            return;
+          }
+
+          // Subscribe to device connect/disconnect events.
+          this.notifyList.push((event) => {
+            if (event.port.type == 'input')
+              Log.print('<b>' + event.port.name + '</b> (' + event.port.id + ', –): Port is ' + event.port.state);
+
+            else if (event.port.type == 'output')
+              Log.print('<b>' + event.port.name + '</b> (–, ' + event.port.id + '): Port is ' + event.port.state);
+
+            // Disconnect if the current device is unplugged.
+            if (this.deviceInput == event.port && event.port.state == 'disconnected')
+              this.disconnectDevice();
+
+            Device.updateList();
+          });
+
+          Log.print('WebMIDI initialized');
+          this.printStatus();
+          Device.updateList();
+        });
+      }
+
+      sendNote(channel, note, velocity) {
+        super.sendNote(this.deviceOutput, channel, note, velocity);
+        this.print('Sending <b>NoteOn</b> <i>#' + note +
+          '</i> with velocity <i>' + velocity + '</i> on channel <i>#' + (channel + 1) + '</i>');
+      }
+
+      sendNoteOff(channel, note, velocity) {
+        super.sendNoteOff(this.deviceOutput, channel, note, velocity);
+        this.print('Sending <b>NoteOff</b> <i>#' + note +
+          '</i> with velocity <i>' + velocity + '</i> on channel <i>#' + (channel + 1) + '</i>');
+      }
+
+      sendControlChange(channel, controller, value) {
+        super.sendControlChange(this.deviceOutput, channel, controller, value);
+        this.print('Sending <b>Control Change</b> <i>#' + controller +
+          '</i> with value <i>' + value + '</i> on channel <i>#' + (channel + 1) + '</i>');
+      }
+
+      sendProgramChange(channel, value) {
+        super.sendProgramChange(this.deviceOutput, channel, value);
+        this.print('Sending <b>Program Change</b> <i>#' + (value + 1) +
+          '</i> on channel <i>#' + (channel + 1) + '</i>');
+      }
+
+      sendAftertouchChannel(channel, value) {
+        super.sendAftertouchChannel(this.deviceOutput, channel, value);
+        this.print('Sending <b>Aftertouch Channel</b> <i>#' + value +
+          '</i> on channel <i>#' + (channel + 1) + '</i>');
+      }
+
+      sendPitchBend(channel, value) {
+        super.sendPitchBend(this.deviceOutput, channel, value);
+        this.print('Sending <b>Pitch Bend</b> <i>#' + value +
+          '</i> on channel <i>#' + (channel + 1) + '</i>');
+      }
+
+      sendSystemReset() {
+        super.sendSystemReset(this.deviceOutput);
+        this.print('Sending <b>SystemReset</b>');
+      }
+
+      sendSystemExclusive(message) {
+        const length = super.sendSystemExclusive(this.deviceOutput, message);
+        this.print('Sending <b>SystemExclusive</b> length=' + length);
+      }
+    }
+  </script>
+
+  <!-- Device selector and metadata table -->
+  <section>
+    <div class="container">
+      <div id="banner"></div>
+      <h2 class="title">
+        Device
+      </h2>
+      <p class="subtitle">
+        Connection and Information
+      </p>
+      <div class="field has-addons">
+        <p class="control">
+          <span id="deviceSelectIsLoading" class="select">
+            <select id="deviceSelect" title="Select the MIDI device to connect to" disabled onchange="Device.connect();">
+              <option value="">Connect to ...</option>
+            </select>
+          </span>
+        </p>
+        <p class="control">
+          <button class="button" title="Reload the page" onclick="location.reload(true);">
+            <i class="fas fa-redo"></i>
+          </button>
+        </p>
+      </div>
+      <div class="tabs is-centered is-fullwidth is-boxed">
+        <ul>
+          <li id="deviceTabInfo" onclick="Device.switchTab('info');">
+            <a>Info</a>
+          </li>
+          <li id="deviceTabDetails" onclick="Device.switchTab('details');">
+            <a>Details</a>
+          </li>
+          <li id="deviceTabUpdate" onclick="Device.switchTab('update');">
+            <a>Update</a>
+          </li>
+        </ul>
+      </div>
+      <div id="deviceInfo" style="display:none">
+        <div class="table-container">
+          <table class="table is-fullwidth is-striped is-narrow">
+            <tbody id="deviceInfoList">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="deviceDetails" style="display:none">
+        <div class="field has-addons">
+          <p class="control">
+            <button class="button is-link" title="Refresh data" onclick="Device.sendGetAll();">Refresh</button>
+          </p>
+        </div>
+        <div class="table-container">
+          <table class="table is-fullwidth is-striped is-narrow">
+            <tbody id="deviceDetailsList">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="deviceUpdate" class="content" style="display:none">
+        <div class="field has-addons">
+          <p class="control">
+            <button id="deviceUpdatePorts" class="button" title="Enable ports to access children devices" disabled onclick="Device.rebootWithPorts();">Enable Ports</button>
+          </p>
+          <p class="control">
+            <button class="button" title="Load a firmware image" onclick="Device.loadFirmware();">Load</button>
+          </p>
+          <p class="control">
+            <button id="deviceUpdateUpload" class="button is-link" title="Update the device with the new firmware" disabled onclick="Device.uploadFirmware()">Upload</button>
+          </p>
+        </div>
+        <progress id="deviceUpdateProgress" class="progress is-small" value="0" style="display:none"></progress>
+        <div id="deviceUpdateNotify"></div>
+        <p class="subtitle">
+          Firmware
+        </p>
+        <div class="table-container">
+          <table class="table is-fullwidth is-striped is-narrow">
+            <tbody id="deviceUpdateCurrentList">
+            </tbody>
+          </table>
+        </div>
+        <div id="deviceUpdateFirmware" style="display:none">
+          <p class="subtitle">
+            Firmware Update
+          </p>
+          <div class="table-container">
+            <table class="table is-fullwidth is-striped is-narrow">
+              <tbody id="deviceUpdateFirmwareList">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <h3 class="title subsection">
+        Settings
+      </h3>
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button isEnabled" title="Reboot the device" disabled onclick="Device.reboot();">Reboot</button>
+        </p>
+        <p class="control">
+          <button class="button isEnabled" title="Reset the device" disabled onclick="Device.reset();">Reset</button>
+        </p>
+        <p class="control">
+          <button class="button isEnabled" title="Silence all active notes (CC 123)" disabled onclick="MIDI.sendControlChange(Input.channel, V2MIDI.CC.allNotesOff, 0);">Notes Off</button>
+        </p>
+        <p class="control">
+          <button class="button isEnabled is-link" title="Store the settings in the device" disabled onclick="Device.sendConfig();">Save</button>
+        </p>
+      </div>
+      <div id="deviceNotify"></div>
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button button-field has-background-grey-lighter inactive" tabindex="-1">Name</button>
+        </p>
+        <p class="control ">
+          <input id="deviceName" class="input isEnabled" title="The USB device name" type="text" maxlength="31" disabled>
+        </p>
+      </div>
+      <div id="devicePorts" class="field has-addons" style="display:none">
+        <p class="control">
+          <button class="button button-field has-background-grey-lighter inactive" tabindex="-1">Ports</button>
+        </p>
+        <p class="control">
+          <input id="devicePortsValue" class="input input-number isEnabled" title="The number of MIDI ports" type="number" min="1" max="16" disabled>
+        </p>
+      </div>
+    </div>
+  </section>
+  <script>
+    'use strict';
+
+    // Drop-down menu to connect to a device. The list is updated when devices
+    // are connected/disconnected from the system.
+    const Device = new class {
+      token = null;
+      banner = new Notify(document.getElementById('banner'));
+      select = {
+        element: document.getElementById('deviceSelect'),
+        isLoading: document.getElementById('deviceSelectIsLoading')
+      };
+      tab = {
+        active: 'info'
+      };
+      info = {
+        element: document.getElementById('deviceInfo'),
+        elementTab: document.getElementById('deviceTabInfo'),
+        elementList: document.getElementById('deviceInfoList'),
+        metadata: null,
+        system: null
+      };
+      details = {
+        element: document.getElementById('deviceDetails'),
+        elementTab: document.getElementById('deviceTabDetails'),
+        elementList: document.getElementById('deviceDetailsList')
+      };
+      update = {
+        element: document.getElementById('deviceUpdate'),
+        elementTab: document.getElementById('deviceTabUpdate'),
+        elementCurrentList: document.getElementById('deviceUpdateCurrentList'),
+        elementFirmware: document.getElementById('deviceUpdateFirmware'),
+        elementFirmwareList: document.getElementById('deviceUpdateFirmwareList'),
+        elementPorts: document.getElementById('deviceUpdatePorts'),
+        elementUpload: document.getElementById('deviceUpdateUpload'),
+        elementProgress: document.getElementById('deviceUpdateProgress'),
+        notify: new Notify(document.getElementById('deviceUpdateNotify')),
+        firmware: {
+          bytes: null,
+          hash: null,
+          current: null
+        }
+      };
+      notify = new Notify(document.getElementById('deviceNotify'));
+      timeout = null;
+      name = {
+        element: document.getElementById('deviceName')
+      };
+      ports = {
+        element: document.getElementById('devicePorts'),
+        elementValue: document.getElementById('devicePortsValue')
+      };
+
+      switchTab(tab) {
+        this.info.elementTab.classList.remove('is-active');
+        this.details.elementTab.classList.remove('is-active');
+        this.update.elementTab.classList.remove('is-active');
+        this.info.element.style.display = 'none';
+        this.details.element.style.display = 'none';
+        this.update.element.style.display = 'none';
+
+        if (!tab || !MIDI.deviceInput)
+          return;
+
+        this.tab.active = tab;
+        switch (tab) {
+          case 'info':
+            this.info.elementTab.classList.add('is-active');
+            this.info.element.style.display = '';
+            break;
+
+          case 'details':
+            this.details.elementTab.classList.add('is-active');
+            this.details.element.style.display = '';
+            break;
+
+          case 'update':
+            this.update.elementTab.classList.add('is-active');
+            this.update.element.style.display = '';
+            this.loadFirmwareIndex();
+            break;
+        }
+      }
+
+      // Dim UI elements when no device is connected, or an action waits for a reply.
+      setEnabled(enabled) {
+        const isEnabled = Array.prototype.slice.call(document.querySelectorAll('.isEnabled'), 0);
+        isEnabled.forEach((el) => {
+          el.disabled = !enabled;
+        });
+      }
+
+      setConnected(connected) {
+        if (connected)
+          this.select.element.options[0].text = 'Disconnect ...';
+        else
+          this.select.element.options[0].text = 'Connect to ...';
+
+        this.select.isLoading.classList.remove('is-loading');
+        this.updateList();
+        this.setEnabled(connected)
+      }
+
+      updateList() {
+        this.select.element.options.length = 1;
+        // Iterate over the input ports, only add the device to the list if we
+        // find an output port with the same name and index.
+        MIDI.forEachDevice((inputPort, outputPort) => {
+          if (inputPort && outputPort) {
+            const option = document.createElement('option');
+            option.value = inputPort.id;
+            option.text = inputPort.name;
+            if (inputPort == MIDI.deviceInput)
+              option.selected = true
+            this.select.element.add(option);
+          }
+        });
+
+        const disable = this.select.element.options.length == 1;
+        const isDisabled = this.select.element.disabled;
+        this.select.element.disabled = disable;
+
+        // If we enable the previously disabled selector, select it.
+        if (!disable && isDisabled)
+          this.select.element.focus();
+      }
+
+      sendJSON(json) {
+        let request;
+        try {
+          request = JSON.parse(json);
+
+        } catch (error) {
+          MIDI.printDevice('Unable to parse JSON string: <i>' + error.toString() + '</i>');
+          return;
+        }
+
+        MIDI.sendSystemExclusive(request);
+      }
+
+      sendRequest(request) {
+        // Requests and replies contain the device's current bootID.
+        if (this.token)
+          request.token = this.token;
+
+        MIDI.sendSystemExclusive({
+          'com.versioduo.device': request
+        });
+      }
+
+      sendGetAll() {
+        MIDI.printDevice('Calling <b>getAll()</>');
+        this.sendRequest({
+          'method': 'getAll'
+        });
+        MIDI.printDevice('Waiting for reply ...');
+      }
+
+      // Process the reply with a com.versioduo.device message.
+      handleReply(data) {
+        MIDI.printDevice('Received <b>com.versioduo.device<b> message');
+
+        // Remember the token from the first reply.
+        if (!this.token && data['token'])
+          this.token = data['token'];
+
+        if (this.token != data['token']) {
+          MIDI.printDevice('Wrong token, ignoring message');
+          return;
+        }
+
+        if (data.firmware && data.firmware.status) {
+          this.uploadFirmwareBlock(data.firmware.status);
+          return;
+        }
+
+        if (!data.metadata) {
+          MIDI.printDevice('Missing device information');
+          MIDI.disconnectDevice();
+          return;
+        }
+
+        this.setConnected(true);
+        this.show(data.metadata, data.system);
+        Input.show(data.input, data.configuration.calibration);
+        Output.show(data.output);
+        Configuration.show(data.configuration);
+      }
+
+      disconnect() {
+        this.token = null;
+        this.tab.active = 'info';
+        this.clear();
+        this.setConnected(false);
+
+        Input.disconnect();
+        Output.disconnect();
+        Configuration.clear();
+
+        window.scroll(0, 0);
+        this.select.element.focus();
+      }
+
+      // Triggered by the main drop-down menu.
+      connect() {
+        if (this.select.element.selectedIndex == 0) {
+          MIDI.disconnectDevice();
+
+        } else {
+          if (MIDI.connectDevice(this.select.element.value))
+            this.select.isLoading.classList.add('is-loading');
+        }
+      }
+
+      sendConfig() {
+        MIDI.printDevice('Calling <b>writeConfiguration()</b> ');
+        this.sendRequest({
+          'method': 'writeConfiguration',
+          'configuration': {
+            'name': this.name.element.value,
+            'ports': Number(this.ports.elementValue.value)
+          }
+        });
+        this.setEnabled(false);
+
+        this.timeout = setTimeout(() => {
+          this.timeout = null;
+          this.notify.error('No reply from device. Changes might not be not saved.');
+          this.setEnabled(true);
+          MIDI.printDevice('No reply from device');
+        }, 1000);
+      }
+
+      // A table showing the queried metadata from the device.
+      show(meta, system) {
+        const notify = this.timeout != null;
+        this.clear();
+        if (notify)
+          this.notify.success('Configuration updated.');
+
+        this.info.metadata = meta;
+        this.info.system = system;
+
+        // The info tab.
+        Object.keys(meta).forEach((key) => {
+          const name = key.charAt(0).toUpperCase() + key.slice(1);
+          const value = meta[key];
+
+          const tr = document.createElement('tr');
+          const tdName = document.createElement('td');
+          tdName.textContent = name;
+          tr.appendChild(tdName);
+
+          const tdValue = document.createElement('td');
+          if (typeof value == 'string' && value.match(/^https?:\/\//)) {
+            const a = document.createElement('a');
+            a.setAttribute('href', value);
+            a.setAttribute('target', 'home');
+            a.textContent = value.replace(/^https?:\/\//, '');
+            tdValue.appendChild(a);
+
+          } else
+            tdValue.textContent = value;
+
+          tr.appendChild(tdValue);
+          this.info.elementList.appendChild(tr);
+        });
+
+        // The details tab.
+        const printObject = (parent, object) => {
+          Object.keys(object).forEach((key) => {
+            let name = key;
+            if (parent)
+              name = parent + '.' + name;
+
+            const value = object[key];
+            if (typeof value == 'object') {
+              printObject(name, value);
+
+            } else {
+              const tr = document.createElement('tr');
+
+              const tdName = document.createElement('td');
+              tdName.textContent = name;
+              tr.appendChild(tdName);
+
+              const tdValue = document.createElement('td');
+              tdValue.textContent = value;
+              tr.appendChild(tdValue);
+
+              this.details.elementList.appendChild(tr);
+            }
+          });
+        }
+        printObject(null, system);
+
+        // The update tab.
+        let tr = document.createElement('tr');
+        let td = document.createElement('td');
+        td.textContent = 'Version';
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.textContent = this.info.metadata.version;
+        tr.appendChild(td);
+        this.update.elementCurrentList.appendChild(tr);
+
+        tr = document.createElement('tr');
+        td = document.createElement('td');
+        td.textContent = 'Id';
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.textContent = this.info.system.firmware.id;
+        tr.appendChild(td);
+        this.update.elementCurrentList.appendChild(tr);
+
+        tr = document.createElement('tr');
+        td = document.createElement('td');
+        td.textContent = 'Board';
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.textContent = this.info.system.firmware.board;
+        tr.appendChild(td);
+        this.update.elementCurrentList.appendChild(tr);
+
+        tr = document.createElement('tr');
+        td = document.createElement('td');
+        td.textContent = 'Hash';
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.textContent = this.info.system.firmware.hash;
+        tr.appendChild(td);
+        this.update.elementCurrentList.appendChild(tr);
+
+        this.switchTab(this.tab.active);
+
+        // The device name.
+        if (system.name)
+          this.name.element.value = system.name;
+        this.name.element.placeholder = this.info.metadata.product;
+
+        // The number of MIDI ports.
+        if (system.ports && system.ports.announce > 0) {
+          this.update.elementPorts.disabled = false;
+          this.ports.elementValue.value = system.ports.configured;
+          this.ports.element.style.display = '';
+        }
+      }
+
+      clear() {
+        this.select.isLoading.classList.remove('is-loading');
+
+        this.switchTab();
+        this.info.metadata = null;
+        this.info.system = null;
+
+        while (this.info.elementList.firstChild)
+          this.info.elementList.firstChild.remove();
+
+        while (this.details.elementList.firstChild)
+          this.details.elementList.firstChild.remove();
+
+        while (this.update.elementCurrentList.firstChild)
+          this.update.elementCurrentList.firstChild.remove();
+
+        this.clearFirmware();
+
+        if (this.timeout) {
+          clearTimeout(this.timeout);
+          this.timeout = null;
+        }
+        this.notify.clear();
+
+        this.name.element.value = '';
+        this.name.element.placeholder = '';
+
+        this.ports.element.style.display = 'none';
+        this.ports.elementValue.value = 1;
+      }
+
+      reset() {
+        MIDI.sendSystemReset();
+        this.sendGetAll();
+      }
+
+      reboot() {
+        MIDI.printDevice('Calling <b>reboot()</>');
+        this.sendRequest({
+          'method': 'reboot'
+        });
+        MIDI.disconnectDevice();
+      }
+
+      // Reboot the device and temporarily create MIDI ports/virtual
+      // cables to access children devices. The device can describe itself
+      // how many children devices are expected to be connected.
+      rebootWithPorts() {
+        let ports = this.info.system.ports.announce;
+
+        // Ports enabled but no custom number of ports specified, use the maximum.
+        if (ports == 1)
+          ports = 16;
+
+        MIDI.printDevice('Calling <b>reboot()</>');
+        this.sendRequest({
+          'method': 'reboot',
+          'reboot': {
+            'ports': ports
+          }
+        });
+        MIDI.disconnectDevice();
+      }
+
+      clearFirmware() {
+        this.update.notify.clear();
+
+        this.update.elementPorts.disabled = true;
+        this.update.elementUpload.disabled = true;
+
+        this.update.elementProgress.style.display = 'none';
+        this.update.elementProgress.value = 0;
+
+        this.update.elementFirmware.style.display = 'none';
+        while (this.update.elementFirmwareList.firstChild)
+          this.update.elementFirmwareList.firstChild.remove();
+
+        this.update.firmware.bytes = null;
+        this.update.firmware.hash = null;
+      }
+
+      // Load 'index.json' and from the 'download' URL and check if there is a firmware update available.
+      loadFirmwareIndex() {
+        if (!this.info.system || !this.info.system.firmware.download)
+          return;
+
+        if (this.update.firmware.bytes)
+          return;
+
+        MIDI.printDevice('Downloading firmware update index: <b>' + this.info.system.firmware.download + '/index.json</b>');
+        const request = new XMLHttpRequest();
+        request.onreadystatechange = () => {
+          let index;
+
+          if (request.readyState == 4 && request.status == 200) {
+            try {
+              index = JSON.parse(request.responseText);
+
+            } catch (error) {
+              MIDI.printDevice('Unable to parse firmware update index: <b>' + this.info.system.firmware.download + '/index.json</b>');
+              return;
+            }
+
+            MIDI.printDevice('Retrieved firmware update index');
+
+            const update = index[this.info.system.firmware.id];
+            if (!update) {
+              MIDI.printDevice('No firmware update found for this device.');
+              return;
+            }
+
+            if (this.info.system.board != update.board) {
+              MIDI.printDevice('No firmware update found for this board.');
+              return;
+            }
+
+            if (this.info.system.firmware.hash == update.hash) {
+              this.update.notify.success('The firmware is up-to-date.');
+              return;
+            }
+
+            if (this.info.system.firmware.version > update.version) {
+              this.update.notify.warn('A more recent firmware is already installed.');
+              return;
+            }
+
+            MIDI.printDevice('Downloading firmware update: <b>' + update.file + '</b>');
+            const firmware = new XMLHttpRequest();
+            firmware.onreadystatechange = () => {
+              if (firmware.readyState == 4) { // DONE
+                if (firmware.status == 200) {
+                  const bytes = firmware.response;
+                  MIDI.printDevice('Retrieved firmware image, length=' + bytes.byteLength);
+                  this.showFirmware(new Uint8Array(bytes));
+
+                } else
+                  MIDI.printDevice('Failed to download firmware image: ' + firmware.status);
+              }
+            }
+
+            firmware.open("GET", this.info.system.firmware.download + '/' + update.file, true);
+            firmware.responseType = "arraybuffer";
+            firmware.send();
+          }
+        };
+
+        request.open("GET", this.info.system.firmware.download + '/index.json', true);
+        request.send();
+      }
+
+      // Load a firmware image from the local disk.
+      loadFirmware() {
+        this.clearFirmware();
+
+        // Temporarily create a hidden 'browse button' and trigger a file upload.
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', '.bin');
+        input.style.display = 'none';
+        document.body.appendChild(input);
+
+        input.addEventListener('change', () => {
+          const reader = new FileReader();
+          reader.onload = (element) => {
+            this.showFirmware(new Uint8Array(reader.result));
+          }
+
+          reader.readAsArrayBuffer(input.files[0]);
+          input.remove();
+        });
+
+        input.click();
+      }
+
+      // Present a new firmware image to update the current one.
+      showFirmware(bytes) {
+        // Read the metadata in the image; the very end of the image contains
+        // the the JSON metadata record with a leading and trailing NUL character.
+        let metaStart = bytes.length - 2;
+        while (bytes[metaStart] != 0) {
+          metaStart--;
+          if (metaStart < 4) {
+            this.update.notify.warn('Unknown file type. No valid device metadata found.');
+            return;
+          }
+        }
+
+        const metaBytes = bytes.slice(metaStart + 1, bytes.length - 1);
+        const metaString = new TextDecoder().decode(metaBytes);
+
+        let meta;
+        try {
+          meta = JSON.parse(metaString);
+
+        } catch (error) {
+          this.update.notify.warn('Unknown file type. Unable to parse metadata.');
+          return;
+        }
+
+        if (meta.interface != "com.versioduo.firmware") {
+          this.update.notify.warn('Unknown file type. Missing metadata.');
+          return;
+        }
+
+        // We found metadata in the loaded image.
+        this.update.firmware.bytes = bytes;
+
+        let tr = document.createElement('tr');
+        let td = document.createElement('td');
+        td.textContent = 'Version';
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.textContent = meta.version;
+        tr.appendChild(td);
+        this.update.elementFirmwareList.appendChild(tr);
+
+        tr = document.createElement('tr');
+        td = document.createElement('td');
+        td.textContent = 'Id';
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.textContent = meta.id;
+        tr.appendChild(td);
+        this.update.elementFirmwareList.appendChild(tr);
+
+        tr = document.createElement('tr');
+        td = document.createElement('td');
+        td.textContent = 'Board';
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.textContent = meta.board;
+        tr.appendChild(td);
+        this.update.elementFirmwareList.appendChild(tr);
+
+        tr = document.createElement('tr');
+        td = document.createElement('td');
+        td.textContent = 'Hash';
+        tr.appendChild(td);
+        const tdHash = document.createElement('td');
+        tr.appendChild(tdHash);
+        this.update.elementFirmwareList.appendChild(tr);
+
+        crypto.subtle.digest('SHA-1', this.update.firmware.bytes).then((hash) => {
+          const array = Array.from(new Uint8Array(hash));
+          const hex = array.map(b => b.toString(16).padStart(2, '0')).join('');
+          this.update.firmware.hash = hex;
+          tdHash.textContent = hex;
+
+          if (this.info.system.board && meta.board != this.info.system.board)
+            this.update.notify.error('The firmware update is for a different board which has the name <b>' + meta.board + '</>.');
+
+          else if (meta.id != this.info.system.firmware.id)
+            this.update.notify.warn('The firmware update appears to provide a different functionality, it has the name <b>' + meta.id + '</>.');
+
+          else if (meta.version < this.info.metadata.version)
+            this.update.notify.warn('The firmware update is version <b>' + meta.version + '</b>, which is older than the current firmware.');
+
+          else if (this.update.firmware.hash == this.info.system.firmware.hash)
+            this.update.notify.success('The firmware is up-to-date.');
+
+          else
+            this.update.notify.warn('Press <b>Upload</b> to install version <b>' + meta.version + '</b> of the firmware.');
+
+          this.update.elementUpload.disabled = false;
+          this.update.elementFirmware.style.display = '';
+        });
+      }
+
+      // Transfer the loded image to the device.
+      uploadFirmware() {
+        this.update.elementProgress.value = 0;
+        this.update.elementProgress.max = this.update.firmware.bytes.length;
+        this.update.elementProgress.style.display = '';
+
+        // Send the first block; the reply messages will trigger the remaining blocks.
+        this.update.firmware.current = 0;
+        this.uploadFirmwareBlock();
+      }
+
+      // Send one block of our firmware image. This will be called from
+      // the incoming message handler, when the previous block was sucessfully written.
+      uploadFirmwareBlock(status) {
+        if (status) {
+          switch (status) {
+            case 'success':
+              break;
+
+            case 'hashMismatch':
+              this.update.notify.error('Error while verifying the transferred firmware.');
+              return;
+
+            case 'invalidOffset':
+              this.update.notify.error('Invalid parameters for firmware update.');
+              return;
+
+            default:
+              this.update.notify.error('Error while updating the firmware: ' + status);
+              return;
+          }
+        }
+
+        // The last update packet was successful. If the device is connected
+        // over USB we will notice the automatic reboot, we will not detect the reboot
+        // of a children device, so disconnect it here.
+        if (this.update.firmware.current == null) {
+          MIDI.printDevice('Firmware update successful. Disconnecting device');
+          MIDI.disconnectDevice();
+          return;
+        }
+
+        const offset = this.update.firmware.current;
+        // The block size is fixed to 8k. Daisy-chained devices might not be able to forward larger packets.
+        const block = this.update.firmware.bytes.slice(offset, offset + 0x2000);
+        const data = btoa(String.fromCharCode.apply(null, block));
+        let request = {
+          'method': 'writeFirmware',
+          'firmware': {
+            'offset': offset,
+            'data': data
+          }
+        };
+
+        if (this.update.firmware.current + 0x2000 <= this.update.firmware.bytes.length) {
+          // Prepare for next block.
+          this.update.elementProgress.value = offset;
+          this.update.firmware.current += 0x2000;
+
+        } else {
+          // Last block.
+          this.update.elementProgress.value = this.update.firmware.bytes.length;
+          this.update.firmware.current = null;
+
+          // Add our hash to the request; if the device has received
+          // the correct image it copies it over and reboots.
+          MIDI.printDevice('Firmware submitted. Requesting device update with hash <b>' + this.update.firmware.hash + '</b>');
+          request.firmware.hash = this.update.firmware.hash;
+        }
+
+        this.sendRequest(request);
+      }
+    }
+  </script>
+
+  <!-- MIDI In, play notes -->
+  <section id="input">
+    <div class="container">
+      <h2 class="title">
+        MIDI In
+      </h2>
+      <p class="subtitle">
+        Play notes and adjust controllers
+      </p>
+      <div id="inputControls"></div>
+      <div id="inputControllers" style="display:none">
+        <h3 class="title subsection">
+          Controllers
+        </h3>
+        <div id="inputControllersList"></div>
+      </div>
+      <div id="inputNotes" style="display:none">
+        <h3 class="title subsection">
+          Notes
+        </h3>
+        <div id="inputNotesControls"></div>
+        <div id="inputNotesList"></div>
+        <div id="inputNotesChromatic"></div>
+      </div>
+      <div id="inputCalibration" style="display:none">
+        <h3 class="title subsection">
+          Calibration
+        </h3>
+        <div class="field has-addons">
+          <p class="control">
+            <button class="button" title="Play all notes with velocity 1" onclick="Input.playAll('min');">Play Min</button>
+          </p>
+          <p class="control">
+            <button class="button" title="Play all notes with velocity 127" onclick="Input.playAll('max');">Play Max</button>
+          </p>
+          <p class="control">
+            <button class="button isEnabled is-link" title="Store the calibration in the device" onclick="Input.sendCalibration();">Save</button>
+          </p>
+        </div>
+        <div id="inputCalibrationNotify"></div>
+        <div id="inputCalibrationNotes"></div>
+      </div>
+    </div>
+  </section>
+  <script>
+    'use strict';
+
+    const Input = new class {
+      channel = 0;
+      controls = {
+        element: document.getElementById('inputControls'),
+        program: null
+      };
+      controllers = {
+        element: document.getElementById('inputControllers'),
+        elementList: document.getElementById('inputControllersList')
+      };
+      notes = {
+        element: document.getElementById('inputNotes'),
+        controls: {
+          element: document.getElementById('inputNotesControls'),
+          velocity: 15
+        },
+        elementList: document.getElementById('inputNotesList'),
+        chromatic: {
+          element: document.getElementById('inputNotesChromatic'),
+          start: 0,
+          count: 0
+        },
+        calibration: {
+          element: document.getElementById('inputCalibration'),
+          notify: new Notify(document.getElementById('inputCalibrationNotify')),
+          timeout: null,
+          elementNotes: document.getElementById('inputCalibrationNotes'),
+          program: null,
+          values: null,
+          playTimer: null
+        }
+      };
+
+      show(data, calibrationData) {
+        const addController = (name, controller, type, value, valueFine) => {
+          const field = document.createElement('div');
+          field.classList.add('field');
+          field.classList.add('has-addons');
+
+          const p = document.createElement('p');
+          p.classList.add('control');
+          field.appendChild(p);
+
+          const button = document.createElement('button');
+          button.classList.add('button');
+          button.classList.add('button-field');
+          button.classList.add('has-background-grey-lighter');
+          button.classList.add('inactive');
+          button.textContent = 'CC ' + controller;
+          button.tabIndex = -1;
+          p.appendChild(button);
+
+          const p2 = document.createElement('p');
+          p2.classList.add('control');
+          field.appendChild(p2);
+
+          const button2 = document.createElement('button');
+          button2.classList.add('button');
+          button2.classList.add('button-text');
+          button2.classList.add('has-background-light');
+          button2.classList.add('inactive');
+          button2.textContent = name;
+          button2.tabIndex = -1;
+          p2.appendChild(button2);
+
+          const p3 = document.createElement('p');
+          p3.classList.add('control');
+          field.appendChild(p3);
+
+          switch (type) {
+            case 'range': {
+              const input = document.createElement('input');
+              input.classList.add('input');
+              input.classList.add('input-number');
+              input.title = 'The controller value';
+              input.type = 'number';
+              input.min = 0;
+              input.max = 127;
+              input.value = value || 0;
+              input.addEventListener('input', () => {
+                if (!inputFine) {
+                  range.value = input.value;
+                  MIDI.sendControlChange(this.channel, controller, input.value);
+
+                } else {
+                  range.value = (input.value << 7) | inputFine.value;
+                  MIDI.sendControlChange(this.channel, controller, input.value);
+                  MIDI.sendControlChange(this.channel, V2MIDI.CC.controllerLSB + controller, inputFine.value);
+                }
+              });
+              p3.appendChild(input);
+
+              // Support high-resolution, 14 bits controllers. Controllers 0-31 (MSB)
+              // have matching high-resolution values with controllers 32-63 (LSB).
+              var inputFine;
+              if (valueFine != null) {
+                inputFine = document.createElement('input');
+                inputFine.classList.add('input');
+                inputFine.classList.add('input-number');
+                inputFine.title = 'The controller value';
+                inputFine.type = 'number';
+                inputFine.min = 0;
+                inputFine.max = 127;
+                inputFine.value = value;
+                inputFine.addEventListener('input', () => {
+                  range.value = (input.value << 7) | inputFine.value;
+                  MIDI.sendControlChange(this.channel, controller, input.value);
+                  MIDI.sendControlChange(this.channel, V2MIDI.CC.controllerLSB + controller, inputFine.value);
+                });
+                p3.appendChild(inputFine);
+              }
+
+              this.controllers.elementList.appendChild(field);
+
+              const range = document.createElement('input');
+              range.classList.add('range');
+              range.title = 'The controller value';
+              range.type = 'range';
+              if (!inputFine) {
+                range.max = 127;
+                range.value = value || 0;
+
+              } else {
+                range.max = (127 << 7) + 127;
+                range.value = (value << 7) + valueFine;
+              }
+              range.addEventListener('input', () => {
+                if (!inputFine) {
+                  input.value = range.value;
+                  MIDI.sendControlChange(this.channel, controller, range.value);
+
+                } else {
+                  const msb = (range.value >> 7) & 0x7f;
+                  const lsb = range.value & 0x7f;
+                  input.value = msb;
+                  inputFine.value = lsb;
+                  MIDI.sendControlChange(this.channel, controller, msb);
+                  MIDI.sendControlChange(this.channel, V2MIDI.CC.controllerLSB + controller, lsb);
+                }
+              });
+
+              this.controllers.elementList.appendChild(range);
+              break;
+            }
+
+            case 'toggle': {
+              const toggle = document.createElement('label');
+              toggle.classList.add('switch');
+
+              const inputSwitch = document.createElement('input');
+              inputSwitch.type = 'checkbox';
+              inputSwitch.title = 'Toggle Switch';
+              inputSwitch.checked = value > 63;
+              inputSwitch.addEventListener('input', () => {
+                MIDI.sendControlChange(this.channel, controller, inputSwitch.checked ? 127 : 0);
+              });
+              toggle.appendChild(inputSwitch);
+
+              const inputSwitchCheck = document.createElement('span');
+              inputSwitchCheck.classList.add('check');
+              toggle.appendChild(inputSwitchCheck);
+
+              p3.appendChild(toggle);
+              this.controllers.elementList.appendChild(field);
+              break;
+            }
+
+            case 'momentary': {
+              const button3 = document.createElement('button');
+              button3.classList.add('button');
+              button3.classList.add('button-field');
+              button3.classList.add('is-link');
+              button3.title = 'Momentary Switch';
+
+              button3.addEventListener('mousedown', () => {
+                MIDI.sendControlChange(this.channel, controller, 127);
+              });
+              button3.addEventListener('mouseup', () => {
+                MIDI.sendControlChange(this.channel, controller, 0);
+              });
+              button3.addEventListener('touchstart', (event) => {
+                button3.classList.add('is-active');
+                button3.dispatchEvent(new MouseEvent('mousedown'));
+                if (event.cancelable)
+                  event.preventDefault()
+              });
+              button3.addEventListener('touchend', (event) => {
+                button3.classList.remove('is-active');
+                button3.dispatchEvent(new MouseEvent('mouseup'));
+                if (event.cancelable)
+                  event.preventDefault()
+              });
+
+              p3.appendChild(button3);
+
+              this.controllers.elementList.appendChild(field);
+              break;
+            }
+          }
+        }
+
+        const addControllers = (controllers) => {
+          controllers.forEach((controller, index) => {
+            addController(controller.name, controller.number, controller.type || 'range', controller.value || 0, controller.valueFine);
+          });
+
+          this.controllers.element.style.display = '';
+        }
+
+        // Draw keyboard-like rows of octaves.
+        const addKeyboard = (start, count) => {
+          const addOctave = (octave, first, last) => {
+            const field = document.createElement('div');
+            field.classList.add('field');
+            field.classList.add('has-addons');
+
+            for (let i = 0; i < 12; i++) {
+              const p = document.createElement('p');
+              p.classList.add('control');
+              p.classList.add('is-expanded');
+              field.appendChild(p);
+
+              const button = document.createElement('button');
+              button.classList.add('button');
+              button.classList.add('button-keyboard');
+
+              const note = (octave * 12) + i;
+              button.textContent = V2MIDI.Note.name(note);
+              if (V2MIDI.Note.isBlack(note))
+                button.classList.add('is-dark');
+
+              button.title = '#' + note;
+
+              button.addEventListener('mousedown', () => {
+                MIDI.sendNote(this.channel, note, this.notes.controls.velocity);
+              });
+              button.addEventListener('mouseup', () => {
+                MIDI.sendNoteOff(this.channel, note);
+              });
+              button.addEventListener('touchstart', (event) => {
+                button.classList.add('is-active');
+                button.dispatchEvent(new MouseEvent('mousedown'));
+                if (event.cancelable)
+                  event.preventDefault()
+              });
+              button.addEventListener('touchend', (event) => {
+                button.classList.remove('is-active');
+                button.dispatchEvent(new MouseEvent('mouseup'));
+                if (event.cancelable)
+                  event.preventDefault()
+              });
+
+              if (i < first || i > last)
+                button.style.visibility = 'hidden';
+
+              p.appendChild(button);
+            }
+
+            this.notes.chromatic.element.appendChild(field);
+          }
+
+          const firstOctave = Math.trunc(start / 12);
+          const lastOctave = Math.trunc((start + (count - 1)) / 12);
+          addOctave(firstOctave, start % 12, Math.min(11, (start % 12) + count - 1));
+          if (lastOctave > firstOctave) {
+            for (let i = firstOctave + 1; i < lastOctave; i++)
+              addOctave(i, 0, 11);
+
+            addOctave(lastOctave, 0, (start + count - 1) % 12);
+          }
+        }
+
+        const addNotes = (notes) => {
+          const addNote = (name, note) => {
+            const field = document.createElement('div');
+            field.classList.add('field');
+            field.classList.add('has-addons');
+
+            const p = document.createElement('p');
+            p.classList.add('control');
+            field.appendChild(p);
+
+            const button = document.createElement('button');
+            button.classList.add('button');
+            button.classList.add('button-field');
+            button.classList.add('inactive');
+            button.textContent = V2MIDI.Note.name(note);
+            if (V2MIDI.Note.isBlack(note))
+              button.classList.add('is-dark');
+            else
+              button.classList.add('has-background-grey-lighter');
+            button.tabIndex = -1;
+            p.appendChild(button);
+
+            const p2 = document.createElement('p');
+            p2.classList.add('control');
+            field.appendChild(p2);
+
+            const button2 = document.createElement('button');
+            button2.textContent = name;
+            button2.classList.add('button');
+            button2.classList.add('button-text');
+            button2.classList.add('has-background-light');
+            button2.classList.add('inactive');
+            button2.tabIndex = -1;
+            p2.appendChild(button2);
+
+            const p3 = document.createElement('p');
+            p3.classList.add('control');
+            field.appendChild(p3);
+
+            const button3 = document.createElement('button');
+            button3.classList.add('button');
+            button3.classList.add('button-field');
+            button3.classList.add('is-link');
+            button3.title = '#' + note;
+            button3.addEventListener('mousedown', () => {
+              MIDI.sendNote(this.channel, note, this.notes.controls.velocity);
+            });
+            button3.addEventListener('mouseup', () => {
+              MIDI.sendNoteOff(this.channel, note);
+            });
+            button3.addEventListener('touchstart', (event) => {
+              button3.classList.add('is-active');
+              button3.dispatchEvent(new MouseEvent('mousedown'));
+              if (event.cancelable)
+                event.preventDefault()
+            });
+            button3.addEventListener('touchend', (event) => {
+              button3.classList.remove('is-active');
+              button3.dispatchEvent(new MouseEvent('mouseup'));
+              if (event.cancelable)
+                event.preventDefault()
+            });
+            p3.appendChild(button3);
+
+            this.notes.elementList.appendChild(field);
+          }
+
+          notes.forEach((note) => {
+            addNote(note.name, note.number);
+          });
+        }
+
+        const addCalibration = (start, count, calibrationData) => {
+          const addCalibrationNote = (i, note) => {
+            const field = document.createElement('div');
+            field.classList.add('field');
+            field.classList.add('has-addons');
+
+            const p = document.createElement('p');
+            p.classList.add('control');
+            field.appendChild(p);
+
+            const button = document.createElement('button');
+            button.classList.add('button');
+            button.classList.add('button-field');
+            button.classList.add('inactive');
+            button.textContent = V2MIDI.Note.name(note);
+            if (V2MIDI.Note.isBlack(note))
+              button.classList.add('is-dark');
+            else
+              button.classList.add('has-background-grey-lighter');
+            button.tabIndex = -1;
+            p.appendChild(button);
+
+            const p1 = document.createElement('p');
+            p1.classList.add('control');
+            field.appendChild(p1);
+
+            const button1 = document.createElement('button');
+            button1.classList.add('button');
+            button1.title = 'Play note #' + note + ' with velocity 1';
+            button1.textContent = 'Min';
+            button1.addEventListener('mousedown', () => {
+              MIDI.sendProgramChange(this.channel, this.notes.calibration.program);
+              MIDI.sendNote(this.channel, note, this.notes.calibration.values[i].min);
+              MIDI.sendProgramChange(this.channel, this.controls.program);
+            });
+            p1.appendChild(button1);
+
+            const p2 = document.createElement('p');
+            p2.classList.add('control');
+            field.appendChild(p2);
+
+            const inputMin = document.createElement('input');
+            inputMin.classList.add('input');
+            inputMin.classList.add('input-number');
+            inputMin.title = 'The raw value to play note #' + note + ' with velocity 1';
+            inputMin.type = 'number';
+            inputMin.min = 1;
+            inputMin.max = 127;
+            inputMin.value = this.notes.calibration.values[i].min;
+            inputMin.addEventListener('change', () => {
+              this.notes.calibration.values[i].min = inputMin.value
+              MIDI.sendProgramChange(this.channel, this.notes.calibration.program);
+              MIDI.sendNote(this.channel, note, inputMin.value);
+              MIDI.sendProgramChange(this.channel, this.controls.program);
+            });
+            p2.appendChild(inputMin);
+
+            const p3 = document.createElement('p');
+            p3.classList.add('control');
+            field.appendChild(p3);
+
+            const button127 = document.createElement('button');
+            button127.classList.add('button');
+            button127.title = 'Play note #' + note + ' with velocity 127';
+            button127.textContent = 'Max';
+            button127.addEventListener('mousedown', () => {
+              MIDI.sendProgramChange(this.channel, this.notes.calibration.program);
+              MIDI.sendNote(this.channel, note, this.notes.calibration.values[i].max);
+              MIDI.sendProgramChange(this.channel, this.controls.program);
+            });
+            p3.appendChild(button127);
+
+            const p4 = document.createElement('p');
+            p4.classList.add('control');
+            field.appendChild(p4);
+
+            const inputMax = document.createElement('input');
+            inputMax.classList.add('input');
+            inputMax.classList.add('input-number');
+            inputMax.title = 'The raw value to play the note #' + note + ' with velocity 127';
+            inputMax.type = 'number';
+            inputMax.min = 1;
+            inputMax.max = 127;
+            inputMax.value = this.notes.calibration.values[i].max;
+            inputMax.addEventListener('change', () => {
+              this.notes.calibration.values[i].max = inputMax.value;
+              MIDI.sendProgramChange(this.channel, this.notes.calibration.program);
+              MIDI.sendNote(this.channel, note, inputMax.value);
+              MIDI.sendProgramChange(this.channel, this.controls.program);
+            });
+            p4.appendChild(inputMax);
+
+            this.notes.calibration.elementNotes.appendChild(field);
+          }
+
+          this.notes.calibration.values = [];
+          for (let i = 0; i < count; i++) {
+            this.notes.calibration.values.push({
+              'min': calibrationData[i].min,
+              'max': calibrationData[i].max
+            });
+          }
+
+          for (let i = 0; i < count; i++)
+            addCalibrationNote(i, start + i);
+        }
+
+        const addChannel = (channel) => {
+          // Program change.
+          if (channel.programs) {
+            // Look for the currently selected program number.
+            channel.programs.find((program) => {
+              if (!program.selected)
+                return false;
+
+              this.controls.program = program.number;
+              return true;
+            });
+
+            const field = document.createElement('div');
+            field.classList.add('field');
+            field.classList.add('has-addons');
+
+            const p = document.createElement('p');
+            p.classList.add('control');
+            field.appendChild(p);
+
+            const button = document.createElement('button');
+            button.classList.add('button');
+            button.classList.add('button-field');
+            button.classList.add('has-background-grey-lighter');
+            button.classList.add('inactive');
+            button.textContent = 'Program';
+            button.tabIndex = -1;
+            p.appendChild(button);
+
+            const p2 = document.createElement('p');
+            p2.classList.add('control');
+            field.appendChild(p2);
+
+            const span = document.createElement('span');
+            span.classList.add('select');
+            p2.appendChild(span);
+
+            const select = document.createElement('select');
+            select.title = 'Send MIDI Program Change';
+            span.appendChild(select);
+
+            channel.programs.forEach((program, index) => {
+              const option = document.createElement('option');
+              option.title = '#' + (program.number + 1);
+              option.value = program.number;
+              option.text = (program.number + 1) + ' - ' + program.name;
+              option.selected = (program.number == this.controls.program);
+              select.appendChild(option);
+            });
+
+            select.addEventListener('change', () => {
+              this.controls.program = channel.programs[select.selectedIndex].number;
+              MIDI.sendProgramChange(this.channel, channel.programs[select.selectedIndex].number);
+              Device.sendGetAll();
+            });
+
+            this.controls.element.appendChild(field);
+          }
+
+          // Controllers Section.
+          if (channel.controllers)
+            addControllers(channel.controllers);
+
+          // Notes Section.
+          if (channel.chromatic || channel.notes) {
+            const field = document.createElement('div');
+            field.classList.add('field');
+            field.classList.add('has-addons');
+
+            const p = document.createElement('p');
+            p.classList.add('control');
+            field.appendChild(p);
+
+            const button = document.createElement('button');
+            button.classList.add('button');
+            button.classList.add('button-field');
+            button.classList.add('has-background-grey-lighter');
+            button.classList.add('inactive');
+            button.textContent = 'Velocity';
+            button.tabIndex = -1;
+            p.appendChild(button);
+
+            const p2 = document.createElement('p');
+            p2.classList.add('control');
+            field.appendChild(p2);
+
+            const input = document.createElement('input');
+            input.classList.add('input');
+            input.classList.add('input-number');
+            input.title = 'The velocity value to play the notes with';
+            input.type = 'number';
+            input.min = 1;
+            input.max = 127;
+            input.value = this.notes.controls.velocity;
+            input.addEventListener('input', () => {
+              this.notes.controls.velocity = Number(input.value);
+              range.value = input.value;
+            });
+            p2.appendChild(input);
+
+            this.notes.controls.element.appendChild(field);
+
+            const range = document.createElement('input');
+            range.classList.add('range');
+            range.title = 'The velocity value to play the notes with';
+            range.type = 'range';
+            range.min = 1;
+            range.max = 127;
+            range.value = this.notes.controls.velocity;
+            range.addEventListener('input', () => {
+              this.notes.controls.velocity = Number(range.value);
+              input.value = range.value;
+            });
+
+            this.notes.controls.element.appendChild(range);
+
+            // Aftertouch Channel.
+            if (channel.aftertouch) {
+              const field = document.createElement('div');
+              field.classList.add('field');
+              field.classList.add('has-addons');
+
+              const p = document.createElement('p');
+              p.classList.add('control');
+              field.appendChild(p);
+
+              const button = document.createElement('button');
+              button.classList.add('button');
+              button.classList.add('button-field');
+              button.classList.add('has-background-grey-lighter');
+              button.classList.add('inactive');
+              button.textContent = 'Aftertouch';
+              button.tabIndex = -1;
+              p.appendChild(button);
+
+              const p2 = document.createElement('p');
+              p2.classList.add('control');
+              field.appendChild(p2);
+
+              const input = document.createElement('input');
+              input.classList.add('input');
+              input.classList.add('input-number');
+              input.title = 'Channel Aftertouch';
+              input.type = 'number';
+              input.min = 0;
+              input.max = 127;
+              input.value = channel.aftertouch.value;
+              input.addEventListener('input', () => {
+                MIDI.sendAftertouchChannel(this.channel, Number(input.value));
+                range.value = input.value;
+              });
+              p2.appendChild(input);
+
+              this.notes.controls.element.appendChild(field);
+
+              const range = document.createElement('input');
+              range.classList.add('range');
+              range.title = 'Channel Aftertouch';
+              range.type = 'range';
+              range.min = 0;
+              range.max = 127;
+              range.value = channel.aftertouch.value;
+              range.addEventListener('input', () => {
+                MIDI.sendAftertouchChannel(this.channel, Number(range.value));
+                input.value = range.value;
+              });
+
+              range.addEventListener('mouseup', () => {
+                range.value = 0;
+                input.value = 0;
+                MIDI.sendAftertouchChannel(this.channel, 0);
+              });
+
+              range.addEventListener('touchend', (event) => {
+                range.dispatchEvent(new MouseEvent('mouseup'));
+                if (event.cancelable)
+                  event.preventDefault()
+              });
+
+              this.notes.controls.element.appendChild(range);
+            }
+
+            // Pitch Bend.
+            if (channel.pitchbend) {
+              const field = document.createElement('div');
+              field.classList.add('field');
+              field.classList.add('has-addons');
+
+              const p = document.createElement('p');
+              p.classList.add('control');
+              field.appendChild(p);
+
+              const button = document.createElement('button');
+              button.classList.add('button');
+              button.classList.add('button-field');
+              button.classList.add('has-background-grey-lighter');
+              button.classList.add('inactive');
+              button.textContent = channel.pitchbend.name || 'Pitch Bend';
+              button.tabIndex = -1;
+              p.appendChild(button);
+
+              const p2 = document.createElement('p');
+              p2.classList.add('control');
+              field.appendChild(p2);
+
+              const input = document.createElement('input');
+              input.classList.add('input');
+              input.classList.add('input-number');
+              input.title = 'Pitch Bend';
+              input.type = 'number';
+              input.min = -8192;
+              input.max = 8191;
+              input.value = channel.pitchbend.value;
+              input.addEventListener('input', () => {
+                MIDI.sendPitchBend(this.channel, Number(input.value));
+                range.value = input.value;
+              });
+              p2.appendChild(input);
+
+              this.notes.controls.element.appendChild(field);
+
+              const range = document.createElement('input');
+              range.classList.add('range');
+              range.title = 'Pitch Bend';
+              range.type = 'range';
+              range.min = -8192;
+              range.max = 8191;
+              range.value = channel.pitchbend.value;
+              range.addEventListener('input', () => {
+                MIDI.sendPitchBend(this.channel, Number(range.value));
+                input.value = range.value;
+              });
+
+              range.addEventListener('mouseup', () => {
+                // Do not reset value to 0 if pitchbend is used for something else.
+                if (channel.pitchbend.name != null)
+                  return;
+                range.value = 0;
+                input.value = 0;
+                MIDI.sendPitchBend(this.channel, 0);
+              });
+
+              range.addEventListener('touchend', (event) => {
+                range.dispatchEvent(new MouseEvent('mouseup'));
+                if (event.cancelable)
+                  event.preventDefault()
+              });
+
+              this.notes.controls.element.appendChild(range);
+            }
+
+            // A range of chromatic notes.
+            if (channel.chromatic) {
+              const chromatic = channel.chromatic;
+
+              // Range of chromatic notes.
+              this.notes.chromatic.start = chromatic.start;
+              this.notes.chromatic.count = chromatic.count;
+              addKeyboard(this.notes.chromatic.start, this.notes.chromatic.count);
+
+              // Calibration editor to tune velocity range.
+              if (chromatic.calibration && calibrationData) {
+                const calibration = chromatic.calibration;
+
+                if (calibration.program != null) {
+                  this.notes.calibration.program = calibration.program;
+
+                  if (calibrationNotify)
+                    this.notes.calibration.notify.success('Calibration updated.');
+
+                  addCalibration(this.notes.chromatic.start, this.notes.chromatic.count, calibrationData);
+                  this.notes.calibration.element.style.display = '';
+                }
+              }
+            }
+
+            // A list of individual notes.
+            if (channel.notes)
+              addNotes(channel.notes);
+
+            this.notes.element.style.display = '';
+          }
+        }
+
+        const addChannels = (channels) => {
+          const field = document.createElement('div');
+          field.classList.add('field');
+          field.classList.add('has-addons');
+
+          const p = document.createElement('p');
+          p.classList.add('control');
+          field.appendChild(p);
+
+          const button = document.createElement('button');
+          button.classList.add('button');
+          button.classList.add('button-field');
+          button.classList.add('has-background-grey-lighter');
+          button.classList.add('inactive');
+          button.textContent = 'Channel';
+          button.tabIndex = -1;
+          p.appendChild(button);
+
+          const p2 = document.createElement('p');
+          p2.classList.add('control');
+          field.appendChild(p2);
+
+          const span = document.createElement('span');
+          span.classList.add('select');
+          p2.appendChild(span);
+
+          const select = document.createElement('select');
+          select.title = 'MIDI Channel';
+          span.appendChild(select);
+
+          // Look for the currently selected channel number.
+          channels.find((channel) => {
+            if (!channel.selected)
+              return false;
+
+            this.channel = channel.number;
+            return true;
+          });
+
+          channels.forEach((channel, index) => {
+            const option = document.createElement('option');
+            option.title = '#' + (channel.number + 1);
+            option.value = index;
+            option.text = (channel.number + 1);
+            if (channel.name)
+              option.text += ' - ' + channel.name;
+            option.selected = (channel.number == this.channel);
+            select.appendChild(option);
+          });
+
+          select.addEventListener('change', () => {
+            this.channel = channels[select.selectedIndex].number;
+            // Request a refresh with the values of the selected channel.
+            Device.sendRequest({
+              'method': 'switchChannel',
+              'channel': channels[select.selectedIndex].number
+            });
+          });
+
+          const p3 = document.createElement('p');
+          p3.classList.add('control');
+          field.appendChild(p3);
+
+          const refresh = document.createElement('button');
+          refresh.classList.add('button');
+          refresh.data = "Refresh data";
+          refresh.addEventListener('click', () => {
+            Device.sendGetAll();
+          });
+
+          const icon = document.createElement('i');
+          icon.classList.add('fas');
+          icon.classList.add('fa-redo');
+          refresh.appendChild(icon);
+
+          p3.appendChild(refresh);
+
+          this.controls.element.appendChild(field);
+
+          channels.find((channel) => {
+            if (channel.number != this.channel)
+              return false;
+
+            addChannel(channel);
+            return true;
+          });
+        }
+
+        const calibrationNotify = this.notes.calibration.timeout != null;
+
+        this.clear();
+
+        if (!data)
+          return;
+
+        // The controls for all channels.
+        addChannel(data);
+
+        // A separate set of controls per channel.
+        if (data.channels)
+          addChannels(data.channels)
+      }
+
+      clear() {
+        this.notes.controls.velocity = 15;
+
+        this.controllers.element.style.display = 'none';
+
+        this.controls.program = null;
+
+        while (this.controls.element.firstChild)
+          this.controls.element.firstChild.remove();
+
+        while (this.controllers.elementList.firstChild)
+          this.controllers.elementList.firstChild.remove();
+
+        this.notes.element.style.display = 'none';
+
+        while (this.notes.controls.element.firstChild)
+          this.notes.controls.element.firstChild.remove();
+
+        while (this.notes.chromatic.element.firstChild)
+          this.notes.chromatic.element.firstChild.remove();
+
+        while (this.notes.elementList.firstChild)
+          this.notes.elementList.firstChild.remove();
+
+        if (this.notes.calibration) {
+          const calibration = this.notes.calibration;
+          if (calibration.timeout) {
+            clearTimeout(calibration.timeout);
+            calibration.timeout = null;
+          }
+          calibration.notify.clear();
+
+          calibration.element.style.display = 'none';
+          calibration.values = null;
+          while (calibration.elementNotes.firstChild)
+            calibration.elementNotes.firstChild.remove();
+        }
+      }
+
+      disconnect() {
+        this.channel = 0;
+        this.clear();
+      }
+
+      sendCalibration() {
+        MIDI.printDevice('Calling <b>writeConfiguration()</b>');
+        Device.sendRequest({
+          'method': 'writeConfiguration',
+          'configuration': {
+            'calibration': this.notes.calibration.values
+          }
+        });
+
+        Device.setEnabled(false);
+
+        this.notes.calibration.timeout = setTimeout(() => {
+          this.notes.calibration.timeout = null;
+          this.notes.calibration.notify.error('No reply from device. Calibration might not be not saved.');
+          MIDI.printDevice('No reply from device');
+          Device.setEnabled(true);
+        }, 1000);
+      }
+
+      playAll(field) {
+        if (this.notes.calibration.program == null)
+          return;
+
+        if (this.notes.calibration.playTimer) {
+          clearInterval(this.notes.calibration.playTimer);
+          this.notes.calibration.playTimer = null;
+          return;
+        }
+
+        MIDI.sendProgramChange(this.channel, this.notes.calibration.program);
+
+        let index = 0;
+        this.notes.calibration.playTimer = setInterval(() => {
+          const calibration = this.notes.calibration;
+          const note = index + this.notes.chromatic.start;
+          const velocity = calibration.values[index][field];
+          MIDI.sendNote(this.channel, note, velocity);
+
+          index++;
+          if (index == calibration.values.length) {
+            clearInterval(this.notes.calibration.playTimer);
+            this.notes.calibration.playTimer = null;
+            MIDI.sendProgramChange(this.channel, this.controls.program);
+          }
+        }, 150);
+      }
+    }
+  </script>
+
+  <!-- MIDI Out, receive notes -->
+  <section id="output">
+    <div class="container">
+      <h2 class="title">
+        MIDI Out
+      </h2>
+      <p class="subtitle">
+        Receive notes and control changes
+      </p>
+      <div id="outputChannel" style="display:none">
+        <div class="field has-addons">
+          <p class="control">
+            <button class="button button-field has-background-grey-lighter inactive" tabindex=-1>Channel</button>
+          </p>
+          <p class="control">
+            <button id="outputChannelValue" class="button button-number inactive" tabindex=-1></button>
+          </p>
+        </div>
+      </div>
+      <div id="outputControllers" style="display:none">
+        <h3 class="title subsection">
+          Controllers
+        </h3>
+        <div id="outputControllersList"></div>
+      </div>
+      <div id="outputNotes" style="display:none">
+        <h3 class="title subsection">
+          Notes
+        </h3>
+        <div id="outputNotesList"></div>
+      </div>
+    </div>
+  </section>
+  <script>
+    'use strict';
+
+    const Output = new class {
+      channel = {
+        element: document.getElementById('outputChannel'),
+        elementValue: document.getElementById('outputChannelValue'),
+        value: null
+      };
+      controllers = {
+        element: document.getElementById('outputControllers'),
+        elementList: document.getElementById('outputControllersList'),
+        list: null
+      };
+      notes = {
+        element: document.getElementById('outputNotes'),
+        elementList: document.getElementById('outputNotesList'),
+        list: null
+      };
+
+      show(data) {
+        const addController = (name, controller, type, value, valueFine) => {
+          const field = document.createElement('div');
+          field.classList.add('field');
+          field.classList.add('has-addons');
+
+          const p = document.createElement('p');
+          p.classList.add('control');
+          field.appendChild(p);
+
+          const button = document.createElement('button');
+          button.classList.add('button');
+          button.classList.add('button-field');
+          button.classList.add('has-background-grey-lighter');
+          button.classList.add('inactive');
+          button.textContent = 'CC ' + controller;
+          button.tabIndex = -1;
+          p.appendChild(button);
+
+          const p2 = document.createElement('p');
+          p2.classList.add('control');
+          field.appendChild(p2);
+
+          const button2 = document.createElement('button');
+          button2.classList.add('button');
+          button2.classList.add('button-text');
+          button2.classList.add('has-background-light');
+          button2.classList.add('inactive');
+          button2.textContent = name;
+          button2.tabIndex = -1;
+          p2.appendChild(button2);
+
+          const p3 = document.createElement('p');
+          p3.classList.add('control');
+          field.appendChild(p3);
+
+          switch (type) {
+            case 'range': {
+              const input = document.createElement('input');
+              input.classList.add('input');
+              input.classList.add('input-number');
+              input.classList.add('inactive');
+              input.type = 'number';
+              input.value = value || 0;
+              input.readOnly = true;
+              input.tabIndex = -1;
+              p3.appendChild(input);
+
+              // Support high-resolution, 14 bits controllers. Controllers 0-31 (MSB)
+              // have matching high-resolution values with controllers 32-63 (LSB).
+              if (valueFine != null) {
+                const inputFine = document.createElement('input');
+                inputFine.classList.add('input');
+                inputFine.classList.add('input-number');
+                inputFine.classList.add('inactive');
+                inputFine.type = 'number';
+                inputFine.value = valueFine;
+                inputFine.readOnly = true;
+                inputFine.tabIndex = -1;
+                p3.appendChild(inputFine);
+
+                Output.controllers.list[controller + V2MIDI.CC.controllerLSB] = {
+                  'input': inputFine
+                };
+              }
+
+              this.controllers.elementList.appendChild(field);
+
+              const progress = document.createElement('progress');
+              progress.classList.add('progress');
+              progress.classList.add('is-small');
+              progress.value = value || 0;
+              progress.max = '127';
+              this.controllers.elementList.appendChild(progress);
+
+              this.controllers.list[controller] = {
+                'input': input,
+                'progress': progress
+              };
+              break;
+            }
+
+            case 'toggle': {
+              const toggle = document.createElement('label');
+              toggle.classList.add('switch');
+              toggle.classList.add('inactive');
+
+              const inputSwitch = document.createElement('input');
+              inputSwitch.disabled = true;
+              inputSwitch.type = 'checkbox';
+              inputSwitch.title = 'Toggle Switch';
+              inputSwitch.checked = value > 63;
+              toggle.appendChild(inputSwitch);
+
+              const inputSwitchCheck = document.createElement('span');
+              inputSwitchCheck.classList.add('check');
+              toggle.appendChild(inputSwitchCheck);
+
+              p3.appendChild(toggle);
+              this.controllers.elementList.appendChild(field);
+
+              this.controllers.list[controller] = {
+                'input': input,
+                'switch': inputSwitch
+              };
+              break;
+            }
+
+            case 'momentary': {
+              const button3 = document.createElement('button');
+              button3.classList.add('button');
+              button3.classList.add('button-field');
+              if (value > 63)
+                button3.classList.add('is-link');
+              button3.classList.add('inactive');
+              button3.title = 'Momentary Switch';
+              button3.tabIndex = -1;
+              p3.appendChild(button3);
+              this.controllers.elementList.appendChild(field);
+
+              this.controllers.list[controller] = {
+                'input': input,
+                'button': button3
+              };
+              break;
+            }
+          }
+        }
+
+        const addNote = (name, note, hasAftertouch) => {
+          const field = document.createElement('div');
+          field.classList.add('field');
+          field.classList.add('has-addons');
+
+          const p = document.createElement('p');
+          p.classList.add('control');
+          field.appendChild(p);
+
+          const button = document.createElement('button');
+          button.classList.add('button');
+          button.classList.add('button-field');
+          button.classList.add('inactive');
+          button.textContent = V2MIDI.Note.name(note);
+          if (V2MIDI.Note.isBlack(note))
+            button.classList.add('is-dark');
+          else
+            button.classList.add('has-background-grey-lighter');
+          button.tabIndex = -1;
+          p.appendChild(button);
+
+          const p2 = document.createElement('p');
+          p2.classList.add('control');
+          field.appendChild(p2);
+
+          const button2 = document.createElement('button');
+          button2.classList.add('button');
+          button2.classList.add('button-text');
+          button2.classList.add('inactive');
+          button2.classList.add('has-background-light');
+          button2.textContent = name;
+          button2.tabIndex = -1;
+          p2.appendChild(button2);
+
+          const p3 = document.createElement('p');
+          p3.classList.add('control');
+          field.appendChild(p3);
+
+          const input = document.createElement('input');
+          input.classList.add('input');
+          input.classList.add('input-number');
+          input.classList.add('inactive');
+          input.title = 'Velocity';
+          input.type = 'number';
+          input.readOnly = true;
+          input.tabIndex = -1;
+          p3.appendChild(input);
+
+          this.notes.elementList.appendChild(field);
+
+          const progress = document.createElement('progress');
+          progress.classList.add('progress');
+          progress.classList.add('is-small');
+          progress.value = '0';
+          progress.max = '127';
+          this.notes.elementList.appendChild(progress);
+
+          this.notes.list[note] = {
+            'input': input,
+            'progress': progress
+          }
+
+          if (hasAftertouch) {
+            const aftertouch = document.createElement('progress');
+            aftertouch.classList.add('progress');
+            aftertouch.classList.add('is-small');
+            aftertouch.value = '0';
+            aftertouch.max = '127';
+            this.notes.elementList.appendChild(aftertouch);
+
+            this.notes.list[note].aftertouch = aftertouch;
+          }
+        }
+
+        this.clear();
+
+        if (!data)
+          return;
+
+        if (data.channel != null) {
+          this.channel.elementValue.textContent = data.channel + 1;
+          this.channel.element.style.display = '';
+          this.channel.value = data.channel;
+        }
+
+        if (data.controllers) {
+          this.controllers.list = {};
+          data.controllers.forEach((controller) => {
+            addController(controller.name, controller.number, controller.type || 'range', controller.value, controller.valueFine);
+          });
+
+          this.controllers.element.style.display = '';
+        }
+
+        if (data.notes) {
+          this.notes.list = {};
+          data.notes.forEach((note) => {
+            addNote(note.name, note.number, note.aftertouch);
+          });
+
+          this.notes.element.style.display = '';
+        }
+      }
+
+      updateController(channel, controller, value) {
+        if (this.channel.value != null && this.channel.value != channel)
+          return;
+
+        if (!this.controllers.list || !this.controllers.list[controller])
+          return;
+
+        this.controllers.list[controller].input.value = value;
+
+        if (this.controllers.list[controller].progress) {
+          this.controllers.list[controller].progress.value = value;
+
+        } else if (this.controllers.list[controller].switch) {
+          this.controllers.list[controller].switch.checked = value > 63;
+
+        } else if (this.controllers.list[controller].button) {
+          if (value > 63)
+            this.controllers.list[controller].button.classList.add('is-link');
+          else
+            this.controllers.list[controller].button.classList.remove('is-link');
+        }
+      }
+
+      updateNote(channel, note, velocity) {
+        if (this.channel.value != null && this.channel.value != channel)
+          return;
+
+        if (!this.notes.list || !this.notes.list[note])
+          return;
+
+        if (velocity > 0) {
+          this.notes.list[note].input.value = velocity;
+          this.notes.list[note].progress.value = velocity;
+
+        } else {
+          this.notes.list[note].input.value = null;
+          this.notes.list[note].progress.value = 0;
+          if (this.notes.list[note].aftertouch)
+            this.notes.list[note].aftertouch.value = 0;
+        }
+      }
+
+      updateNoteAftertouch(channel, note, pressure) {
+        if (this.channel.value != null && this.channel.value != channel)
+          return;
+
+        if (!this.notes.list[note] || !this.notes.list[note].aftertouch)
+          return;
+
+        this.notes.list[note].aftertouch.value = pressure;
+      }
+
+      clear() {
+        this.channel.element.style.display = 'none';
+
+        this.controllers.element.style.display = 'none';
+        this.controllers.list = null;
+        while (this.controllers.elementList.firstChild)
+          this.controllers.elementList.firstChild.remove();
+
+        this.notes.element.style.display = 'none';
+        this.notes.list = null;
+        while (this.notes.elementList.firstChild)
+          this.notes.elementList.firstChild.remove();
+      }
+
+      disconnect() {
+        this.clear();
+      }
+    }
+  </script>
+
+  <!-- Configuration editor -->
+  <section id="configuration">
+    <div class="container">
+      <h2 class="title">
+        Configuration
+      </h2>
+      <p class="subtitle">
+        The stored settings
+      </p>
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button isEnabled " title="Write this configuration to a file" disabled onclick="Configuration.save();">Export</button>
+        </p>
+        <p class="control">
+          <button class="button isEnabled" title="Read a configuration from a file" disabled onclick="Configuration.open();">Import</button>
+        </p>
+        <p class="control">
+          <button class="button isEnabled" title="Reset everything to defaults and reboot the device" disabled onclick="Configuration.erase();">Erase</button>
+        </p>
+        <p class="control">
+          <button class="button isEnabled is-link" title="Store this configuration in the device" disabled onclick="Configuration.send();">Save</button>
+        </p>
+      </div>
+      <div id="configurationNotify"></div>
+      <textarea id="configurationJSON" class="textarea isEnabled" placeholder="No configuration loaded" rows="1" onclick="Configuration.expand(event);" disabled></textarea>
+    </div>
+  </section>
+  <script>
+    'use strict';
+
+    // Textarea containing the JSON formatted configuration of the device. The content
+    // is parsed and reformatted when an action is requested. The JSON object can be saved
+    // to and loaded from disk.
+    const Configuration = new class {
+      notify = new Notify(document.getElementById('configurationNotify'));
+      timeout = null;
+      maximized = false;
+      elementJSON = document.getElementById('configurationJSON');
+
+      resize() {
+        const lines = this.elementJSON.value.split('\n').length;
+        if (this.maximized) {
+          this.elementJSON.rows = lines;
+
+        } else {
+          this.elementJSON.style.height = 'initial';
+          this.elementJSON.rows = Math.min(5, lines);
+        }
+      }
+
+      // Click to maximize, triple-click to minimize.
+      expand(event) {
+        if (this.maximized && event.detail == 3) {
+          this.elementJSON.setSelectionRange(1, 1);
+          this.maximized = false;
+
+        } else if (!this.maximized)
+          this.maximized = true;
+
+        this.resize();
+      }
+
+      show(json) {
+        const notify = this.timeout != null;
+        this.clear();
+        if (notify)
+          this.notify.success('Configuration updated.');
+
+        this.elementJSON.value = JSON.stringify(json, null, '  ');
+        this.resize();
+        this.elementJSON.disabled = false;
+      }
+
+      clear() {
+        if (this.timeout) {
+          clearTimeout(this.timeout);
+          this.timeout = null;
+        }
+        this.notify.clear();
+        this.elementJSON.value = '';
+        this.maximized = false;
+        this.resize();
+      }
+
+      // Parse the JSON text field and reformat it.
+      parse() {
+        let configuration;
+
+        try {
+          configuration = JSON.parse(this.elementJSON.value);
+
+        } catch (error) {
+          this.notify.warn(error.toString());
+
+          // Try to find the position in the error string and place the cursor.
+          const match = error.toString().match(/position (\d+)/);
+          if (match) {
+            const position = Number(match[1]);
+            this.elementJSON.setSelectionRange(position, position + 1);
+          }
+          this.elementJSON.focus();
+          Log.print('Configuration <b>Invalid JSON</b>: ' + error);
+          return;
+        }
+
+        this.show(configuration);
+        return configuration;
+      }
+
+      // Save the current JSON text field to a file.
+      save() {
+        const configuration = this.parse();
+        if (!configuration)
+          return;
+
+        const date = new Date();
+        const config = {
+          '#': 'Device configuration export',
+          'vendor': Device.info.metadata.vendor,
+          'product': Device.info.metadata.product,
+          'version': Device.info.metadata.version,
+          'serial': Device.info.metadata.serial,
+          'creator': window.location.href,
+          'date': date.toISOString(),
+          'configuration': configuration
+        };
+
+        const json = JSON.stringify(config, null, '  ');
+        let name = Device.info.metadata.product;
+        if (Device.info.metadata.name)
+          name += '-' + Device.info.metadata.name;
+        name += '.json';
+
+        // Temporarily create an anchor and download the file as URI.
+        const a = document.createElement('a');
+        a.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(json));
+        a.setAttribute('download', name.replace(/ /g, '-'));
+        a.style.display = 'none';
+        a.click();
+      }
+
+      // Load a JSON file into the text field.
+      open() {
+        // Temporarily create a 'browse button' and trigger a file upload.
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', '.json,.txt,.conf');
+        input.style.display = 'none';
+        document.body.appendChild(input);
+
+        input.addEventListener('change', () => {
+          const reader = new FileReader();
+          reader.onload = (element) => {
+            let config;
+
+            try {
+              config = JSON.parse(reader.result);
+
+            } catch (error) {
+              this.notify.warn('Unable to parse JSON from file');
+              return;
+            }
+
+            if (!config.configuration) {
+              this.notify.warn('No valid configuration found in file');
+              return;
+            }
+
+            const json = JSON.stringify(config.configuration, null, '  ');
+            this.elementJSON.value = json;
+            this.parse();
+          };
+
+          reader.readAsText(input.files[0]);
+          input.remove();
+        });
+
+        input.click();
+
+        this.maximized = true;
+        this.resize();
+      }
+
+      // Send the configuration to the device.
+      send() {
+        const data = this.parse();
+        if (data) {
+          MIDI.printDevice('Calling <b>writeConfiguration()</b>');
+          Device.sendRequest({
+            'method': 'writeConfiguration',
+            'configuration': data
+          });
+
+          Device.setEnabled(false);
+
+          this.timeout = setTimeout(() => {
+            this.timeout = null;
+            this.notify.error('No reply from device. Configuration might not be not saved.');
+            MIDI.printDevice('No reply from device');
+            Device.setEnabled(true);
+          }, 1000);
+        }
+      }
+
+      // Factory reset.
+      erase() {
+        MIDI.printDevice('Calling <b>eraseConfiguration()</b> command');
+        Device.sendRequest({
+          'method': 'eraseConfiguration'
+        });
+
+        MIDI.disconnectDevice();
+      }
+    }
+  </script>
+
+  <!-- Buttons to send generic MIDI test messages -->
+  <section id="test">
+    <div class="container">
+      <h2 class="title">
+        Test
+      </h2>
+      <p class="subtitle">
+        Send MIDI messages
+      </p>
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button button-field isEnabled" title="Send a NoteOn message to the device" disabled onclick="MIDI.sendNote(document.getElementById('noteOnChannel').value - 1,
+            document.getElementById('noteOnNote').value, document.getElementById('noteOnVelocity').value);">Note On</button>
+        </p>
+        <p class="control">
+          <input id="noteOnChannel" class="input input-number" title="Channel" type="number" min="1" max="16" value="1">
+        </p>
+        <p class="control">
+          <input id="noteOnNote" class="input input-number" title="Note" type="number" min="0" max="127" value="60">
+        </p>
+        <p class="control">
+          <input id="noteOnVelocity" class="input input-number" title="Velocity" type="number" min="0" max="127" value="10" oninput="document.getElementById('noteOnVelocityRange').value=value;">
+        </p>
+      </div>
+      <input id="noteOnVelocityRange" class="range" title="Velocity" type="range" min="0" max="127" value="10" oninput="document.getElementById('noteOnVelocity').value=value;">
+
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button button-field isEnabled" title="Send a NoteOff message to the device" disabled onclick="MIDI.sendNoteOff(document.getElementById('noteOffChannel').value - 1,
+          document.getElementById('noteOffNote').value, document.getElementById('noteOffVelocity').value);">Note Off</button>
+        </p>
+        <p class="control">
+          <input id="noteOffChannel" class="input input-number" title="Channel" type="number" min="1" max="16" value="1">
+        </p>
+        <p class="control">
+          <input id="noteOffNote" class="input input-number" title="Note" type="number" min="0" max="127" value="60">
+        </p>
+        <p class="control">
+          <input id="noteOffVelocity" class="input input-number" title="Velocity" type="number" min="0" max="127" value="64">
+        </p>
+      </div>
+
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button button-field isEnabled" title="Send a Program Change Message to the device" disabled onclick="MIDI.sendProgramChange(document.getElementById('programChannel').value - 1,
+            document.getElementById('program').value - 1);">Program</button>
+        </p>
+        <p class="control">
+          <input id="programChannel" class="input input-number" title="Channel" type="number" min="1" max="16" value="1">
+        </p>
+        <p class="control">
+          <input id="program" class="input input-number" title="Program" type="number" min="1" max="128" value="1">
+        </p>
+      </div>
+
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button button-field isEnabled" title="Send a Control Change Message (CC) to the device" disabled onclick="MIDI.sendControlChange(document.getElementById('controllerChannel').value - 1,
+            document.getElementById('controller').value, document.getElementById('controllerValue').value);">Controller</button>
+        </p>
+        <p class="control">
+          <input id="controllerChannel" class="input input-number" title="Channel" type="number" min="1" max="16" value="1">
+        </p>
+        <p class="control">
+          <input id="controller" class="input input-number" title="Controller" type="number" min="0" max="127" value="1">
+        </p>
+        <p class="control">
+          <input id="controllerValue" class="input input-number" title="Value" type="number" min="0" max="127" value="64">
+        </p>
+      </div>
+
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button button-field isEnabled" title="Send a System Exclusive JSON message to the device" disabled onclick="Device.sendJSON(document.getElementById('systemExclusive').value);">JSON</button>
+        </p>
+        <p class="control is-expanded">
+          <input id="systemExclusive" class="input" title="Message" type="text" value="{}">
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- System log viewer -->
+  <section id="log">
+    <div class="container">
+      <h2 class="title">
+        Log
+      </h2>
+      <p class="subtitle">
+        View system events
+      </p>
+      <div class="field has-addons">
+        <p class="control">
+          <button class="button" title="Print all available MIDI ports" onclick="MIDI.printStatus();">Status</button>
+        </p>
+        <p class="control">
+          <button class="button" title="Clear this log" onclick="Log.clear();">Clear</button>
+        </p>
+      </div>
+      <div id="logHTML" class="log content is-small"></div>
+    </div>
+  </section>
+
+  <script>
+    'use strict';
+
+    const Log = new V2Log(document.getElementById('logHTML'));
+    Menu.setup();
+    MIDI.setup();
+  </script>
+</body>
+
+</html>
