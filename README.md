@@ -10,7 +10,7 @@ All messages use the globally unique object `com.versioduo.device` with a simple
 
 The devices implement the JSON interface with [V2Device](https://github.com/versioduo/V2Device/) and send and receive MIDI System Exclusive messages with [V2MIDI](https://github.com/versioduo/V2MIDI/).
 
-:bulb: _This repository if fully self-contained. It does not require or load anything from external resources. It can be cloned or downloaded, and used offline as as a local web application._
+:bulb: _This repository if fully self-contained. It does not require or load anything from external resources. It can be cloned or downloaded, and used offline as a local web application._
 
 ## Example Request
 
