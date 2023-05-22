@@ -1017,14 +1017,16 @@ class V2SettingsNumber extends V2SettingsModule {
 class V2SettingsPulse extends V2SettingsModule {
   static type = 'pulse';
 
-  #seconds = Object.seal({
+  #watts = Object.seal({
+    limit: 100,
     number: null,
     updateNumber: null,
     setNumber: null,
     setRange: null
   });
 
-  #watts = Object.seal({
+  #seconds = Object.seal({
+    limit: 100,
     number: null,
     updateNumber: null,
     setNumber: null,
@@ -1034,6 +1036,12 @@ class V2SettingsPulse extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSection(canvas, setting);
+
+    if (setting.limit?.watts)
+      this.#watts.limit = setting.limit.watts;
+
+    if (setting.limit?.seconds)
+      this.#seconds.limit = setting.limit.seconds;
 
     V2Web.addButtons(canvas, (buttons) => {
       V2Web.addButton(buttons, (e) => {
@@ -1087,7 +1095,7 @@ class V2SettingsPulse extends V2SettingsModule {
         this.#watts.number = e;
         e.classList.add('width-number-wide');
         e.min = 0;
-        e.max = 100;
+        e.max = this.#watts.limit;
         e.addEventListener('input', () => {
           this.#watts.updateNumber();
           this.#watts.setRange(e.value);
@@ -1120,11 +1128,11 @@ class V2SettingsPulse extends V2SettingsModule {
       e.max = 1;
       e.step = 0.002;
       e.addEventListener('input', () => {
-        this.#watts.setNumber(100 * Math.pow(e.value, 3));
+        this.#watts.setNumber(this.#watts.limit * Math.pow(e.value, 3));
       });
 
       this.#watts.setRange = (watts) => {
-        e.value = Math.pow(watts / 100, 1 / 3);
+        e.value = Math.pow(watts / this.#watts.limit, 1 / 3);
       };
     });
 
@@ -1148,7 +1156,7 @@ class V2SettingsPulse extends V2SettingsModule {
         this.#seconds.number = e;
         e.classList.add('width-number-wide');
         e.min = 0;
-        e.max = 100;
+        e.max = this.#seconds.limit;
         e.addEventListener('input', () => {
           this.#seconds.updateNumber();
           this.#seconds.setRange(e.value);
@@ -1181,11 +1189,11 @@ class V2SettingsPulse extends V2SettingsModule {
       e.max = 1;
       e.step = 0.002;
       e.addEventListener('input', () => {
-        this.#seconds.setNumber(100 * Math.pow(e.value, 8));
+        this.#seconds.setNumber(this.#seconds.limit * Math.pow(e.value, 8));
       });
 
       this.#seconds.setRange = (seconds) => {
-        e.value = Math.pow(seconds / 100, 1 / 8);
+        e.value = Math.pow(seconds / this.#seconds.limit, 1 / 8);
       };
     });
 

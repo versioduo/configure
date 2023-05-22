@@ -68,11 +68,11 @@ class V2MIDI {
     generalPurpose4LSB: 51,
 
     // Single-byte Controllers.
-    sustain: 64,
+    sustainPedal: 64,
     portamento: 65,
     sostenuto: 66,
-    soft: 67,
-    legato: 68,
+    softPedal: 67,
+    legatoPedal: 68,
     hold2: 69,
     soundController1: 70, // Sound Variation
     soundController2: 71, // Timber / Harmonic Intensity
@@ -154,11 +154,11 @@ class V2MIDI {
       17: 'General 2',
       18: 'General 3',
       19: 'General 4',
-      64: 'Sustain',
+      64: 'Sustain Pedal',
       65: 'Portamento',
       66: 'Sostenuto',
       67: 'Soft Pedal',
-      68: 'Legato',
+      68: 'Legato Pedal',
       69: 'Hold 2',
       70: 'Sound 1',
       71: 'Sound 2',
