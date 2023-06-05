@@ -8,26 +8,36 @@ class V2Input extends V2WebModule {
     value: null,
     addEntry: null
   });
+
   #controls = Object.seal({
     element: null,
     program: null,
     bank: null
   });
+
   #controllers = Object.seal({
     element: null,
     elementList: null
   });
+
   #notes = Object.seal({
     element: null,
+    pads: null,
     controls: Object.seal({
       element: null,
-      velocity: 15
+      velocity: Object.seal({
+        number: null,
+        update: null,
+        value: 15
+      }),
     }),
+
     elementList: null,
     chromatic: Object.seal({
       element: null,
       start: 0,
-      count: 0
+      count: 0,
+      octave: 3
     })
   });
 
@@ -181,6 +191,7 @@ class V2Input extends V2WebModule {
           e.max = controller.max ?? (127 << 7) + 127;;
           e.value = (value << 7) + controller.valueFine;
         }
+
         e.addEventListener('input', () => {
           if (!inputFine) {
             input.value = e.value;
@@ -201,6 +212,140 @@ class V2Input extends V2WebModule {
 
   // Draw keyboard-like rows of octaves.
   #addKeyboard(start, count) {
+    // Subscribe to key presses, arranged in piano layout.
+    const handleKey = (ev) => {
+      let index = null;
+
+      // Use the key code to void localization issues.
+      switch (ev.keyCode) {
+        case 65: // A
+          index = 0;
+          break;
+
+        case 87: // W
+          index = 1;
+          break;
+
+        case 83: // S
+          index = 2;
+          break;
+
+        case 69: // E
+          index = 3;
+          break;
+
+        case 68: // D
+          index = 4;
+          break;
+
+        case 70: // F
+          index = 5;
+          break;
+
+        case 84: // T
+          index = 6;
+          break;
+
+        case 71: // G
+          index = 7;
+          break;
+
+        case 89: // Y
+          index = 8;
+          break;
+
+        case 72: // H
+          index = 9;
+          break;
+
+        case 85: // U
+          index = 10;
+          break;
+
+        case 74: // J
+          index = 11;
+          break;
+
+        case 75: // K
+          index = 12;
+          break;
+
+        case 79: // O
+          index = 13;
+          break;
+
+        case 90: // Z
+          if (ev.type === 'keydown' && this.#notes.chromatic.octave > -2) {
+            this.#notes.chromatic.octave--;
+            if (this.#notes.pads[(this.#notes.chromatic.octave + 2) * 12])
+              this.#notes.pads[(this.#notes.chromatic.octave + 2) * 12].focus();
+
+            else
+              document.activeElement.blur();
+          }
+          return null;
+
+        case 88: // X
+          if (ev.type === 'keydown' && this.#notes.chromatic.octave < 8) {
+            this.#notes.chromatic.octave++;
+            if (this.#notes.pads[(this.#notes.chromatic.octave + 2) * 12])
+              this.#notes.pads[(this.#notes.chromatic.octave + 2) * 12].focus();
+
+            else
+              document.activeElement.blur();
+          }
+          return null;
+
+        case 67: // C
+          if (ev.type === 'keydown' && this.#notes.controls.velocity.value > 1) {
+            this.#notes.controls.velocity.update(this.#notes.controls.velocity.value - Math.min(10, (this.#notes.controls.velocity.value - 1)));
+            this.#notes.controls.velocity.number.focus();
+          }
+          return null;
+
+        case 86: // V
+          if (ev.type === 'keydown' && this.#notes.controls.velocity.value < 127) {
+            this.#notes.controls.velocity.update(this.#notes.controls.velocity.value + Math.min(10, 127 - this.#notes.controls.velocity.value));
+            this.#notes.controls.velocity.number.focus();
+          }
+          return null;
+
+        default:
+          return null;
+      }
+
+      if (index === null)
+        return;
+
+      const base = (this.#notes.chromatic.octave + 2) * 12;
+      const note = base + index;
+
+      if (note > 127)
+        return;
+
+      if (this.#notes.pads[note])
+        this.#notes.pads[note].focus();
+
+      return note;
+    };
+
+    document.addEventListener('keydown', (ev) => {
+      if (ev.repeat)
+        return;
+
+      const note = handleKey(ev);
+      if (note != null)
+        this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
+    });
+
+    document.addEventListener('keyup', (ev) => {
+      const note = handleKey(ev);
+      if (note != null)
+        this.#device.sendNoteOff(this.#channel.value, note);
+    });
+
+    this.#notes.chromatic.octave = Math.trunc(start / 12) - 2;
+
     const addOctave = (octave, first, last) => {
       new V2WebField(this.#notes.chromatic.element, (field) => {
         for (let i = 0; i < 12; i++) {
@@ -209,22 +354,28 @@ class V2Input extends V2WebModule {
             p.classList.add('is-expanded');
 
             const note = (octave * 12) + i;
+            this.#notes.pads[note] = e;
+
             e.textContent = V2MIDI.Note.name(note);
             if (V2MIDI.Note.isBlack(note))
               e.classList.add('is-dark');
 
+
             e.addEventListener('mousedown', () => {
-              this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity);
+              this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
             });
+
             e.addEventListener('mouseup', () => {
               this.#device.sendNoteOff(this.#channel.value, note);
             });
+
             e.addEventListener('touchstart', (event) => {
               e.classList.add('is-active');
               e.dispatchEvent(new MouseEvent('mousedown'));
             }, {
               passive: true
             });
+
             e.addEventListener('touchend', (event) => {
               e.classList.remove('is-active');
               e.dispatchEvent(new MouseEvent('mouseup'));
@@ -241,6 +392,8 @@ class V2Input extends V2WebModule {
 
     const firstOctave = Math.trunc(start / 12);
     const lastOctave = Math.trunc((start + (count - 1)) / 12);
+    this.#notes.pads = [];
+
     addOctave(firstOctave, start % 12, Math.min(11, (start % 12) + count - 1));
     if (lastOctave > firstOctave) {
       for (let i = firstOctave + 1; i < lastOctave; i++)
@@ -275,7 +428,7 @@ class V2Input extends V2WebModule {
         e.classList.add('width-label');
         e.classList.add('is-link');
         e.addEventListener('mousedown', () => {
-          this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity);
+          this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
         });
         e.addEventListener('mouseup', () => {
           this.#device.sendNoteOff(this.#channel.value, note);
@@ -371,6 +524,15 @@ class V2Input extends V2WebModule {
       let input = null;
       let range = null;
 
+      this.#notes.controls.velocity.update = (number) => {
+        if (isNull(number) || number < 0 || number > 127)
+          return;
+
+        this.#notes.controls.velocity.value = Number(number);
+        input.value = number;
+        range.value = number;
+      };
+
       new V2WebField(this.#notes.controls.element, (field) => {
         field.addButton((e) => {
           e.classList.add('width-label');
@@ -381,14 +543,14 @@ class V2Input extends V2WebModule {
         });
 
         field.addInput('number', (e) => {
+          this.#notes.controls.velocity.number = e;
           input = e;
           e.classList.add('width-number');
           e.min = 1;
           e.max = 127;
-          e.value = this.#notes.controls.velocity;
+          e.value = this.#notes.controls.velocity.value;
           e.addEventListener('input', () => {
-            this.#notes.controls.velocity = Number(input.value);
-            range.value = e.value;
+            this.#notes.controls.velocity.update(e.value);
           });
         });
       });
@@ -399,10 +561,9 @@ class V2Input extends V2WebModule {
         e.type = 'range';
         e.min = 1;
         e.max = 127;
-        e.value = this.#notes.controls.velocity;
+        e.value = this.#notes.controls.velocity.value;
         e.addEventListener('input', () => {
-          this.#notes.controls.velocity = Number(e.value);
-          input.value = e.value;
+          this.#notes.controls.velocity.update(e.value);
         });
       });
 

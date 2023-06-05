@@ -216,6 +216,51 @@ class V2Device extends V2Connection {
       });
     });
 
+    V2Web.addElement(this.#info, 'div', (container) => {
+      if (data.links?.length > 0) {
+        V2Web.addElement(container, 'hr', (e) => {
+          e.classList.add('subsection');
+        });
+
+        V2Web.addElement(container, 'h3', (e) => {
+          e.classList.add('title');
+          e.classList.add('subsection');
+          e.textContent = 'Links';
+        });
+
+        for (const link of data.links) {
+          V2Web.addElement(container, 'div', (entry) => {
+            entry.classList.add('mt-5');
+
+            V2Web.addElement(entry, 'p', (e) => {
+              e.innerText = link.description;
+            });
+
+            V2Web.addElement(entry, 'a', (anchor) => {
+              anchor.classList.add('mt-2');
+              anchor.classList.add('button');
+
+              anchor.href = link.target;
+              anchor.target = 'links';
+
+              V2Web.addElement(anchor, 'span', (icon) => {
+                icon.classList.add('icon');
+                V2Web.addElement(icon, 'i', (e) => {
+                  e.classList.add('fas');
+                  e.classList.add('fa-link');
+                });
+              });
+
+              V2Web.addElement(anchor, 'span', (e) => {
+                const target = link.target.replace(/^https?:\/\//, '');
+                e.innerText = target.split("?")[0];
+              });
+            });
+          });
+        }
+      }
+    });
+
     // The Details tab.
     V2Web.addButtons(this.#details, (buttons) => {
       V2Web.addButton(buttons, (e) => {
@@ -260,7 +305,7 @@ class V2Device extends V2Connection {
                 });
               }
             }
-          }
+          };
           printObject(null, data.system);
 
         });
@@ -441,8 +486,8 @@ class V2Device extends V2Connection {
     this.printDevice('Requesting firmware information: <b>' + this.#data.system.firmware.download + '/index.json</b>');
 
     fetch(this.#data.system.firmware.download + '/index.json', {
-        cache: 'no-cache'
-      })
+      cache: 'no-cache'
+    })
       .then((response) => {
         if (!response.ok)
           throw new Error('Status=' + response.status);
@@ -542,15 +587,15 @@ class V2Device extends V2Connection {
       })
       .catch((error) => {
         this.printDevice('Error requesting firmware information: ' + error.message);
-      })
+      });
   }
 
   #loadFirmware(filename) {
     this.printDevice('Requesting firmware image: <b>' + filename + '</b>');
 
     fetch(filename, {
-        cache: 'no-cache'
-      })
+      cache: 'no-cache'
+    })
       .then((response) => {
         if (!response.ok)
           throw new Error('Status=' + response.status);
@@ -563,14 +608,14 @@ class V2Device extends V2Connection {
       })
       .catch((error) => {
         this.printDevice('Error requesting firmware image: ' + error.message);
-      })
+      });
   }
 
   #readFirmware(file) {
     const reader = new FileReader();
     reader.onload = (element) => {
       this.#showFirmware(new Uint8Array(reader.result));
-    }
+    };
 
     reader.readAsArrayBuffer(file);
   }

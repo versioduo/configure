@@ -10,9 +10,12 @@ class V2MIDI {
   static Note = Object.freeze({
     names: ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'],
 
+    octave: (note) => {
+      return Math.trunc(note / 12) - 2;
+    },
+
     name: (note) => {
-      const octave = Math.trunc(note / 12) - 2;
-      return this.Note.names[note % 12] + octave;
+      return this.Note.names[note % 12] + this.Note.octave(note);
     },
 
     isBlack: (note) => {

@@ -115,7 +115,7 @@ class V2Connection extends V2WebModule {
           this.select.select(device);
           this.connect(device);
           return true;
-        }
+        };
 
         for (const device of this.midi.getDevices().values()) {
           if (tryConnect(device))
