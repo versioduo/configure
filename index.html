@@ -1,201 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-  <meta name="name" content="configure">
-  <meta name="version" content="245">
-  <meta name="revised" content="2023-06-06">
-  <meta name="copyright" content="Kay Sievers, kay@versioduo.com">
-  <meta name="license" href="LICENSE">
-  <meta name="rating" content="safe for kids">
-  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-  <title>Versio Duo – configure</title>
-  <meta name="description" content="MIDI Device Configuration">
-  <link rel="canonical" href="https://versioduo.com/configure">
-  <link rel="source" href="https://github.com/versioduo/configure">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="black">
-  <link rel="icon" href="icons/logo-black.svg" media="(prefers-color-scheme: light)">
-  <link rel="icon" href="icons/logo.svg" media="(prefers-color-scheme: dark)">
-  <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="css/bulma.min.css">
-  <link rel="stylesheet" href="css/bulma-addons.css">
-  <link rel="stylesheet" href="css/fonts.css">
-  <link rel="stylesheet" href="css/fontawesome.min.css">
-  <style>
-    html {
-      background-color: black;
-      scroll-padding-top: 3.25rem;
-      scroll-behavior: smooth;
-      overflow: auto;
-    }
-
-    body {
-      font-family: 'DIN 1451', sans-serif;
-      color: hsl(0, 0%, 21%);
-    }
-
-    .navbar {
-      opacity: 95%;
-    }
-
-    section {
-      background-color: hsl(0, 0%, 92%);
-      padding: 1rem;
-    }
-
-    section:not(:first-of-type) {
-      margin-top: 0.25rem;
-    }
-
-    /* Do not mess with the DIN font, fake bold looks really ugly */
-    .title {
-      font-weight: 400;
-    }
-
-    .subsection {
-      margin-top: 3rem;
-    }
-
-    hr.subsection {
-      background-color: hsl(0, 0%, 50%);
-      height: 3px;
-    }
-
-    hr.break {
-      background-color: hsl(0, 0%, 75%);
-    }
-
-    .inactive {
-      pointer-events: none;
-    }
-
-    .keyboard-button {
-      font-size: min(1rem, 1.8vw);
-      height: 2.5rem;
-      width: 100%;
-    }
-
-    .width-label {
-      width: 6rem;
-    }
-
-    .width-text {
-      width: 8rem;
-    }
-
-    .width-text-wide {
-      width: 12rem;
-    }
-
-    .width-number {
-      width: 4.5rem;
-    }
-
-    .width-number-wide {
-      width: 6rem;
-    }
-
-    .log {
-      height: 12rem;
-      overflow: auto;
-      background-color: white;
-      padding: 1rem;
-    }
-  </style>
-</head>
-
-<body class="has-navbar-fixed-top">
-  <nav class="navbar is-fixed-top is-black" aria-label="navigation">
-    <div class="container">
-      <div class="navbar-brand">
-        <a class="navbar-home navbar-item is-size-4 pl-4" href="#">
-          <img src="icons/logo.svg" alt="" style="width: auto; height: 1.5rem;">
-          <h1 class="ml-3">
-            configure
-          </h1>
-        </a>
-        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
-          <span class="inactive" aria-hidden="true"></span>
-          <span class="inactive" aria-hidden="true"></span>
-          <span class="inactive" aria-hidden="true"></span>
-        </a>
-      </div>
-
-      <div class="navbar-menu">
-        <div class="navbar-start"></div>
-      </div>
-    </div>
-  </nav>
-
-  <script src="js/V2Web.js"></script>
-  <script src="js/V2Log.js"></script>
-  <script src="js/V2MIDI.js"></script>
-  <script src="js/V2MIDISelect.js"></script>
-  <script src="js/V2Connection.js"></script>
-  <script src="js/V2Device.js"></script>
-  <script src="js/V2Configuration.js"></script>
-  <script src="js/V2Settings.js"></script>
-  <script src="js/V2Input.js"></script>
-  <script src="js/V2Output.js"></script>
-  <script src="js/V2Debug.js"></script>
-  <script>
-    'use strict';
-
-    {
-      // Initialize the menu.
-      V2Web.setup();
-
-      // Early logging init, we don't have a device or the web sections yet, but we already
-      // record the messages. setup() is called later to attach the device.
-      const log = new V2Log();
-
-      // Read commands from the URL.
-      const url = new URL(window.location);
-
-      // WebUSB exports the link to this site with the USB device name to connect to.
-      const connect = url.searchParams.get('connect');
-      if (connect) {
-        // Remove the command, it is only used for the first connection.
-        url.searchParams.delete('connect');
-        window.history.pushState({}, '', url);
+  <head>
+    <meta name="name" content="configure">
+    <meta name="version" content="248">
+    <meta name="revised" content="2023-06-06">
+    <meta name="copyright" content="Kay Sievers, kay@versioduo.com">
+    <meta name="license" href="LICENSE">
+    <meta name="rating" content="safe for kids">
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Versio Duo – configure</title>
+    <meta name="description" content="MIDI Device Configuration">
+    <link rel="canonical" href="https://versioduo.com/configure">
+    <link rel="source" href="https://github.com/versioduo/configure">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="black">
+    <link rel="icon" href="icons/logo-black.svg" media="(prefers-color-scheme: light)">
+    <link rel="icon" href="icons/logo.svg" media="(prefers-color-scheme: dark)">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="stylesheet" href="css/bulma.min.css">
+    <link rel="stylesheet" href="css/bulma-addons.css">
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/fontawesome.min.css">
+    <style>
+      html {
+        background-color: black;
+        scroll-padding-top: 3.25rem;
+        scroll-behavior: smooth;
+        overflow: auto;
       }
 
-      // Add the sections.
-      const device = new V2Device(log, connect);
-      log.setup(device);
+      body {
+        font-family: 'DIN 1451', sans-serif;
+        color: hsl(0, 0%, 21%);
+      }
 
-      // Cache the content for offline operation.
-      V2Web.registerServiceWorker('service-worker.js', (state, newWorker) => {
-        // There is no worker during the intial setup.
-        if (!navigator.serviceWorker.controller)
-          return;
+      .navbar {
+        opacity: 95%;
+      }
 
-        switch (state) {
-          case 'installed':
-            // A new version was installed into the cache and a new worker is waiting to take control.
-            V2Web.notifyUpdate('A fresh version is available', () => {
-              newWorker.postMessage({
-                type: 'skipWaiting'
-              });
-            });
-            break;
+      section {
+        background-color: hsl(0, 0%, 92%);
+        padding: 1rem;
+      }
 
-          case 'activated':
-            // A new worker took control over the page.
-            location.reload();
-            break;
+      section:not(:first-of-type) {
+        margin-top: 0.25rem;
+      }
+
+      /* Do not mess with the DIN font, fake bold looks really ugly */
+      .title {
+        font-weight: 400;
+      }
+
+      .subsection {
+        margin-top: 3rem;
+      }
+
+      hr.subsection {
+        background-color: hsl(0, 0%, 50%);
+        height: 3px;
+      }
+
+      hr.break {
+        background-color: hsl(0, 0%, 75%);
+      }
+
+      .inactive {
+        pointer-events: none;
+      }
+
+      .keyboard-button {
+        font-size: min(1rem, 1.8vw);
+        height: 2.5rem;
+        width: 100%;
+      }
+
+      .width-label {
+        width: 6rem;
+      }
+
+      .width-text {
+        width: 8rem;
+      }
+
+      .width-text-wide {
+        width: 12rem;
+      }
+
+      .width-number {
+        width: 4.5rem;
+      }
+
+      .width-number-wide {
+        width: 6rem;
+      }
+
+      .log {
+        height: 12rem;
+        overflow: auto;
+        background-color: white;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+
+  <body class="has-navbar-fixed-top">
+    <nav class="navbar is-fixed-top is-black" aria-label="navigation">
+      <div class="container">
+        <div class="navbar-brand">
+          <a class="navbar-home navbar-item is-size-4 pl-4" href="#">
+            <img src="icons/logo.svg" alt="" style="width: auto; height: 1.5rem;">
+            <h1 class="ml-3">
+              configure
+            </h1>
+          </a>
+          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span class="inactive" aria-hidden="true"></span>
+            <span class="inactive" aria-hidden="true"></span>
+            <span class="inactive" aria-hidden="true"></span>
+          </a>
+        </div>
+
+        <div class="navbar-menu">
+          <div class="navbar-start"></div>
+        </div>
+      </div>
+    </nav>
+
+    <script src="js/V2Web.js"></script>
+    <script src="js/V2Log.js"></script>
+    <script src="js/V2MIDI.js"></script>
+    <script src="js/V2MIDISelect.js"></script>
+    <script src="js/V2Connection.js"></script>
+    <script src="js/V2Device.js"></script>
+    <script src="js/V2Configuration.js"></script>
+    <script src="js/V2Keyboard.js"></script>
+    <script src="js/V2Settings.js"></script>
+    <script src="js/V2Input.js"></script>
+    <script src="js/V2Output.js"></script>
+    <script src="js/V2Debug.js"></script>
+    <script>
+      'use strict';
+
+      {
+        // Initialize the menu.
+        V2Web.setup();
+
+        // Early logging init, we don't have a device or the web sections yet, but we already
+        // record the messages. setup() is called later to attach the device.
+        const log = new V2Log();
+
+        // Read commands from the URL.
+        const url = new URL(window.location);
+
+        // WebUSB exports the link to this site with the USB device name to connect to.
+        const connect = url.searchParams.get('connect');
+        if (connect) {
+          // Remove the command, it is only used for the first connection.
+          url.searchParams.delete('connect');
+          window.history.pushState({}, '', url);
         }
-      });
 
-      new V2Configuration(device);
-      new V2Input(device);
-      new V2Output(device);
+        // Add the sections.
+        const device = new V2Device(log, connect);
+        log.setup(device);
 
-      if (url.searchParams.get('debug'))
-        new V2Debug(device);
-    }
-  </script>
-</body>
+        // Cache the content for offline operation.
+        V2Web.registerServiceWorker('service-worker.js', (state, newWorker) => {
+          // There is no worker during the intial setup.
+          if (!navigator.serviceWorker.controller)
+            return;
+
+          switch (state) {
+            case 'installed':
+              // A new version was installed into the cache and a new worker is waiting to take control.
+              V2Web.notifyUpdate('A fresh version is available', () => {
+                newWorker.postMessage({
+                  type: 'skipWaiting'
+                });
+              });
+              break;
+
+            case 'activated':
+              // A new worker took control over the page.
+              location.reload();
+              break;
+          }
+        });
+
+        new V2Configuration(device);
+        new V2Input(device);
+        new V2Output(device);
+
+        if (url.searchParams.get('debug'))
+          new V2Debug(device);
+      }
+    </script>
+  </body>
 
 </html>

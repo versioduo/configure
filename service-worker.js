@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const name = 'configure';
-const version = 245;
+const version = 248;
 const files = [
   './',
   'css/bulma-addons.css',
@@ -19,6 +19,7 @@ const files = [
   'js/V2Debug.js',
   'js/V2Device.js',
   'js/V2Input.js',
+  'js/V2Keyboard.js',
   'js/V2Log.js',
   'js/V2MIDI.js',
   'js/V2MIDISelect.js',

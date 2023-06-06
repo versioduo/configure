@@ -1,4 +1,4 @@
-// © Kay Sievers <kay@versioduo.com>, 2019-2022
+// © Kay Sievers <kay@versioduo.com>, 2019-2023
 // SPDX-License-Identifier: Apache-2.0
 
 // MIDI Input controllers and notes.
@@ -207,199 +207,6 @@ class V2Input extends V2WebModule {
           }
         });
       });
-    }
-  }
-
-  // Draw keyboard-like rows of octaves.
-  #addKeyboard(start, count) {
-    // Subscribe to key presses, arranged in piano layout.
-    const handleKey = (ev) => {
-      let index = null;
-
-      // Use the key code to void localization issues.
-      switch (ev.keyCode) {
-        case 65: // A
-          index = 0;
-          break;
-
-        case 87: // W
-          index = 1;
-          break;
-
-        case 83: // S
-          index = 2;
-          break;
-
-        case 69: // E
-          index = 3;
-          break;
-
-        case 68: // D
-          index = 4;
-          break;
-
-        case 70: // F
-          index = 5;
-          break;
-
-        case 84: // T
-          index = 6;
-          break;
-
-        case 71: // G
-          index = 7;
-          break;
-
-        case 89: // Y
-          index = 8;
-          break;
-
-        case 72: // H
-          index = 9;
-          break;
-
-        case 85: // U
-          index = 10;
-          break;
-
-        case 74: // J
-          index = 11;
-          break;
-
-        case 75: // K
-          index = 12;
-          break;
-
-        case 79: // O
-          index = 13;
-          break;
-
-        case 90: // Z
-          if (ev.type === 'keydown' && this.#notes.chromatic.octave > -2) {
-            this.#notes.chromatic.octave--;
-            if (this.#notes.pads[(this.#notes.chromatic.octave + 2) * 12])
-              this.#notes.pads[(this.#notes.chromatic.octave + 2) * 12].focus();
-
-            else
-              document.activeElement.blur();
-          }
-          return null;
-
-        case 88: // X
-          if (ev.type === 'keydown' && this.#notes.chromatic.octave < 8) {
-            this.#notes.chromatic.octave++;
-            if (this.#notes.pads[(this.#notes.chromatic.octave + 2) * 12])
-              this.#notes.pads[(this.#notes.chromatic.octave + 2) * 12].focus();
-
-            else
-              document.activeElement.blur();
-          }
-          return null;
-
-        case 67: // C
-          if (ev.type === 'keydown' && this.#notes.controls.velocity.value > 1) {
-            this.#notes.controls.velocity.update(this.#notes.controls.velocity.value - Math.min(10, (this.#notes.controls.velocity.value - 1)));
-            this.#notes.controls.velocity.number.focus();
-          }
-          return null;
-
-        case 86: // V
-          if (ev.type === 'keydown' && this.#notes.controls.velocity.value < 127) {
-            this.#notes.controls.velocity.update(this.#notes.controls.velocity.value + Math.min(10, 127 - this.#notes.controls.velocity.value));
-            this.#notes.controls.velocity.number.focus();
-          }
-          return null;
-
-        default:
-          return null;
-      }
-
-      if (index === null)
-        return;
-
-      const base = (this.#notes.chromatic.octave + 2) * 12;
-      const note = base + index;
-
-      if (note > 127)
-        return;
-
-      if (this.#notes.pads[note])
-        this.#notes.pads[note].focus();
-
-      return note;
-    };
-
-    document.addEventListener('keydown', (ev) => {
-      if (ev.repeat)
-        return;
-
-      const note = handleKey(ev);
-      if (note != null)
-        this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
-    });
-
-    document.addEventListener('keyup', (ev) => {
-      const note = handleKey(ev);
-      if (note != null)
-        this.#device.sendNoteOff(this.#channel.value, note);
-    });
-
-    this.#notes.chromatic.octave = Math.trunc(start / 12) - 2;
-
-    const addOctave = (octave, first, last) => {
-      new V2WebField(this.#notes.chromatic.element, (field) => {
-        for (let i = 0; i < 12; i++) {
-          field.addButton((e, p) => {
-            e.classList.add('keyboard-button');
-            p.classList.add('is-expanded');
-
-            const note = (octave * 12) + i;
-            this.#notes.pads[note] = e;
-
-            e.textContent = V2MIDI.Note.getName(note);
-            if (V2MIDI.Note.isBlack(note))
-              e.classList.add('is-dark');
-
-
-            e.addEventListener('mousedown', () => {
-              this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
-            });
-
-            e.addEventListener('mouseup', () => {
-              this.#device.sendNoteOff(this.#channel.value, note);
-            });
-
-            e.addEventListener('touchstart', (event) => {
-              e.classList.add('is-active');
-              e.dispatchEvent(new MouseEvent('mousedown'));
-            }, {
-              passive: true
-            });
-
-            e.addEventListener('touchend', (event) => {
-              e.classList.remove('is-active');
-              e.dispatchEvent(new MouseEvent('mouseup'));
-              if (event.cancelable)
-                event.preventDefault();
-            });
-
-            if (i < first || i > last)
-              e.style.visibility = 'hidden';
-          });
-        }
-      });
-    };
-
-    const firstOctave = Math.trunc(start / 12);
-    const lastOctave = Math.trunc((start + (count - 1)) / 12);
-    this.#notes.pads = [];
-
-    addOctave(firstOctave, start % 12, Math.min(11, (start % 12) + count - 1));
-    if (lastOctave > firstOctave) {
-      for (let i = firstOctave + 1; i < lastOctave; i++)
-        addOctave(i, 0, 11);
-
-      addOctave(lastOctave, 0, (start + count - 1) % 12);
     }
   }
 
@@ -680,7 +487,31 @@ class V2Input extends V2WebModule {
         // Range of chromatic notes.
         this.#notes.chromatic.start = chromatic.start;
         this.#notes.chromatic.count = chromatic.count;
-        this.#addKeyboard(this.#notes.chromatic.start, this.#notes.chromatic.count);
+
+        const keyboard = new V2Keyboard(this.#notes.chromatic.element, this.#notes.chromatic.start, this.#notes.chromatic.count);
+        keyboard.handler.down = (note) => {
+          this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
+        };
+
+        keyboard.handler.up = (note) => {
+          this.#device.sendNoteOff(this.#channel.value, note);
+        };
+
+        keyboard.handler.velocity.down = () => {
+          if (this.#notes.controls.velocity.value === 1)
+            return;
+
+          this.#notes.controls.velocity.update(this.#notes.controls.velocity.value - Math.min(10, (this.#notes.controls.velocity.value - 1)));
+          this.#notes.controls.velocity.number.focus();
+        };
+
+        keyboard.handler.velocity.up = () => {
+          if (this.#notes.controls.velocity.value === 127)
+            return;
+
+          this.#notes.controls.velocity.update(this.#notes.controls.velocity.value + Math.min(10, 127 - this.#notes.controls.velocity.value));
+          this.#notes.controls.velocity.number.focus();
+        };
       }
 
       // A list of individual notes.
