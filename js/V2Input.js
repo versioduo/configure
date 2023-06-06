@@ -356,7 +356,7 @@ class V2Input extends V2WebModule {
             const note = (octave * 12) + i;
             this.#notes.pads[note] = e;
 
-            e.textContent = V2MIDI.Note.name(note);
+            e.textContent = V2MIDI.Note.getName(note);
             if (V2MIDI.Note.isBlack(note))
               e.classList.add('is-dark');
 
@@ -408,7 +408,7 @@ class V2Input extends V2WebModule {
       V2Web.addButton(buttons, (e) => {
         e.classList.add('width-label');
         e.classList.add('inactive');
-        e.textContent = V2MIDI.Note.name(note) + ' (' + note + ')';
+        e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
         if (V2MIDI.Note.isBlack(note))
           e.classList.add('is-dark');
         else

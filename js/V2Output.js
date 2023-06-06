@@ -219,7 +219,7 @@ class V2Output extends V2WebModule {
       field.addButton((e) => {
         e.classList.add('width-label');
         e.classList.add('inactive');
-        e.textContent = V2MIDI.Note.name(note) + ' (' + note + ')';
+        e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
         if (V2MIDI.Note.isBlack(note))
           e.classList.add('is-dark');
         else

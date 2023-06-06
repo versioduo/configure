@@ -48,20 +48,20 @@ class V2Connection extends V2WebModule {
     this.device.addNotifier('note', (channel, note, velocity) => {
       if (velocity > 0)
         this.print('Received <b>Note</b> <i>' +
-          V2MIDI.Note.name(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel <i>#' + (channel + 1)) + '</i>';
+          V2MIDI.Note.getName(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel <i>#' + (channel + 1)) + '</i>';
 
       else
         this.print('Received <b>NoteOff</b> <i>' +
-          V2MIDI.Note.name(note) + '(' + note + ')</i> on channel #' + (channel + 1));
+          V2MIDI.Note.getName(note) + '(' + note + ')</i> on channel #' + (channel + 1));
     });
 
     this.device.addNotifier('noteOff', (channel, note, velocity) => {
       this.print('Received <b>NoteOff</b> <i>' +
-        V2MIDI.Note.name(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel #' + (channel + 1));
+        V2MIDI.Note.getName(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel #' + (channel + 1));
     });
 
     this.device.addNotifier('aftertouch', (channel, note, pressure) => {
-      this.print('Received <b>Aftertouch</b> for note <i>' + V2MIDI.Note.name(note) + '(' + note + ')</i>' + ' with pressure <i>' + pressure + '</i> on channel <i>#' + (channel + 1) + '</i>');
+      this.print('Received <b>Aftertouch</b> for note <i>' + V2MIDI.Note.getName(note) + '(' + note + ')</i>' + ' with pressure <i>' + pressure + '</i> on channel <i>#' + (channel + 1) + '</i>');
     });
 
     this.device.addNotifier('controlChange', (channel, controller, value) => {
@@ -186,13 +186,13 @@ class V2Connection extends V2WebModule {
   sendNote(channel, note, velocity) {
     this.device.sendNote(channel, note, velocity);
     this.print('Sending <b>Note</b> <i>' +
-      V2MIDI.Note.name(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel #' + (channel + 1));
+      V2MIDI.Note.getName(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel #' + (channel + 1));
   }
 
   sendNoteOff(channel, note, velocity = 64) {
     this.device.sendNoteOff(channel, note, velocity);
     this.print('Sending <b>NoteOff</b> <i>' +
-      V2MIDI.Note.name(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel #' + (channel + 1));
+      V2MIDI.Note.getName(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel #' + (channel + 1));
   }
 
   sendControlChange(channel, controller, value) {

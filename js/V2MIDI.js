@@ -7,21 +7,26 @@ class V2MIDI {
   // The octave numbers -2 to 8 are not defined by MIDI itself, it's just what
   // some vendors of instruments and audio workstation software use. The middle
   // C (Number === 60) in this mapping is C3.
-  static Note = Object.freeze({
-    names: ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'],
+  static Note = class {
+    static names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
-    octave: (note) => {
-      return Math.trunc(note / 12) - 2;
-    },
-
-    name: (note) => {
-      return this.Note.names[note % 12] + this.Note.octave(note);
-    },
-
-    isBlack: (note) => {
-      return this.Note.names[note % 12].includes('♯');
+    static getName(note) {
+      const octave = Math.trunc(note / 12) - 2;
+      return this.names[note % 12] + octave;
     }
-  });
+
+    static isBlack(note) {
+      return this.names[note % 12].includes('♯');
+    }
+
+    static getOctave(note) {
+      return Math.trunc(note / 12) - 2;
+    }
+
+    static getNote(octave, index = 0) {
+      return ((octave + 2) * 12) + index;
+    }
+  };
 
   // MIDI Control Change (CC) values.
   static CC = Object.freeze({

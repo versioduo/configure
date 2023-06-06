@@ -172,7 +172,7 @@ class V2SettingsCalibration extends V2SettingsModule {
           e.classList.add('width-label');
           e.classList.add('inactive');
           e.tabIndex = -1;
-          e.textContent = V2MIDI.Note.name(note) + ' (' + note + ')';
+          e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
           e.classList.add(V2MIDI.Note.isBlack(note) ? 'is-dark' : 'has-background-grey-lighter');
         });
 
@@ -563,7 +563,7 @@ class V2SettingsDrum extends V2SettingsModule {
 
       const updateNote = (number) => {
         if (number > 0) {
-          note.textContent = V2MIDI.Note.name(number) + (V2MIDI.GM.Percussion.Name[number] ? ' – ' + V2MIDI.GM.Percussion.Name[number] : '');
+          note.textContent = V2MIDI.Note.getName(number) + (V2MIDI.GM.Percussion.Name[number] ? ' – ' + V2MIDI.GM.Percussion.Name[number] : '');
           if (V2MIDI.Note.isBlack(number)) {
             note.classList.add('is-dark');
             note.classList.remove('has-background-light');
@@ -744,7 +744,7 @@ class V2SettingsNote extends V2SettingsModule {
       if (isNull(number) || number < 0 || number > 127)
         return;
 
-      note.textContent = V2MIDI.Note.name(number);
+      note.textContent = V2MIDI.Note.getName(number);
       if (V2MIDI.Note.isBlack(number)) {
         note.classList.add('is-dark');
         note.classList.remove('has-background-light');
