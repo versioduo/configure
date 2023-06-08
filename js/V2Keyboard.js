@@ -59,65 +59,65 @@ class V2Keyboard {
   #handleKey(ev) {
     let index = null;
 
-    // Use the key code to avoid localization issues.
-    switch (ev.keyCode) {
-      case 65: // A
+    // Use the key's code to avoid localization issues.
+    switch (ev.code) {
+      case 'KeyA':
         index = 0;
         break;
 
-      case 87: // W
+      case 'KeyW':
         index = 1;
         break;
 
-      case 83: // S
+      case 'KeyS':
         index = 2;
         break;
 
-      case 69: // E
+      case 'KeyE':
         index = 3;
         break;
 
-      case 68: // D
+      case 'KeyD':
         index = 4;
         break;
 
-      case 70: // F
+      case 'KeyF':
         index = 5;
         break;
 
-      case 84: // T
+      case 'KeyT':
         index = 6;
         break;
 
-      case 71: // G
+      case 'KeyG':
         index = 7;
         break;
 
-      case 89: // Y
+      case 'KeyY':
         index = 8;
         break;
 
-      case 72: // H
+      case 'KeyH':
         index = 9;
         break;
 
-      case 85: // U
+      case 'KeyU':
         index = 10;
         break;
 
-      case 74: // J
+      case 'KeyJ':
         index = 11;
         break;
 
-      case 75: // K
+      case 'KeyK':
         index = 12;
         break;
 
-      case 79: // O
+      case 'KeyO':
         index = 13;
         break;
 
-      case 90: // Z
+      case 'KeyZ':
         if (ev.type === 'keydown' && this.#octave > -2) {
           this.#octave--;
           if (this.#pads[V2MIDI.Note.getNote(this.#octave)])
@@ -128,7 +128,7 @@ class V2Keyboard {
         }
         return null;
 
-      case 88: // X
+      case 'KeyX':
         if (ev.type === 'keydown' && this.#octave < 8) {
           this.#octave++;
           if (this.#pads[V2MIDI.Note.getNote(this.#octave)])
@@ -139,12 +139,12 @@ class V2Keyboard {
         }
         return null;
 
-      case 67: // C
+      case 'KeyC':
         if (ev.type === 'keydown' && this.handler.velocity.down)
           this.handler.velocity.down();
         return null;
 
-      case 86: // V
+      case 'KeyV':
         if (ev.type === 'keydown' && this.handler.velocity.up)
           this.handler.velocity.up();
         return null;

@@ -26,7 +26,7 @@ class V2Input extends V2WebModule {
     controls: Object.seal({
       element: null,
       velocity: Object.seal({
-        number: null,
+        focus: null,
         update: null,
         value: 15
       }),
@@ -350,7 +350,6 @@ class V2Input extends V2WebModule {
         });
 
         field.addInput('number', (e) => {
-          this.#notes.controls.velocity.number = e;
           input = e;
           e.classList.add('width-number');
           e.min = 1;
@@ -363,6 +362,7 @@ class V2Input extends V2WebModule {
       });
 
       V2Web.addElement(this.#notes.controls.element, 'input', (e) => {
+        this.#notes.controls.velocity.focus = e;
         range = e;
         e.classList.add('range');
         e.type = 'range';
@@ -502,7 +502,7 @@ class V2Input extends V2WebModule {
             return;
 
           this.#notes.controls.velocity.update(this.#notes.controls.velocity.value - Math.min(10, (this.#notes.controls.velocity.value - 1)));
-          this.#notes.controls.velocity.number.focus();
+          this.#notes.controls.velocity.focus.focus();
         };
 
         keyboard.handler.velocity.up = () => {
@@ -510,7 +510,7 @@ class V2Input extends V2WebModule {
             return;
 
           this.#notes.controls.velocity.update(this.#notes.controls.velocity.value + Math.min(10, 127 - this.#notes.controls.velocity.value));
-          this.#notes.controls.velocity.number.focus();
+          this.#notes.controls.velocity.focus.focus();
         };
       }
 

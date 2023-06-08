@@ -289,7 +289,7 @@ class V2Device extends V2Connection {
                 name = parent + '.' + name;
 
               const value = object[key];
-              if (typeof value === 'object' && !isNull(value)) {
+              if (!isNull(value) && (typeof value === 'object')) {
                 printObject(name, value);
 
               } else {
@@ -400,7 +400,7 @@ class V2Device extends V2Connection {
     if (!this.#token && data['token'])
       this.#token = data['token'];
 
-    if (this.#token !== data['token']) {
+    if (!isNull(data['token']) && (data['token'] !== this.#token)) {
       this.printDevice('Wrong token, ignoring message');
       return;
     }
