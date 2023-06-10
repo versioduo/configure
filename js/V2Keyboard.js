@@ -14,11 +14,13 @@ class V2Keyboard {
   });
 
   #element = null;
+  #listener = null;
   #octave = 3;
   #pads = null;
 
   constructor(element, noteStart, noteCount) {
     this.#element = element;
+    this.#listener = new AbortController();
 
     document.addEventListener('keydown', (ev) => {
       if (ev.repeat)
@@ -27,12 +29,16 @@ class V2Keyboard {
       const note = this.#handleKey(ev);
       if (note != null)
         this.handler.down(note);
+    }, {
+      signal: this.#listener.signal
     });
 
     document.addEventListener('keyup', (ev) => {
       const note = this.#handleKey(ev);
       if (note != null)
         this.handler.up(note);
+    }, {
+      signal: this.#listener.signal
     });
 
     // If the middle C is not in the given range of notes, switch to the octave of the first note.
@@ -53,6 +59,11 @@ class V2Keyboard {
 
     this.#pads = Object.seal(this.#pads);
     return Object.seal(this);
+  }
+
+  // Unregister from global document events.
+  cleanup() {
+    this.#listener.abort();
   }
 
   // Arrange two rows of keys in piano layout.

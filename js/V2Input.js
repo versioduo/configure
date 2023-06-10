@@ -22,7 +22,6 @@ class V2Input extends V2WebModule {
 
   #notes = Object.seal({
     element: null,
-    pads: null,
     controls: Object.seal({
       element: null,
       velocity: Object.seal({
@@ -37,7 +36,7 @@ class V2Input extends V2WebModule {
       element: null,
       start: 0,
       count: 0,
-      octave: 3
+      keyboard: null
     })
   });
 
@@ -488,16 +487,16 @@ class V2Input extends V2WebModule {
         this.#notes.chromatic.start = chromatic.start;
         this.#notes.chromatic.count = chromatic.count;
 
-        const keyboard = new V2Keyboard(this.#notes.chromatic.element, this.#notes.chromatic.start, this.#notes.chromatic.count);
-        keyboard.handler.down = (note) => {
+        this.#notes.chromatic.keyboard = new V2Keyboard(this.#notes.chromatic.element, this.#notes.chromatic.start, this.#notes.chromatic.count);
+        this.#notes.chromatic.keyboard.handler.down = (note) => {
           this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
         };
 
-        keyboard.handler.up = (note) => {
+        this.#notes.chromatic.keyboard.handler.up = (note) => {
           this.#device.sendNoteOff(this.#channel.value, note);
         };
 
-        keyboard.handler.velocity.down = () => {
+        this.#notes.chromatic.keyboard.handler.velocity.down = () => {
           if (this.#notes.controls.velocity.value === 1)
             return;
 
@@ -505,7 +504,7 @@ class V2Input extends V2WebModule {
           this.#notes.controls.velocity.focus.focus();
         };
 
-        keyboard.handler.velocity.up = () => {
+        this.#notes.chromatic.keyboard.handler.velocity.up = () => {
           if (this.#notes.controls.velocity.value === 127)
             return;
 
@@ -682,6 +681,9 @@ class V2Input extends V2WebModule {
 
   #clear() {
     this.#controls.program = null;
+    if (this.#notes.chromatic.keyboard)
+      this.#notes.chromatic.keyboard.cleanup();
+
     super.reset();
   }
 }
