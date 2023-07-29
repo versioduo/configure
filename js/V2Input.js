@@ -25,7 +25,6 @@ class V2Input extends V2WebModule {
     controls: Object.seal({
       element: null,
       velocity: Object.seal({
-        focus: null,
         update: null,
         value: 15
       }),
@@ -331,8 +330,14 @@ class V2Input extends V2WebModule {
       let range = null;
 
       this.#notes.controls.velocity.update = (number) => {
-        if (isNull(number) || number < 0 || number > 127)
+        if (isNull(number))
           return;
+
+        if (number < 0)
+          number = 0;
+
+        else if (number > 127)
+          number = 127;
 
         this.#notes.controls.velocity.value = Number(number);
         input.value = number;
@@ -361,7 +366,6 @@ class V2Input extends V2WebModule {
       });
 
       V2Web.addElement(this.#notes.controls.element, 'input', (e) => {
-        this.#notes.controls.velocity.focus = e;
         range = e;
         e.classList.add('range');
         e.type = 'range';
@@ -378,6 +382,20 @@ class V2Input extends V2WebModule {
         let input = null;
         let range = null;
 
+        const update = (number) => {
+          if (isNull(number))
+            return;
+
+          if (number < 0)
+            number = 0;
+
+          else if (number > 127)
+            number = 127;
+
+          input.value = number;
+          range.value = number;
+        };
+
         new V2WebField(this.#notes.controls.element, (field) => {
           field.addButton((e) => {
             e.classList.add('width-label');
@@ -391,28 +409,29 @@ class V2Input extends V2WebModule {
             input = e;
             e.classList.add('input');
             e.classList.add('width-number');
+            e.min = 0;
             e.max = 127;
             e.value = channel.aftertouch.value;
             e.addEventListener('input', () => {
-              this.#device.sendAftertouchChannel(this.#channel.value, Number(e.value));
-              range.value = e.value;
+              update(e.value);
+              this.#device.sendAftertouchChannel(this.#channel.value, input.value);
             });
           });
         });
 
         V2Web.addElement(this.#notes.controls.element, 'input', (e) => {
+          range = e;
           e.classList.add('range');
           e.type = 'range';
           e.max = 127;
           e.value = channel.aftertouch.value;
           e.addEventListener('input', () => {
-            this.#device.sendAftertouchChannel(this.#channel.value, Number(e.value));
-            input.value = e.value;
+            update(e.value);
+            this.#device.sendAftertouchChannel(this.#channel.value, input.value);
           });
 
           e.addEventListener('mouseup', () => {
-            e.value = 0;
-            e.value = 0;
+            update(0);
             this.#device.sendAftertouchChannel(this.#channel.value, 0);
           });
 
@@ -428,6 +447,20 @@ class V2Input extends V2WebModule {
       if (channel.pitchbend) {
         let input = null;
         let range = null;
+
+        const update = (number) => {
+          if (isNull(number))
+            return;
+
+          if (number < -8192)
+            number = -8192;
+
+          else if (number > 8191)
+            number = 8191;
+
+          input.value = number;
+          range.value = number;
+        };
 
         new V2WebField(this.#notes.controls.element, (field) => {
           field.addButton((e) => {
@@ -445,27 +478,29 @@ class V2Input extends V2WebModule {
             e.max = 8191;
             e.value = channel.pitchbend.value;
             e.addEventListener('input', () => {
-              this.#device.sendPitchBend(this.#channel.value, Number(e.value));
-              range.value = e.value;
+              update(e.value);
+              this.#device.sendPitchBend(this.#channel.value, input.value);
             });
           });
         });
 
         V2Web.addElement(this.#notes.controls.element, 'input', (e) => {
+          range = e;
           e.classList.add('range');
           e.type = 'range';
           e.min = -8192;
           e.max = 8191;
           e.value = channel.pitchbend.value;
           e.addEventListener('input', () => {
-            this.#device.sendPitchBend(this.#channel.value, Number(e.value));
-            input.value = e.value;
+            update(e.value);
+            this.#device.sendPitchBend(this.#channel.value, input.value);
           });
 
           e.addEventListener('mouseup', () => {
             // Do not reset value to 0 if pitchbend is used for something else.
             if (!isNull(channel.pitchbend.name))
               return;
+
             e.value = 0;
             input.value = 0;
             this.#device.sendPitchBend(this.#channel.value, 0);
@@ -501,7 +536,6 @@ class V2Input extends V2WebModule {
             return;
 
           this.#notes.controls.velocity.update(this.#notes.controls.velocity.value - Math.min(10, (this.#notes.controls.velocity.value - 1)));
-          this.#notes.controls.velocity.focus.focus();
         };
 
         this.#notes.chromatic.keyboard.handler.velocity.up = () => {
@@ -509,7 +543,6 @@ class V2Input extends V2WebModule {
             return;
 
           this.#notes.controls.velocity.update(this.#notes.controls.velocity.value + Math.min(10, 127 - this.#notes.controls.velocity.value));
-          this.#notes.controls.velocity.focus.focus();
         };
       }
 

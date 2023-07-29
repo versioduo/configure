@@ -13,16 +13,28 @@ class V2Keyboard {
     up: null
   });
 
-  #element = null;
   #listener = null;
   #octave = 3;
   #pads = null;
 
   constructor(element, noteStart, noteCount) {
-    this.#element = element;
     this.#listener = new AbortController();
 
+    // Remove any focus, the keyboard listens to key presses.
+    document.activeElement.blur();
+
+    // If an input element is currently in focus, do not steal the key presses from it.
+    const play = () => {
+      if (!document.activeElement || document.activeElement === document.body)
+        return true;
+
+      return document.activeElement.tagName !== 'INPUT';
+    };
+
     document.addEventListener('keydown', (ev) => {
+      if (!play())
+        return;
+
       if (ev.repeat)
         return;
 
@@ -34,6 +46,9 @@ class V2Keyboard {
     });
 
     document.addEventListener('keyup', (ev) => {
+      if (!play())
+        return;
+
       const note = this.#handleKey(ev);
       if (note != null)
         this.handler.up(note);
@@ -49,12 +64,12 @@ class V2Keyboard {
     const lastOctave = V2MIDI.Note.getOctave(noteStart + noteCount - 1);
     this.#pads = [];
 
-    this.#addOctave(firstOctave, noteStart % 12, Math.min(11, (noteStart % 12) + noteCount - 1));
+    this.#addOctave(element, firstOctave, noteStart % 12, Math.min(11, (noteStart % 12) + noteCount - 1));
     if (lastOctave > firstOctave) {
       for (let i = firstOctave + 1; i < lastOctave; i++)
-        this.#addOctave(i, 0, 11);
+        this.#addOctave(element, i, 0, 11);
 
-      this.#addOctave(lastOctave, 0, (noteStart + noteCount - 1) % 12);
+      this.#addOctave(element, lastOctave, 0, (noteStart + noteCount - 1) % 12);
     }
 
     this.#pads = Object.seal(this.#pads);
@@ -177,8 +192,8 @@ class V2Keyboard {
     return note;
   };
 
-  #addOctave(octave, firstIndex, lastIndex) {
-    new V2WebField(this.#element, (field) => {
+  #addOctave(element, octave, firstIndex, lastIndex) {
+    new V2WebField(element, (field) => {
       for (let i = 0; i < 12; i++) {
         field.addButton((e, p) => {
           e.classList.add('keyboard-button');

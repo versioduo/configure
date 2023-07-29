@@ -435,8 +435,10 @@ class V2Device extends V2Connection {
 
   // Connect or switch to a device.
   connect(device) {
-    if (this.version)
+    if (this.version) {
       this.version.remove();
+      this.version = null;
+    }
 
     this.#disconnectDevice();
 
