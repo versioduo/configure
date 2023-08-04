@@ -727,6 +727,99 @@ class V2SettingsDrum extends V2SettingsModule {
   }
 }
 
+
+// JSON text field.
+class V2SettingsJSON extends V2SettingsModule {
+  static type = 'json';
+
+  #json = null;
+
+  // Named object wrapping the JSON data.
+  #name = null;
+
+  constructor(device, settings, canvas, setting, data) {
+    super(device, settings, setting);
+    super.addSection(canvas, setting);
+
+    if (setting.text) {
+      V2Web.addElement(canvas, 'p', (e) => {
+        e.classList.add('subtitle');
+        e.textContent = setting.text;
+      });
+    }
+
+    V2Web.addButtons(canvas, (buttons) => {
+      V2Web.addButton(buttons, (e) => {
+        e.textContent = 'Copy';
+
+        e.addEventListener('click', () => {
+          navigator.clipboard.writeText(this.#json.value);
+        });
+      });
+
+      V2Web.addButton(buttons, (e) => {
+        e.textContent = 'Paste';
+
+        e.addEventListener('click', () => {
+          navigator.clipboard.readText().then((data) => {
+            let jsonObject;
+
+            try {
+              jsonObject = JSON.parse(data);
+
+            } catch (error) {
+              return;
+            }
+
+            const entry = jsonObject['com.versioduo.sequencer.pattern'];
+            if (!entry)
+              return;
+
+            this.#json.value = JSON.stringify(jsonObject);
+          });
+        });
+      });
+    });
+
+    V2Web.addElement(canvas, 'textarea', (e) => {
+      this.#json = e;
+      e.classList.add('textarea');
+
+      if (setting.name) {
+        this.#name = setting.name;
+
+        e.value = JSON.stringify({
+          [setting.name]: this.getConfiguration(data.configuration)
+        });
+
+      } else
+        e.value = JSON.stringify(this.getConfiguration(data.configuration));
+    });
+
+    return Object.seal(this);
+  }
+
+  save(configuration) {
+    let pattern;
+
+    try {
+      pattern = JSON.parse(this.#json.value);
+
+      if (this.#name) {
+        if (!pattern[this.#name])
+          return;
+
+        pattern = pattern[this.#name];
+      }
+
+    } catch (error) {
+      return;
+    }
+
+    this.setConfiguration(configuration, pattern);
+  }
+}
+
 // Note selector.
 class V2SettingsNote extends V2SettingsModule {
   static type = 'note';
