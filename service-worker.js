@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const name = 'configure';
-const version = 264;
+const version = 267;
 const files = [
   './',
   'css/bulma-addons.css',

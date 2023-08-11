@@ -23,12 +23,18 @@ class V2Keyboard {
     // Remove any focus, the keyboard listens to key presses.
     document.activeElement.blur();
 
-    // If an input element is currently in focus, do not steal the key presses from it.
+    // If an input text element is currently in focus, do not steal the key presses from it.
     const play = () => {
       if (!document.activeElement || document.activeElement === document.body)
         return true;
 
-      return document.activeElement.tagName !== 'INPUT';
+      if (document.activeElement.tagName !== 'INPUT')
+        return true;
+
+      if (document.activeElement.type !== 'text')
+        return true;
+
+      return false;
     };
 
     document.addEventListener('keydown', (ev) => {

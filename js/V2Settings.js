@@ -70,7 +70,7 @@ class V2SettingsModule {
 }
 
 // The chromatic note calibration. Every note defines the the raw
-// velociy values to play the velocities 1 and 127.
+// velocity values to play the velocities 1 and 127.
 // The raw values are played by switching to a specific MIDI program.
 class V2SettingsCalibration extends V2SettingsModule {
   static type = 'calibration';
@@ -94,8 +94,9 @@ class V2SettingsCalibration extends V2SettingsModule {
     super.addSection(canvas, setting);
 
     // Find current program.
-    if (data.input.programs) {
-      data.input.programs.find((program) => {
+    const programs = data.input.channels?.[0].programs || data.input.programs;
+    if (programs) {
+      programs.find((program) => {
         if (!program.selected)
           return false;
 
@@ -137,6 +138,9 @@ class V2SettingsCalibration extends V2SettingsModule {
         const note = index + this.setting.chromatic.start;
         const velocity = this.#values[index][field];
         this.device.sendNote(0, note, velocity);
+        setTimeout(() => {
+          this.device.sendNoteOff(0, note);
+        }, 100);
 
         index++;
         if (index === this.#values.length)
@@ -148,6 +152,10 @@ class V2SettingsCalibration extends V2SettingsModule {
       changeProgram(this.#notes.program, this.#notes.bank);
       this.device.sendNote(0, note, velocity);
       changeProgram(this.#currentProgram.number, this.#currentProgram.bank);
+
+      setTimeout(() => {
+        this.device.sendNoteOff(0, note);
+      }, 100);
     };
 
     V2Web.addButtons(canvas, (buttons) => {
