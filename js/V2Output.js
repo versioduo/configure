@@ -151,7 +151,7 @@ class V2Output extends V2WebModule {
 
           // Support high-resolution, 14 bits controllers. Controllers 0-31 (MSB)
           // have matching high-resolution values with controllers 32-63 (LSB).
-          if (isNull(controller.valueFine)) {
+          if (!isNull(controller.valueFine)) {
             field.addInput('number', (e) => {
               e.classList.add('width-number');
               e.classList.add('inactive');
