@@ -1024,8 +1024,9 @@ class V2SettingsNumber extends V2SettingsModule {
 
       if (setting.text) {
         field.addButton((e) => {
-          e.classList.add('width-label');
+          e.classList.add('width-text');
           e.classList.add('inactive');
+          e.classList.add('has-background-light');
           e.textContent = setting.text;
           e.tabIndex = -1;
         });
