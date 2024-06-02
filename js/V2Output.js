@@ -125,7 +125,6 @@ class V2Output extends V2WebModule {
         e.classList.add('inactive');
         e.textContent = 'CC ' + controller.number;
         e.tabIndex = -1;
-
       });
 
       field.addButton((e) => {
