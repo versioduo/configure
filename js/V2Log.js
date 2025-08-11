@@ -1,6 +1,3 @@
-// © Kay Sievers <kay@versioduo.com>, 2019-2023
-// SPDX-License-Identifier: Apache-2.0
-
 // Show HTML formatted log messages.
 class V2Log extends V2WebModule {
   #device = null;

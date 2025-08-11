@@ -1,6 +1,3 @@
-// © Kay Sievers <kay@versioduo.com>, 2019-2022
-// SPDX-License-Identifier: Apache-2.0
-
 // Debug interface
 class V2Debug extends V2WebModule {
   #device = null;

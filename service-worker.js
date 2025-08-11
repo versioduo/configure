@@ -1,8 +1,5 @@
-// © Kay Sievers <kay@versioduo.com>, 2021-2022
-// SPDX-License-Identifier: Apache-2.0
-
 const name = 'configure';
-const version = 276;
+const version = 278;
 const files = [
   './',
   'css/bulma-addons.css',

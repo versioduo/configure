@@ -272,3 +272,7 @@ A reply from the device:
 ### Install as stand-alone application
 
 ![Screenshot](screenshots/install.png?raw=true)
+
+## Copying
+
+Anyone can use this public domain work without having to seek authorisation, no one can ever own it.
