@@ -454,6 +454,10 @@ class V2SettingsController extends V2SettingsModule {
     let range = null;
 
     const update = (number) => {
+      if (number < 0)
+        number = 0;
+      else if (number > 127)
+        number = 127;
       text.textContent = V2MIDI.CC.Name[number] || 'Controller ' + number;
       this.#controller.element.value = number;
       range.value = number;
@@ -462,10 +466,23 @@ class V2SettingsController extends V2SettingsModule {
     new V2WebField(canvas, (field) => {
       field.addButton((e) => {
         e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
-        e.tabIndex = -1;
         e.textContent = setting.label || 'Controller';
+
+        if (setting.test) {
+          e.classList.add('is-link');
+          e.addEventListener('click', () => {
+            device.sendSystemExclusive({
+              test: {
+                controller: Number(this.#controller.element.value)
+              }
+            });
+          });
+
+        } else {
+          e.classList.add('has-background-grey-lighter');
+          e.classList.add('inactive');
+          e.tabIndex = -1;
+        }
       });
 
       field.addButton((e) => {

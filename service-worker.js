@@ -1,5 +1,5 @@
 const name = 'configure';
-const version = 278;
+const version = 280;
 const files = [
   './',
   'css/bulma-addons.css',
