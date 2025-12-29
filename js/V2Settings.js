@@ -246,11 +246,11 @@ class V2SettingsCalibration extends V2SettingsModule {
   }
 }
 
-// HSV color configuration.
-class V2SettingsColor extends V2SettingsModule {
-  static type = 'color';
+// HSV colour configuration.
+class V2SettingsColour extends V2SettingsModule {
+  static type = 'colour';
 
-  #color = Object.seal({
+  #colour = Object.seal({
     element: null,
     h: 0,
     s: 0,
@@ -261,14 +261,14 @@ class V2SettingsColor extends V2SettingsModule {
   #brightness = null;
   #configuration = null;
 
-  #updateColor() {
+  #updateColour() {
     // Convert HSV to HSL.
     let s = 0;
-    let l = this.#color.v * (1 - this.#color.s / 2);
+    let l = this.#colour.v * (1 - this.#colour.s / 2);
     if (l > 0 && l < 1)
-      s = (this.#color.v - l) / (l < 0.5 ? l : 1 - l);
+      s = (this.#colour.v - l) / (l < 0.5 ? l : 1 - l);
 
-    this.#color.element.style.backgroundColor = 'hsl(' + this.#color.h + ', ' + (s * 100) + '%, ' + (l * 100) + '%)';
+    this.#colour.element.style.backgroundColor = 'hsl(' + this.#colour.h + ', ' + (s * 100) + '%, ' + (l * 100) + '%)';
   };
 
   constructor(device, settings, canvas, setting, data) {
@@ -282,11 +282,11 @@ class V2SettingsColor extends V2SettingsModule {
         e.classList.add('has-background-grey-lighter');
         e.classList.add('inactive');
         e.tabIndex = -1;
-        e.textContent = 'Color';
+        e.textContent = 'Colour';
       });
 
       V2Web.addButton(buttons, (e) => {
-        this.#color.element = e;
+        this.#colour.element = e;
         e.classList.add('width-label');
         e.classList.add('inactive');
         e.tabIndex = -1;
@@ -297,10 +297,10 @@ class V2SettingsColor extends V2SettingsModule {
       let range = null;
 
       const update = (value) => {
-        this.#color.h = value / 127 * 360;
+        this.#colour.h = value / 127 * 360;
         this.#hue.value = value;
         range.value = value;
-        this.#updateColor();
+        this.#updateColour();
       };
 
       new V2WebField(canvas, (field) => {
@@ -341,10 +341,10 @@ class V2SettingsColor extends V2SettingsModule {
       let range = null;
 
       const update = (value) => {
-        this.#color.s = value / 127;
+        this.#colour.s = value / 127;
         this.#saturation.value = value;
         range.value = value;
-        this.#updateColor();
+        this.#updateColour();
       };
 
       new V2WebField(canvas, (field) => {
@@ -385,10 +385,10 @@ class V2SettingsColor extends V2SettingsModule {
       let range = null;
 
       const update = (value) => {
-        this.#color.v = value / 127;
+        this.#colour.v = value / 127;
         this.#brightness.value = value;
         range.value = value;
-        this.#updateColor();
+        this.#updateColour();
       };
 
       new V2WebField(canvas, (field) => {

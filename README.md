@@ -1,5 +1,4 @@
 # WebMIDI Device Configuration
-
 A simple configuration tool for small MIDI devices. It runs in the web browser on a desktop or mobile phone without the need to download or install any additional software. It is suited for devices which do not have a network connection themselves.
 
 The Web browser connects over [webMIDI](https://webaudio.github.io/web-midi-api/#extensions-to-the-navigator-interface) to the MIDI device. The messages between the browser and the device are [MIDI System Exclusive](https://en.wikipedia.org/wiki/MIDI#System_Exclusive_messages) messages.
@@ -13,7 +12,6 @@ The devices implement the JSON interface with [V2Device](https://github.com/vers
 :bulb: _This application is copied into client-side storage; it can be used without an active network connection. Alternatively, this repository can be cloned or downloaded and used offline; it is fully self-contained, does not require or load anything from external resources._
 
 ## Request
-
 A host connects to the device and calls the method `getAll()` of `com.versioduo.device`:
 
 ```json
@@ -25,15 +23,12 @@ A host connects to the device and calls the method `getAll()` of `com.versioduo.
 ```
 
 ## Reply
-
 The device replies with a `com.versioduo.device` object.
 
 ### Metadata Section
-
 The `metadata` object is a human-readable flat list of key/value pairs which describe the device.
 
 ### System Section
-
 The `system` object is machine-readable information about the device, like the USB name, the number of MIDI ports, the available memory, ...
 
 ### Settings Section
@@ -41,19 +36,15 @@ The `system` object is machine-readable information about the device, like the U
 The `settings` entries point to data objects in the configuration section, they provide metadata and properties to specific settings plugins.
 
 ### Configuration Section
-
 The `configuration` object is the entire custom configuration of the device. The device configuration can be edited, and updated by calling the `writeConfiguration()` method with a new `configuration` object. The device is reset to factory defaults by calling the `eraseConfiguration()` method.
 
 ### MIDI Input Section
-
 The `input` object lists the notes and controllers the device sends.
 
 ### MIDI Output Section
-
 The `output` object lists the notes and controllers the device listens to.
 
 ## Example
-
 A reply from the device:
 
 ```json
@@ -147,9 +138,9 @@ A reply from the device:
       "path": "calibration"
     },
     {
-      "type": "color",
+      "type": "colour",
       "title": "Light",
-      "path": "color"
+      "path": "colour"
     }
   ],
   "configuration": {
@@ -176,8 +167,8 @@ A reply from the device:
         "max": 127
       }
     ],
-    "#color": "The LED color. Hue, saturation, brightness, 0..127",
-    "color": [
+    "#colour": "The LED colour. Hue, saturation, brightness, 0..127",
+    "colour": [
       15,
       40,
       100
@@ -250,23 +241,18 @@ A reply from the device:
 ## Screenshots
 
 ### Information
-
 ![Screenshot](screenshots/information.png?raw=true)
 
 ### Details
-
 ![Screenshot](screenshots/details.png?raw=true)
 
 ### Firmware Update
-
 ![Screenshot](screenshots/update.png?raw=true)
 
 ### System Configuration
-
 ![Screenshot](screenshots/system.png?raw=true)
 
 ### System Log
-
 ![Screenshot](screenshots/log.png?raw=true)
 
 ### Install as stand-alone application
@@ -274,5 +260,4 @@ A reply from the device:
 ![Screenshot](screenshots/install.png?raw=true)
 
 ## Copying
-
 Anyone can use this public domain work without having to seek authorisation, no one can ever own it.

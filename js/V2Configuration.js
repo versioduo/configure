@@ -101,7 +101,7 @@ class V2ConfigurationSettings {
     this.#canvas = canvas;
 
     this.register(V2SettingsCalibration);
-    this.register(V2SettingsColor);
+    this.register(V2SettingsColour);
     this.register(V2SettingsController);
     this.register(V2SettingsDrum);
     this.register(V2SettingsJSON);
