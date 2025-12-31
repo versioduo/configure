@@ -1,5 +1,5 @@
 const name = 'configure';
-const version = 282;
+const version = 283;
 const files = [
   './',
   'css/bulma-addons.css',
@@ -48,14 +48,14 @@ self.addEventListener('install', (e) => {
     caches.open(name + '-' + version).then((cache) => {
       for (const file of files) {
         fetch(file, {
-            cache: 'no-cache'
-          })
+          cache: 'no-cache'
+        })
           .then((response) => {
             if (!response.ok)
               throw new Error('Status=' + response.status);
 
             return cache.put(file, response);
-          })
+          });
       }
     })
   );
@@ -79,8 +79,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request)
-    .then((response) => {
-      return response || fetch(e.request);
-    })
+      .then((response) => {
+        return response || fetch(e.request);
+      })
   );
 });
