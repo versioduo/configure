@@ -1082,6 +1082,7 @@ class V2SettingsNumber extends V2SettingsModule {
 
         field.addElement('span', (e) => {
           e.classList.add('select');
+          e.classList.add('is-rounded');
 
           V2Web.addElement(e, 'select', (select) => {
             for (let i = min; i < max + 1; i++) {
@@ -1470,6 +1471,7 @@ class V2SettingsUSB extends V2SettingsModule {
 
         field.addElement('span', (e) => {
           e.classList.add('select');
+          e.classList.add('is-rounded');
 
           V2Web.addElement(e, 'select', (select) => {
             this.#ports = select;

@@ -557,6 +557,7 @@ class V2Device extends V2Connection {
 
           field.addElement('span', (e) => {
             e.classList.add('select');
+            e.classList.add('is-rounded');
 
             V2Web.addElement(e, 'select', (select) => {
               if (updates.length === 1)

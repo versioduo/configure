@@ -343,6 +343,7 @@ class V2Output extends V2WebModule {
 
       field.addElement('span', (e) => {
         e.classList.add('select');
+        e.classList.add('is-rounded');
 
         V2Web.addElement(e, 'select', (select) => {
           this.#channel.addEntry = (channel, name, selected) => {
