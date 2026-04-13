@@ -20,16 +20,16 @@ class V2Configuration extends V2WebModule {
     new V2WebTabs(this.canvas, (tabs) => {
       this.#tabs = tabs;
 
-      tabs.addTab('info', 'Information', (e) => {
+      tabs.addTab('info', 'Settings', (e) => {
         this.#info.element = e;
       });
 
-      tabs.addTab('settings', 'Settings', (e) => {
+      tabs.addTab('edit', 'Edit', (e) => {
         this.#settings.element = e;
         this.#settings.object = new V2ConfigurationSettings(device, this.#settings.element);
       });
 
-      tabs.addTab('system', 'System', (e) => {
+      tabs.addTab('backup', 'Backup', (e) => {
         this.#system.element = e;
         this.#system.object = new V2ConfigurationSystem(device, this.#system.element);
       });
@@ -37,14 +37,14 @@ class V2Configuration extends V2WebModule {
 
     this.#device.addNotifier('show', (data) => {
       this.#tabs.resetTab('info');
-      this.#tabs.resetTab('settings');
-      this.#tabs.resetTab('system');
+      this.#tabs.resetTab('edit');
+      this.#tabs.resetTab('backup');
 
       V2Web.addMarkup(this.#info.element, 2,
-        'In Settings, the device can be configured. Changes will not be stored ' +
-        'or modify the device\'s behavior until the Save button is pressed. Some ' +
-        'changes require a device reboot to become active.\n' +
-        'In System, the current configuration can be backed-up as a human ' +
+        'The configuration can be edited and saved to the device. ' +
+        'Changes will not be stored or modify the device\'s behavior until the Save ' +
+        'button is pressed. Some changes require a device reboot to become active.\n' +
+        'The current configuration can be backed-up as a human ' +
         'readable text file. Or the device reset to its factory defaults.');
 
       if (data.help?.configuration) {
@@ -69,8 +69,8 @@ class V2Configuration extends V2WebModule {
       this.#settings.object.clear();
       this.#system.object.clear();
       this.#tabs.resetTab('info');
-      this.#tabs.resetTab('settings');
-      this.#tabs.resetTab('system');
+      this.#tabs.resetTab('edit');
+      this.#tabs.resetTab('backup');
 
       this.detach();
     });

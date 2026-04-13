@@ -123,29 +123,29 @@ class V2Device extends V2Connection {
         this.#tabs = tabs;
         element.classList.add('mt-4');
 
-        tabs.addTab('information', 'Information', (e) => {
+        tabs.addTab('info', 'Information', (e) => {
           this.#info = e;
         });
 
-        tabs.addTab('details', 'Details', (e) => {
+        tabs.addTab('details', 'Statistics', (e) => {
           this.#details = e;
         });
 
-        tabs.addTab('update', 'Update', (e) => {
+        tabs.addTab('firmware', 'Firmware', (e) => {
           this.#update.element = e;
         });
 
         // Check for firmware updates when activating the tab.
         tabs.addNotifier((name) => {
-          if (name === 'update')
+          if (name === 'firmware')
             this.#loadFirmwareIndex();
         });
       });
 
     } else {
-      this.#tabs.resetTab('information');
+      this.#tabs.resetTab('info');
       this.#tabs.resetTab('details');
-      this.#tabs.resetTab('update');
+      this.#tabs.resetTab('firmware');
       this.#update.firmware.bytes = null;
       this.#update.firmware.hash = null;
     }
@@ -369,8 +369,8 @@ class V2Device extends V2Connection {
       this.#update.elementNewFirmware = e;
     });
 
-    if (!this.#tabs.current || this.#tabs.current === 'update')
-      this.#tabs.switchTab('information');
+    if (!this.#tabs.current || this.#tabs.current === 'firmware')
+      this.#tabs.switchTab('info');
   }
 
   #clear() {
@@ -408,7 +408,7 @@ class V2Device extends V2Connection {
     }
 
     if (!data.metadata) {
-      this.printDevice('Missing device information');
+      this.printDevice('Missing device info');
       this.disconnect();
       return;
     }
@@ -462,7 +462,7 @@ class V2Device extends V2Connection {
         // Dispatch incoming messages to V2MIDIDevice.
         this.device.input.onmidimessage = this.device.handleMessage.bind(this.device);
 
-        // Request information from device.
+        // Request info from device.
         this.printDevice('Device is ready');
         this.sendGetAll();
       });
@@ -482,7 +482,7 @@ class V2Device extends V2Connection {
     if (!this.#data.system?.firmware?.download)
       return;
 
-    this.printDevice('Requesting firmware information: <b>' + this.#data.system.firmware.download + '/index.json</b>');
+    this.printDevice('Requesting firmware info: <b>' + this.#data.system.firmware.download + '/index.json</b>');
 
     fetch(this.#data.system.firmware.download + '/index.json', {
       cache: 'no-cache'
@@ -543,7 +543,7 @@ class V2Device extends V2Connection {
         V2Web.addElement(this.#update.elementSelect, 'p', (e) => {
           e.classList.add('title');
           e.classList.add('subsection');
-          e.textContent = 'Firmware Update';
+          e.textContent = 'Update';
         });
 
         new V2WebField(this.#update.elementSelect, (field) => {
@@ -586,7 +586,7 @@ class V2Device extends V2Connection {
 
       })
       .catch((error) => {
-        this.printDevice('Error requesting firmware information: ' + error.message);
+        this.printDevice('Error requesting firmware info: ' + error.message);
       });
   }
 
