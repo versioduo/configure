@@ -1,7 +1,7 @@
 class V2Device extends V2Connection {
   #data = null;
   #tabs = null;
-  #info = null;
+  #device = null;
   #details = null;
   #update = Object.seal({
     element: null,
@@ -123,8 +123,8 @@ class V2Device extends V2Connection {
         this.#tabs = tabs;
         element.classList.add('mt-4');
 
-        tabs.addTab('info', 'Information', (e) => {
-          this.#info = e;
+        tabs.addTab('device', 'Device', (e) => {
+          this.#device = e;
         });
 
         tabs.addTab('details', 'Statistics', (e) => {
@@ -143,7 +143,7 @@ class V2Device extends V2Connection {
       });
 
     } else {
-      this.#tabs.resetTab('info');
+      this.#tabs.resetTab('device');
       this.#tabs.resetTab('details');
       this.#tabs.resetTab('firmware');
       this.#update.firmware.bytes = null;
@@ -151,7 +151,7 @@ class V2Device extends V2Connection {
     }
 
     // The Information tab.
-    V2Web.addElement(this.#info, 'div', (container) => {
+    V2Web.addElement(this.#device, 'div', (container) => {
       container.classList.add('mb-4');
 
       V2Web.addElement(container, 'h2', (e) => {
@@ -175,7 +175,7 @@ class V2Device extends V2Connection {
       }
     });
 
-    V2Web.addElement(this.#info, 'div', (container) => {
+    V2Web.addElement(this.#device, 'div', (container) => {
       container.classList.add('table-container');
 
       V2Web.addElement(container, 'table', (e) => {
@@ -213,7 +213,7 @@ class V2Device extends V2Connection {
       });
     });
 
-    V2Web.addElement(this.#info, 'div', (container) => {
+    V2Web.addElement(this.#device, 'div', (container) => {
       if (data.links?.length > 0) {
         V2Web.addElement(container, 'hr', (e) => {
           e.classList.add('subsection');
@@ -370,7 +370,7 @@ class V2Device extends V2Connection {
     });
 
     if (!this.#tabs.current || this.#tabs.current === 'firmware')
-      this.#tabs.switchTab('info');
+      this.#tabs.switchTab('device');
   }
 
   #clear() {
@@ -543,7 +543,7 @@ class V2Device extends V2Connection {
         V2Web.addElement(this.#update.elementSelect, 'p', (e) => {
           e.classList.add('title');
           e.classList.add('subsection');
-          e.textContent = 'Update';
+          e.textContent = 'Available Firmware';
         });
 
         new V2WebField(this.#update.elementSelect, (field) => {

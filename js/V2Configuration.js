@@ -1,46 +1,46 @@
 class V2Configuration extends V2WebModule {
   #device = null;
   #tabs = null;
-  #info = Object.seal({
+  #overview = Object.seal({
     element: null
   });
-  #settings = Object.seal({
+  #edit = Object.seal({
     element: null,
     object: null
   });
-  #system = Object.seal({
+  #file = Object.seal({
     element: null,
     object: null
   });
 
   constructor(device) {
-    super('configuration', 'Configuration', 'Setup, backup, restore, reset');
+    super('configuration', 'Configuration', 'Edit, backup, restore, reset');
     this.#device = device;
 
     new V2WebTabs(this.canvas, (tabs) => {
       this.#tabs = tabs;
 
-      tabs.addTab('info', 'Settings', (e) => {
-        this.#info.element = e;
+      tabs.addTab('overview', 'Overview', (e) => {
+        this.#overview.element = e;
       });
 
       tabs.addTab('edit', 'Edit', (e) => {
-        this.#settings.element = e;
-        this.#settings.object = new V2ConfigurationSettings(device, this.#settings.element);
+        this.#edit.element = e;
+        this.#edit.object = new V2ConfigurationSettings(device, this.#edit.element);
       });
 
-      tabs.addTab('backup', 'Backup', (e) => {
-        this.#system.element = e;
-        this.#system.object = new V2ConfigurationSystem(device, this.#system.element);
+      tabs.addTab('file', 'File', (e) => {
+        this.#file.element = e;
+        this.#file.object = new V2ConfigurationSystem(device, this.#file.element);
       });
     });
 
     this.#device.addNotifier('show', (data) => {
-      this.#tabs.resetTab('info');
+      this.#tabs.resetTab('overview');
       this.#tabs.resetTab('edit');
-      this.#tabs.resetTab('backup');
+      this.#tabs.resetTab('file');
 
-      V2Web.addMarkup(this.#info.element, 2,
+      V2Web.addMarkup(this.#overview.element, 2,
         'The configuration can be edited and saved to the device. ' +
         'Changes will not be stored or modify the device\'s behavior until the Save ' +
         'button is pressed. Some changes require a device reboot to become active.\n' +
@@ -48,29 +48,29 @@ class V2Configuration extends V2WebModule {
         'readable text file. Or the device reset to its factory defaults.');
 
       if (data.help?.configuration) {
-        V2Web.addElement(this.#info.element, 'hr', (e) => {
+        V2Web.addElement(this.#overview.element, 'hr', (e) => {
           e.classList.add('break');
         });
 
-        V2Web.addMarkup(this.#info.element, 2, data.help.configuration);
+        V2Web.addMarkup(this.#overview.element, 2, data.help.configuration);
       }
 
-      this.#settings.object.show(data);
-      this.#system.object.show(data.configuration);
+      this.#edit.object.show(data);
+      this.#file.object.show(data.configuration);
 
       if (!this.#tabs.current)
-        this.#tabs.switchTab('info');
+        this.#tabs.switchTab('overview');
 
       this.attach();
     });
 
     this.#device.addNotifier('reset', () => {
       this.#tabs.switchTab();
-      this.#settings.object.clear();
-      this.#system.object.clear();
-      this.#tabs.resetTab('info');
+      this.#edit.object.clear();
+      this.#file.object.clear();
+      this.#tabs.resetTab('overview');
       this.#tabs.resetTab('edit');
-      this.#tabs.resetTab('backup');
+      this.#tabs.resetTab('file');
 
       this.detach();
     });
@@ -79,7 +79,7 @@ class V2Configuration extends V2WebModule {
   }
 
   register(module) {
-    this.#settings.object.register(module);
+    this.#edit.object.register(module);
   }
 }
 
