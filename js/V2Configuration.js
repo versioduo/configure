@@ -26,12 +26,12 @@ class V2Configuration extends V2WebModule {
 
       tabs.addTab('edit', 'Edit', (e) => {
         this.#edit.element = e;
-        this.#edit.object = new V2ConfigurationSettings(device, this.#edit.element);
+        this.#edit.object = new V2ConfigurationEdit(device, this.#edit.element);
       });
 
       tabs.addTab('file', 'File', (e) => {
         this.#file.element = e;
-        this.#file.object = new V2ConfigurationSystem(device, this.#file.element);
+        this.#file.object = new V2ConfigurationFile(device, this.#file.element);
       });
     });
 
@@ -83,7 +83,7 @@ class V2Configuration extends V2WebModule {
   }
 }
 
-class V2ConfigurationSettings {
+class V2ConfigurationEdit {
   #device = null;
   #canvas = null;
 
@@ -125,6 +125,13 @@ class V2ConfigurationSettings {
     this.clear();
 
     V2Web.addButtons(this.#canvas, (buttons) => {
+      V2Web.addButton(buttons, (e) => {
+        e.textContent = 'Erase';
+        e.addEventListener('click', () => {
+          this.#erase();
+        });
+      });
+
       V2Web.addButton(buttons, (e) => {
         e.textContent = 'Reboot';
         e.addEventListener('click', () => {
@@ -205,9 +212,19 @@ class V2ConfigurationSettings {
       this.#device.printDevice('No reply from device');
     }, 1000);
   }
+
+  // Factory reset.
+  #erase() {
+    this.#device.printDevice('Calling <b>eraseConfiguration()</b> command');
+    this.#device.sendRequest({
+      'method': 'eraseConfiguration'
+    });
+
+    this.#device.disconnect();
+  }
 }
 
-class V2ConfigurationSystem {
+class V2ConfigurationFile {
   #device = null;
   #canvas = null;
   #notify = null;
@@ -242,13 +259,6 @@ class V2ConfigurationSystem {
 
         V2Web.addFileDrop(e, this.#canvas, ['is-focused', 'is-link', 'is-light'], (file) => {
           this.#readFile(file);
-        });
-      });
-
-      V2Web.addButton(buttons, (e) => {
-        e.textContent = 'Erase';
-        e.addEventListener('click', () => {
-          this.#erase();
         });
       });
 
@@ -436,15 +446,5 @@ class V2ConfigurationSystem {
         this.#device.printDevice('No reply from device');
       }, 1000);
     }
-  }
-
-  // Factory reset.
-  #erase() {
-    this.#device.printDevice('Calling <b>eraseConfiguration()</b> command');
-    this.#device.sendRequest({
-      'method': 'eraseConfiguration'
-    });
-
-    this.#device.disconnect();
   }
 }
