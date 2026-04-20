@@ -1420,7 +1420,7 @@ class V2SettingsUSB extends V2SettingsModule {
           e.classList.add('width-label');
           e.classList.add('has-background-grey-lighter');
           e.classList.add('inactive');
-          e.textContent = 'Vendor ID';
+          e.textContent = 'Vendor';
           e.tabIndex = -1;
         });
 
@@ -1442,7 +1442,7 @@ class V2SettingsUSB extends V2SettingsModule {
           e.classList.add('width-label');
           e.classList.add('has-background-grey-lighter');
           e.classList.add('inactive');
-          e.textContent = 'Product ID';
+          e.textContent = 'Product';
           e.tabIndex = -1;
         });
 

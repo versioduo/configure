@@ -22,9 +22,17 @@ class V2Input extends V2WebModule {
     controls: Object.seal({
       element: null,
       velocity: Object.seal({
+        input: null,
+        range: null,
         update: null,
         value: 15
       }),
+      release: Object.seal({
+        input: null,
+        range: null,
+        update: null,
+        value: 64
+      })
     }),
 
     elementList: null,
@@ -233,7 +241,7 @@ class V2Input extends V2WebModule {
           this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
         });
         e.addEventListener('mouseup', () => {
-          this.#device.sendNoteOff(this.#channel.value, note);
+          this.#device.sendNoteOff(this.#channel.value, note, this.#notes.controls.release.value);
         });
         e.addEventListener('touchstart', (event) => {
           e.classList.add('is-active');
@@ -324,9 +332,6 @@ class V2Input extends V2WebModule {
 
     // Notes Section.
     if (channel.chromatic || channel.notes) {
-      let input = null;
-      let range = null;
-
       this.#notes.controls.velocity.update = (number) => {
         if (isNull(number))
           return;
@@ -338,8 +343,8 @@ class V2Input extends V2WebModule {
           number = 127;
 
         this.#notes.controls.velocity.value = Number(number);
-        input.value = number;
-        range.value = number;
+        this.#notes.controls.velocity.input.value = number;
+        this.#notes.controls.velocity.range.value = number;
       };
 
       new V2WebField(this.#notes.controls.element, (field) => {
@@ -352,7 +357,7 @@ class V2Input extends V2WebModule {
         });
 
         field.addInput('number', (e) => {
-          input = e;
+          this.#notes.controls.velocity.input = e;
           e.classList.add('width-number');
           e.min = 1;
           e.max = 127;
@@ -364,7 +369,7 @@ class V2Input extends V2WebModule {
       });
 
       V2Web.addElement(this.#notes.controls.element, 'input', (e) => {
-        range = e;
+        this.#notes.controls.velocity.range = e;
         e.classList.add('range');
         e.type = 'range';
         e.min = 1;
@@ -372,6 +377,54 @@ class V2Input extends V2WebModule {
         e.value = this.#notes.controls.velocity.value;
         e.addEventListener('input', () => {
           this.#notes.controls.velocity.update(e.value);
+        });
+      });
+
+      this.#notes.controls.release.update = (number) => {
+        if (isNull(number))
+          return;
+
+        if (number < 0)
+          number = 0;
+
+        else if (number > 127)
+          number = 127;
+
+        this.#notes.controls.release.value = Number(number);
+        this.#notes.controls.release.input.value = number;
+        this.#notes.controls.release.range.value = number;
+      };
+
+      new V2WebField(this.#notes.controls.element, (field) => {
+        field.addButton((e) => {
+          e.classList.add('width-label');
+          e.classList.add('has-background-grey-lighter');
+          e.classList.add('inactive');
+          e.textContent = 'Release';
+          e.tabIndex = -1;
+        });
+
+        field.addInput('number', (e) => {
+          this.#notes.controls.release.input = e;
+          e.classList.add('width-number');
+          e.min = 1;
+          e.max = 127;
+          e.value = this.#notes.controls.release.value;
+          e.addEventListener('input', () => {
+            this.#notes.controls.release.update(e.value);
+          });
+        });
+      });
+
+      V2Web.addElement(this.#notes.controls.element, 'input', (e) => {
+        this.#notes.controls.release.range = e;
+        e.classList.add('range');
+        e.type = 'range';
+        e.min = 1;
+        e.max = 127;
+        e.value = this.#notes.controls.release.value;
+        e.addEventListener('input', () => {
+          this.#notes.controls.release.update(e.value);
         });
       });
 
@@ -526,7 +579,7 @@ class V2Input extends V2WebModule {
         };
 
         this.#notes.chromatic.keyboard.handler.up = (note) => {
-          this.#device.sendNoteOff(this.#channel.value, note);
+          this.#device.sendNoteOff(this.#channel.value, note, this.#notes.controls.release.value);
         };
 
         this.#notes.chromatic.keyboard.handler.velocity.down = () => {
