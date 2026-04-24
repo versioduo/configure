@@ -123,15 +123,15 @@ class V2Device extends V2Connection {
         this.#tabs = tabs;
         element.classList.add('mt-4');
 
-        tabs.addTab('device', 'Device', (e) => {
+        tabs.addTab('device', 'Device', 'computer', (e) => {
           this.#device = e;
         });
 
-        tabs.addTab('details', 'Statistics', (e) => {
+        tabs.addTab('details', 'Statistics', 'magnifying-glass-chart', (e) => {
           this.#details = e;
         });
 
-        tabs.addTab('firmware', 'Firmware', (e) => {
+        tabs.addTab('firmware', 'Firmware', 'microchip', (e) => {
           this.#update.element = e;
         });
 

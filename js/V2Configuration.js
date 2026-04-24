@@ -20,16 +20,16 @@ class V2Configuration extends V2WebModule {
     new V2WebTabs(this.canvas, (tabs) => {
       this.#tabs = tabs;
 
-      tabs.addTab('overview', 'Overview', (e) => {
+      tabs.addTab('overview', 'Overview', 'book-open-reader', (e) => {
         this.#overview.element = e;
       });
 
-      tabs.addTab('edit', 'Edit', (e) => {
+      tabs.addTab('edit', 'Edit', 'screwdriver-wrench', (e) => {
         this.#edit.element = e;
         this.#edit.object = new V2ConfigurationEdit(device, this.#edit.element);
       });
 
-      tabs.addTab('file', 'File', (e) => {
+      tabs.addTab('file', 'File', 'file-code', (e) => {
         this.#file.element = e;
         this.#file.object = new V2ConfigurationFile(device, this.#file.element);
       });
