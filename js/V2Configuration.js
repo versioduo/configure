@@ -24,7 +24,7 @@ class V2Configuration extends V2WebModule {
         this.#overview.element = e;
       });
 
-      tabs.addTab('edit', 'Edit', 'screwdriver-wrench', (e) => {
+      tabs.addTab('edit', 'Edit', 'sliders', (e) => {
         this.#edit.element = e;
         this.#edit.object = new V2ConfigurationEdit(device, this.#edit.element);
       });
