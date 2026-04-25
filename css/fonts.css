@@ -67,3 +67,23 @@
 .fa-plug:before {
   content: "\f1e6";
 }
+
+.fa-envelope:before {
+  content: "\f0e0";
+}
+
+.fa-github:before {
+  content: "\f09b";
+}
+
+.fa-mastodon:before {
+  content: "\f4f6";
+}
+
+.fa-instagram:before {
+  content: "\f16d";
+}
+
+.fa-youtube:before {
+  content: "\f167";
+}
