@@ -67,7 +67,7 @@ class V2Device extends V2Connection {
   }
 
   sendGetAll() {
-    this.printDevice('Calling <b>getAll()</>');
+    this.printDevice('Calling <b>getAll()</b>');
     this.sendRequest({
       'method': 'getAll'
     });
@@ -108,9 +108,17 @@ class V2Device extends V2Connection {
 
   sendReboot(ports = false) {
     const method = ports ? 'rebootWithPorts' : 'reboot';
-    this.printDevice('Calling <b>' + method + '()</>');
+    this.printDevice('Calling <b>' + method + '()</b>');
     this.sendRequest({
       'method': method
+    });
+    this.disconnect();
+  }
+
+  sendBootloader() {
+    this.printDevice('Calling <b>bootloader()</b>');
+    this.sendRequest({
+      'method': 'bootloader'
     });
     this.disconnect();
   }
@@ -240,12 +248,10 @@ class V2Device extends V2Connection {
               anchor.href = link.target;
               anchor.target = 'links';
 
-              V2Web.addElement(anchor, 'span', (icon) => {
-                icon.classList.add('icon');
-                V2Web.addElement(icon, 'i', (e) => {
-                  e.classList.add('fas');
-                  e.classList.add('fa-link');
-                });
+              V2Web.addElement(anchor, 'span', (e) => {
+                e.classList.add('icon');
+                e.classList.add('fa');
+                e.classList.add('fa-link');
               });
 
               V2Web.addElement(anchor, 'span', (e) => {
@@ -312,14 +318,14 @@ class V2Device extends V2Connection {
     // The Update tab.
     V2Web.addButtons(this.#update.element, (buttons) => {
       V2Web.addButton(buttons, (e) => {
-        e.textContent = 'Reboot';
+        e.textContent = 'Boot';
         e.addEventListener('click', () => {
           this.sendReboot();
         });
       });
 
       V2Web.addButton(buttons, (e) => {
-        e.textContent = 'Access Ports';
+        e.textContent = 'Ports';
         if (!data.system.hardware?.usb?.ports?.access && !data.system.usb?.ports?.access)
           e.disabled = true;
 
@@ -329,7 +335,15 @@ class V2Device extends V2Connection {
       });
 
       V2Web.addButton(buttons, (e) => {
-        e.textContent = 'Load';
+        e.textContent = 'Loader';
+
+        e.addEventListener('click', () => {
+          this.sendBootloader(true);
+        });
+      });
+
+      V2Web.addButton(buttons, (e) => {
+        e.textContent = 'File';
         e.addEventListener('click', () => {
           this.#openFirmware();
         });
@@ -391,7 +405,7 @@ class V2Device extends V2Connection {
 
   // Process the com.versioduo.device message reply message.
   #handleReply(data) {
-    this.printDevice('Received <b>com.versioduo.device<b> message');
+    this.printDevice('Received <b>com.versioduo.device</b> message');
 
     // Remember the token from the first reply.
     if (!this.#token && data['token'])
@@ -736,10 +750,10 @@ class V2Device extends V2Connection {
       const backup = this.#data.system.hardware?.eeprom?.used ? ' Please backup the configuration before the installation.' : '';
 
       if (this.#data.system.hardware?.board && firmware.board !== this.#data.system.hardware.board)
-        this.#update.notify.error('The firmware update is for a different board which has the name <b>' + firmware.board + '</>.');
+        this.#update.notify.error('The firmware update is for a different board which has the name <b>' + firmware.board + '</b>.');
 
       else if (firmware.id !== this.#data.system.firmware.id)
-        this.#update.notify.warn('The firmware update appears to provide a different functionality, it has the name <b>' + firmware.id + '</>.');
+        this.#update.notify.warn('The firmware update appears to provide a different functionality, it has the name <b>' + firmware.id + '</b>.');
 
       else if (firmware.version < this.#data.metadata.version)
         this.#update.notify.warn('The firmware is older than the currently installed version.' + backup);
