@@ -250,8 +250,7 @@ class V2Device extends V2Connection {
 
               V2Web.addElement(anchor, 'span', (e) => {
                 e.classList.add('icon');
-                e.classList.add('fa');
-                e.classList.add('fa-link');
+                e.classList.add('icon-link');
               });
 
               V2Web.addElement(anchor, 'span', (e) => {

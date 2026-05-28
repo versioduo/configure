@@ -385,8 +385,7 @@ class V2WebTabs {
       V2Web.addElement(e, 'a', (e) => {
         V2Web.addElement(e, 'span', (s) => {
           s.classList.add('icon');
-          s.classList.add('fa');
-          s.classList.add('fa-' + icon);
+          s.classList.add('icon-' + icon);
         });
         V2Web.addElement(e, 'span', (s) => { s.textContent = text; });
       });
