@@ -1,5 +1,6 @@
 class V2Device extends V2Connection {
   #data = null;
+  #title = null;
   #tabs = null;
   #device = null;
   #details = null;
@@ -126,6 +127,23 @@ class V2Device extends V2Connection {
   #show(data) {
     this.#data = data;
 
+    if (!this.#title) {
+      V2Web.addElement(this.canvas, 'div', (container) => {
+        this.#title = container;
+        container.classList.add('my-5');
+
+        V2Web.addElement(container, 'h2', (e) => {
+          e.classList.add('title');
+          e.textContent = data.metadata.product;
+        });
+
+        V2Web.addElement(container, 'p', (e) => {
+          e.classList.add('subtitle');
+          e.textContent = data.metadata.description;
+        });
+      });
+    }
+
     if (!this.#tabs) {
       new V2WebTabs(this.canvas, (tabs, element) => {
         this.#tabs = tabs;
@@ -160,17 +178,7 @@ class V2Device extends V2Connection {
 
     // The Information tab.
     V2Web.addElement(this.#device, 'div', (container) => {
-      container.classList.add('mb-4');
-
-      V2Web.addElement(container, 'h2', (e) => {
-        e.classList.add('title');
-        e.textContent = data.metadata.product;
-      });
-
-      V2Web.addElement(container, 'p', (e) => {
-        e.classList.add('subtitle');
-        e.textContent = data.metadata.description;
-      });
+      container.classList.add('my-3');
 
       if (data.help?.device) {
         const paragraphs = data.help.device.split("\n");
@@ -387,6 +395,10 @@ class V2Device extends V2Connection {
   }
 
   #clear() {
+    while (this.#title.firstChild)
+      this.#title.firstChild.remove();
+    this.#title = null;
+
     if (this.#timeout) {
       clearTimeout(this.#timeout);
       this.#timeout = null;
