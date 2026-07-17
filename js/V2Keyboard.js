@@ -202,18 +202,22 @@ class V2Keyboard {
   };
 
   #addOctave(element, octave, firstIndex, lastIndex) {
-    new V2WebField(element, (field) => {
-      for (let i = 0; i < 12; i++) {
-        field.addButton((e, p) => {
-          e.classList.add('keyboard-button');
-          p.classList.add('is-expanded');
+    new V2WebMenu(element, (menu) => {
+      menu.element.classList.add('full');
+      menu.element.classList.add('font-scale');
 
+      for (let i = 0; i < 12; i++) {
+        if (i < firstIndex || i > lastIndex) {
+          menu.addElement('span');
+          continue;
+        }
+
+        menu.addElement('button', (e) => {
           const note = V2MIDI.Note.getNote(octave, i);
           this.#pads[note] = e;
 
           e.textContent = V2MIDI.Note.getName(note);
-          if (V2MIDI.Note.isBlack(note))
-            e.classList.add('is-dark');
+          e.classList.add(V2MIDI.Note.isBlack(note) ? 'dark' : 'light');
 
           e.addEventListener('mousedown', () => {
             this.handler.down(note);
@@ -224,22 +228,18 @@ class V2Keyboard {
           });
 
           e.addEventListener('touchstart', (event) => {
-            e.classList.add('is-active');
             e.dispatchEvent(new MouseEvent('mousedown'));
           }, {
             passive: true
           });
 
           e.addEventListener('touchend', (event) => {
-            e.classList.remove('is-active');
             e.dispatchEvent(new MouseEvent('mouseup'));
             if (event.cancelable)
               event.preventDefault();
           });
-
-          if (i < firstIndex || i > lastIndex)
-            e.style.visibility = 'hidden';
         });
+
       }
     });
   };

@@ -56,7 +56,7 @@ case "$1" in
     fi
 
     echo "Unsynced files:"
-    rsync -an --log-format=%f --exclude=.git --omit-dir-times --checksum --existing ../../versioduo/V2Web/ .
+    rsync -an --log-format=%f --exclude=.git --exclude=README.md --omit-dir-times --checksum --existing ../../versioduo/V2Web/ .
 
     # The list of source files as a JavaScript array.
     array=\'./\'

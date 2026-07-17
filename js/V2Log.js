@@ -7,15 +7,15 @@ class V2Log extends V2WebModule {
   constructor() {
     super('log', 'Log', 'View system events');
 
-    V2Web.addButtons(this.canvas, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
+    new V2WebMenu(this.canvas, (menu) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Status';
         e.addEventListener('click', () => {
           this.#device.printStatus();
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Clear';
         e.addEventListener('click', () => {
           this.#clear();
@@ -23,11 +23,10 @@ class V2Log extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
+    V2Web.addElement(this.canvas, 'header', (e) => {
       this.#element = e;
-      e.classList.add('log');
-      e.classList.add('content');
-      e.classList.add('is-small');
+      e.style.height = '12rem';
+      e.style.overflow = 'auto';
     });
 
     return Object.seal(this);

@@ -13,77 +13,101 @@
   src: url("../webfonts/fa-brands-400.woff2") format("woff2");
 }
 
-.icon-microchip:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f2db';
-}
+i.icon {
+  font-style: normal;
+  margin-right: 0.5rem;
 
-.icon-magnifying-glass-chart:before {
-  font-family: 'Font Awesome Solid';
-  content: '\e522';
-}
+  &.--nospace {
+    margin: 0;
+  }
 
-.icon-computer:before {
-  font-family: 'Font Awesome Solid';
-  content: '\e4e5';
-}
+  &.--microchip:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f2db';
+  }
 
-.icon-book-open-reader:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f5da';
-}
+  &.--magnifying-glass-chart:before {
+    font-family: 'Font Awesome Solid';
+    content: '\e522';
+  }
 
-.icon-screwdriver-wrench:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f7d9';
-}
+  &.--computer:before {
+    font-family: 'Font Awesome Solid';
+    content: '\e4e5';
+  }
 
-.icon-file-code:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f1c9';
-}
+  &.--book-open-reader:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f5da';
+  }
 
-.icon-music:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f001';
-}
+  &.--screwdriver-wrench:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f7d9';
+  }
 
-.icon-sliders:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f1de';
-}
+  &.--file-code:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f1c9';
+  }
 
-.icon-plug:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f1e6';
-}
+  &.--music:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f001';
+  }
 
-.icon-link:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f0c1';
-}
+  &.--sliders:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f1de';
+  }
 
-.icon-envelope:before {
-  font-family: 'Font Awesome Solid';
-  content: '\f0e0';
-}
+  &.--plug:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f1e6';
+  }
 
-.icon-github:before {
-  font-family: 'Font Awesome Brands';
-  content: '\f09b';
-}
+  &.--link:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f0c1';
+  }
 
-.icon-mastodon:before {
-  font-family: 'Font Awesome Brands';
-  content: '\f4f6';
-}
+  &.--envelope:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f0e0';
+  }
 
-.icon-instagram:before {
-  font-family: 'Font Awesome Brands';
-  content: '\f16d';
-}
+  &.--play:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f04b';
+  }
 
-.icon-youtube:before {
-  font-family: 'Font Awesome Brands';
-  content: '\f167';
+  &.--plus:before {
+    font-family: 'Font Awesome Solid';
+    content: '\2b';
+  }
+
+  &.--minus:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f068';
+  }
+
+  &.--github:before {
+    font-family: 'Font Awesome Brands';
+    content: '\f09b';
+  }
+
+  &.--mastodon:before {
+    font-family: 'Font Awesome Brands';
+    content: '\f4f6';
+  }
+
+  &.--instagram:before {
+    font-family: 'Font Awesome Brands';
+    content: '\f16d';
+  }
+
+  &.--youtube:before {
+    font-family: 'Font Awesome Brands';
+    content: '\f167';
+  }
 }

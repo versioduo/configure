@@ -40,20 +40,19 @@ class V2Configuration extends V2WebModule {
       this.#tabs.resetTab('edit');
       this.#tabs.resetTab('file');
 
-      V2Web.addMarkup(this.#overview.element, 2,
-        'The configuration can be edited and saved to the device. ' +
-        'Changes will not be stored or modify the device\'s behavior until the Save ' +
-        'button is pressed. Some changes require a device reboot to become active.\n' +
-        'The current configuration can be backed-up as a human ' +
-        'readable text file. Or the device reset to its factory defaults.');
+      V2Web.addElement(this.#overview.element, 'header', (e) => {
+        V2Web.addMarkup(e,
+          'The configuration can be edited and saved to the device. ' +
+          'Changes will not be stored or modify the device\'s behavior until the Save ' +
+          'button is pressed. Some changes require a device reboot to become active.\n' +
+          'The current configuration can be backed-up as a human ' +
+          'readable text file. Or the device reset to its factory defaults.');
 
-      if (data.help?.configuration) {
-        V2Web.addElement(this.#overview.element, 'hr', (e) => {
-          e.classList.add('break');
-        });
-
-        V2Web.addMarkup(this.#overview.element, 2, data.help.configuration);
-      }
+        if (data.help?.configuration) {
+          V2Web.addElement(e, 'hr');
+          V2Web.addMarkup(e, data.help.configuration);
+        }
+      });
 
       this.#edit.object.show(data);
       this.#file.object.show(data.configuration);
@@ -124,23 +123,23 @@ class V2ConfigurationEdit {
     const notify = this.#timeout !== null;
     this.clear();
 
-    V2Web.addButtons(this.#canvas, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
+    new V2WebMenu(this.#canvas, (menu) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Erase';
         e.addEventListener('click', () => {
           this.#erase();
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Reboot';
         e.addEventListener('click', () => {
           this.#device.sendReboot();
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
-        e.classList.add('is-link');
+      menu.addElement('button', (e) => {
+        e.classList.add('link');
         e.textContent = 'Save';
         e.addEventListener('click', () => {
           this.save();
@@ -151,12 +150,12 @@ class V2ConfigurationEdit {
     this.#notify = new V2WebNotify(this.#canvas);
 
     if (this.#timeout !== null) {
-      this.#notify.success('Settings updated.');
+      this.#notify.info('Settings updated.');
       clearTimeout(this.#timeout);
       this.#timeout = null;
     }
 
-    // USB is a core part of V2Device, andnot ex[licitley exported in the settings array.
+    // USB is a core part of V2Device, and not explicitley exported in the settings array.
     const section = new this.#modules['usb'](this.#device, this, this.#canvas, null, data);
     this.#sections.push(section);
 
@@ -177,7 +176,7 @@ class V2ConfigurationEdit {
     }
 
     if (notify)
-      this.#notify.success('Configuration updated.');
+      this.#notify.info('Configuration updated.');
   }
 
   clear() {
@@ -243,27 +242,27 @@ class V2ConfigurationFile {
     const notify = this.#timeout !== null;
     this.clear();
 
-    V2Web.addButtons(this.#canvas, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
+    new V2WebMenu(this.#canvas, (menu) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Backup';
         e.addEventListener('click', () => {
           this.#save();
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Restore';
         e.addEventListener('click', () => {
           this.#openFile();
         });
 
-        V2Web.addFileDrop(e, this.#canvas, ['is-focused', 'is-link', 'is-light'], (file) => {
+        V2Web.addFileDrop(e, this.#canvas, ['link'], (file) => {
           this.#readFile(file);
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
-        e.classList.add('is-link');
+      menu.addElement('button', (e) => {
+        e.classList.add('link');
         e.textContent = 'Save';
         e.addEventListener('click', () => {
           this.#send();
@@ -275,7 +274,6 @@ class V2ConfigurationFile {
 
     V2Web.addElement(this.#canvas, 'textarea', (e) => {
       this.#elementJSON = e;
-      e.classList.add('textarea');
       e.placeholder = 'No configuration loaded';
       e.rows = 1;
       e.disabled = true;
@@ -289,7 +287,7 @@ class V2ConfigurationFile {
     this.#elementJSON.disabled = false;
 
     if (notify)
-      this.#notify.success('Configuration updated.');
+      this.#notify.info('Configuration updated.');
   }
 
   clear() {
@@ -315,6 +313,7 @@ class V2ConfigurationFile {
     if (this.#maximized && event.detail > 3) {
       this.#elementJSON.setSelectionRange(1, 1);
       this.#maximized = false;
+      this.#elementJSON.style.width = '100%';
 
     } else if (!this.#maximized)
       this.#maximized = true;

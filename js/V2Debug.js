@@ -7,8 +7,8 @@ class V2Debug extends V2WebModule {
     super('debug', 'Debug', 'Show the last reply');
     this.#device = device;
 
-    V2Web.addButtons(this.canvas, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
+    new V2WebMenu(this.canvas, (menu) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Copy';
         e.addEventListener('click', () => {
           navigator.clipboard.writeText(this.#element.textContent);
@@ -19,7 +19,6 @@ class V2Debug extends V2WebModule {
     V2Web.addElement(this.canvas, 'div', (e) => {
       V2Web.addElement(e, 'pre', (pre) => {
         this.#element = pre;
-        pre.classList.add('has-background-white');
       });
     });
 

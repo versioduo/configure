@@ -11,28 +11,20 @@ class V2SettingsModule {
     return Object.seal(this);
   }
 
-  addHeading(canvas, text) {
-    V2Web.addElement(canvas, 'h3', (e) => {
-      e.classList.add('title');
-      e.classList.add('subsection');
-      e.textContent = text;
-    });
-  }
-
   addSection(canvas, setting) {
     if (setting.title) {
-      V2Web.addElement(canvas, 'hr', (e) => {
-        e.classList.add('subsection');
+      V2Web.addElement(canvas, 'hr', (e) => { });
+
+      V2Web.addElement(canvas, 'p', (e) => {
+        e.classList.add('title');
+        e.textContent = setting.title;
       });
 
-      this.addHeading(canvas, setting.title);
       return;
     }
 
     if (setting.ruler) {
-      V2Web.addElement(canvas, 'hr', (e) => {
-        e.classList.add('break');
-      });
+      V2Web.addElement(canvas, 'hr', (e) => { });
     }
   }
 
@@ -116,7 +108,7 @@ class V2SettingsCalibration extends V2SettingsModule {
       this.device.sendProgramChange(0, program);
     };
 
-    const playAll = (field) => {
+    const playAll = (menu) => {
       const reset = () => {
         clearInterval(this.#playTimer);
         this.#playTimer = null;
@@ -133,7 +125,7 @@ class V2SettingsCalibration extends V2SettingsModule {
       let index = 0;
       this.#playTimer = setInterval(() => {
         const note = index + this.setting.chromatic.start;
-        const velocity = this.#values[index][field];
+        const velocity = this.#values[index][menu];
         this.device.sendNote(0, note, velocity);
         setTimeout(() => {
           this.device.sendNoteOff(0, note);
@@ -155,15 +147,15 @@ class V2SettingsCalibration extends V2SettingsModule {
       }, 100);
     };
 
-    V2Web.addButtons(canvas, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Play Min';
         e.addEventListener('click', () => {
           playAll('min');
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Play Max';
         e.addEventListener('click', () => {
           playAll('max');
@@ -172,24 +164,24 @@ class V2SettingsCalibration extends V2SettingsModule {
     });
 
     const addCalibrationNote = (i, note) => {
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
-          e.classList.add(V2MIDI.Note.isBlack(note) ? 'is-dark' : 'has-background-grey-lighter');
+          e.classList.add(V2MIDI.Note.isBlack(note) ? 'dark' : 'light');
         });
 
-        field.addButton((e) => {
+        menu.addElement('button', (e) => {
+          e.classList.add('field');
+          e.classList.add('link');
           e.textContent = 'Min';
           e.addEventListener('mousedown', () => {
             playNote(note, this.#values[i].min);
           });
         });
 
-        field.addInput('number', (e) => {
-          e.classList.add('width-number');
+        menu.addElement('input', (e) => {
+          e.type = 'number';
           e.min = 1;
           e.max = 127;
           e.value = this.#values[i].min;
@@ -199,15 +191,17 @@ class V2SettingsCalibration extends V2SettingsModule {
           });
         });
 
-        field.addButton((e) => {
+        menu.addElement('button', (e) => {
+          e.classList.add('field');
+          e.classList.add('link');
           e.textContent = 'Max';
           e.addEventListener('mousedown', () => {
             playNote(note, this.#values[i].max);
           });
         });
 
-        field.addInput('number', (e) => {
-          e.classList.add('width-number');
+        menu.addElement('input', (e) => {
+          e.type = 'number';
           e.min = 1;
           e.max = 127;
           e.value = this.#values[i].max;
@@ -276,20 +270,16 @@ class V2SettingsColour extends V2SettingsModule {
     super.addSection(canvas, setting);
 
     this.#configuration = setting.configuration;
-    V2Web.addButtons(canvas, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
-        e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
-        e.tabIndex = -1;
+
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         e.textContent = 'Colour';
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('span', (e) => {
         this.#colour.element = e;
-        e.classList.add('width-label');
-        e.classList.add('inactive');
-        e.tabIndex = -1;
+        e.classList.add('field');
       });
     });
 
@@ -303,18 +293,15 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Hue';
         });
 
-        field.addInput('number', (e) => {
+        menu.addElement('input', (e) => {
           this.#hue = e;
-          e.classList.add('width-number');
+          e.type = 'number';
           e.min = 0;
           e.max = 127;
           e.addEventListener('input', () => {
@@ -325,7 +312,6 @@ class V2SettingsColour extends V2SettingsModule {
 
       V2Web.addElement(canvas, 'input', (e) => {
         range = e;
-        e.classList.add('range');
         e.type = 'range';
         e.min = 0;
         e.max = 127;
@@ -347,18 +333,15 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Saturation';
         });
 
-        field.addInput('number', (e) => {
+        menu.addElement('input', (e) => {
           this.#saturation = e;
-          e.classList.add('width-number');
+          e.type = 'number';
           e.min = 0;
           e.max = 127;
           e.addEventListener('input', () => {
@@ -369,7 +352,6 @@ class V2SettingsColour extends V2SettingsModule {
 
       V2Web.addElement(canvas, 'input', (e) => {
         range = e;
-        e.classList.add('range');
         e.type = 'range';
         e.min = 0;
         e.max = 127;
@@ -391,18 +373,15 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Brightness';
         });
 
-        field.addInput('number', (e) => {
+        menu.addElement('input', (e) => {
           this.#brightness = e;
-          e.classList.add('width-number');
+          e.type = 'number';
           e.min = 0;
           e.max = 127;
           e.addEventListener('input', () => {
@@ -413,7 +392,6 @@ class V2SettingsColour extends V2SettingsModule {
 
       V2Web.addElement(canvas, 'input', (e) => {
         range = e;
-        e.classList.add('range');
         e.type = 'range';
         e.min = 0;
         e.max = 127;
@@ -463,13 +441,12 @@ class V2SettingsController extends V2SettingsModule {
       range.value = number;
     };
 
-    new V2WebField(canvas, (field) => {
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.textContent = setting.label || 'Controller';
-
-        if (setting.test) {
-          e.classList.add('is-link');
+    new V2WebMenu(canvas, (menu) => {
+      if (setting.test) {
+        menu.addElement('button', (e) => {
+          e.textContent = setting.label || 'Controller';
+          e.classList.add('link');
+          e.classList.add('label');
           e.addEventListener('click', () => {
             device.sendSystemExclusive({
               test: {
@@ -477,25 +454,22 @@ class V2SettingsController extends V2SettingsModule {
               }
             });
           });
+        });
+      } else {
+        menu.addElement('span', (e) => {
+          e.textContent = setting.label || 'Controller';
+          e.classList.add('label');
+        });
+      }
 
-        } else {
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
-        }
-      });
-
-      field.addButton((e) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('text');
         text = e;
-        e.classList.add('width-text-wide');
-        e.classList.add('has-background-light');
-        e.classList.add('inactive');
-        e.tabIndex = -1;
       });
 
-      field.addInput('number', (e) => {
+      menu.addElement('input', (e) => {
         this.#controller.element = e;
-        e.classList.add('width-number');
+        e.type = 'number';
         e.min = 0;
         e.max = 127;
         e.addEventListener('input', () => {
@@ -506,7 +480,6 @@ class V2SettingsController extends V2SettingsModule {
 
     V2Web.addElement(canvas, 'input', (e) => {
       range = e;
-      e.classList.add('range');
       e.type = 'range';
       e.min = 0;
       e.max = 127;
@@ -542,19 +515,16 @@ class V2SettingsDrum extends V2SettingsModule {
       let sensitivity = null;
       let range = null;
 
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           sensitivity = e;
-          e.classList.add('width-label');
-          e.classList.add('inactive');
-          e.classList.add('has-background-grey-lighter');
-          e.tabIndex = -1;
           e.textContent = 'Sensitivity';
         });
 
-        field.addInput('number', (e) => {
+        menu.addElement('input', (e) => {
           this.#sensitivity = e;
-          e.classList.add('width-label'); // -0.99 does not fit
+          e.type = 'number';
           e.min = -0.99;
           e.max = 0.99;
           e.step = 0.01;
@@ -567,7 +537,6 @@ class V2SettingsDrum extends V2SettingsModule {
 
       V2Web.addElement(canvas, 'input', (e) => {
         range = e;
-        e.classList.add('range');
         e.type = 'range';
         e.min = -0.99;
         e.max = 0.99;
@@ -587,37 +556,32 @@ class V2SettingsDrum extends V2SettingsModule {
         if (number > 0) {
           note.textContent = V2MIDI.Note.getName(number) + (V2MIDI.GM.Percussion.Name[number] ? ' – ' + V2MIDI.GM.Percussion.Name[number] : '');
           if (V2MIDI.Note.isBlack(number)) {
-            note.classList.add('is-dark');
-            note.classList.remove('has-background-light');
+            note.classList.add('dark');
+            note.classList.remove('light');
 
           } else {
-            note.classList.remove('is-dark');
-            note.classList.add('has-background-light');
+            note.classList.remove('dark');
+            note.classList.add('light');
           }
 
         } else
           note.textContent = 'Disabled';
       };
 
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Note';
         });
 
-        field.addButton((e) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('text');
           note = e;
-          e.classList.add('width-text-wide');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
         });
 
-        field.addInput('number', (e) => {
+        menu.addElement('input', (e) => {
           this.#note = e;
-          e.classList.add('width-number');
+          e.type = 'number';
           e.min = 0;
           e.max = 127;
           e.value = drum.note;
@@ -632,7 +596,6 @@ class V2SettingsDrum extends V2SettingsModule {
 
       V2Web.addElement(canvas, 'input', (e) => {
         range = e;
-        e.classList.add('range');
         e.type = 'range';
         e.min = 0;
         e.max = 127;
@@ -645,27 +608,16 @@ class V2SettingsDrum extends V2SettingsModule {
     }
 
     if (!isNull(drum.aftertouch)) {
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Aftertouch';
-          e.tabIndex = -1;
         });
 
-        field.addElement('label', (label) => {
-          label.classList.add('switch');
-
-          V2Web.addElement(label, 'input', (e) => {
-            this.#aftertouch = e;
-            e.type = 'checkbox';
-            e.checked = drum.aftertouch;
-          });
-
-          V2Web.addElement(label, 'span', (e) => {
-            e.classList.add('check');
-          });
+        menu.addElement('input', (e) => {
+          this.#aftertouch = e;
+          e.type = 'checkbox';
+          e.checked = drum.aftertouch;
         });
       });
     }
@@ -682,26 +634,20 @@ class V2SettingsDrum extends V2SettingsModule {
           text.textContent = 'Disabled';
       };
 
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Pressure';
         });
 
-        field.addButton((e) => {
+        menu.addElement('span', (e) => {
           text = e;
-          e.classList.add('width-text-wide');
-          e.classList.add('has-background-light');
-          e.classList.add('inactive');
-          e.tabIndex = -1;
+          e.classList.add('text');
         });
 
-        field.addInput('number', (e) => {
+        menu.addElement('input', (e) => {
           this.#controller = e;
-          e.classList.add('width-number');
+          e.type = 'number';
           e.min = 0;
           e.max = 127;
           e.value = drum.controller;
@@ -716,7 +662,6 @@ class V2SettingsDrum extends V2SettingsModule {
 
       V2Web.addElement(canvas, 'input', (e) => {
         range = e;
-        e.classList.add('range');
         e.type = 'range';
         e.min = 0;
         e.max = 127;
@@ -750,7 +695,7 @@ class V2SettingsDrum extends V2SettingsModule {
 }
 
 
-// JSON text field.
+// JSON text menu.
 class V2SettingsJSON extends V2SettingsModule {
   static type = 'json';
 
@@ -765,13 +710,12 @@ class V2SettingsJSON extends V2SettingsModule {
 
     if (setting.text) {
       V2Web.addElement(canvas, 'p', (e) => {
-        e.classList.add('subtitle');
         e.textContent = setting.text;
       });
     }
 
-    V2Web.addButtons(canvas, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Copy';
 
         e.addEventListener('click', () => {
@@ -779,7 +723,7 @@ class V2SettingsJSON extends V2SettingsModule {
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Paste';
 
         e.addEventListener('click', () => {
@@ -805,7 +749,6 @@ class V2SettingsJSON extends V2SettingsModule {
 
     V2Web.addElement(canvas, 'textarea', (e) => {
       this.#json = e;
-      e.classList.add('textarea');
 
       if (setting.name) {
         this.#name = setting.name;
@@ -861,43 +804,38 @@ class V2SettingsNote extends V2SettingsModule {
 
       note.textContent = V2MIDI.Note.getName(number);
       if (V2MIDI.Note.isBlack(number)) {
-        note.classList.add('is-dark');
-        note.classList.remove('has-background-light');
+        note.classList.add('dark');
+        note.classList.remove('light');
       } else {
-        note.classList.remove('is-dark');
-        note.classList.add('has-background-light');
+        note.classList.remove('dark');
+        note.classList.add('light');
       }
 
       this.#note.value = Number(number);
       range.value = number;
 
       if (!isNull(setting.default)) {
-        if (number === setting.default)
-          this.#note.classList.add('has-text-grey-lighter');
+        if (Number(this.#note.value) === setting.default)
+          this.#note.classList.add('dim');
         else
-          this.#note.classList.remove('has-text-grey-lighter');
+          this.#note.classList.remove('dim');
       }
     };
 
-    new V2WebField(canvas, (field) => {
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
-        e.tabIndex = -1;
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         e.textContent = setting.label;
       });
 
-      field.addButton((e) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         note = e;
-        e.classList.add('width-label');
-        e.classList.add('inactive');
-        e.tabIndex = -1;
       });
 
-      field.addInput('number', (e) => {
+      menu.addElement('input', (e) => {
         this.#note = e;
-        e.classList.add('width-number');
+        e.type = 'number';
         e.min = setting.min ?? 0;
         e.max = setting.max ?? 127;
         e.addEventListener('input', () => {
@@ -905,17 +843,19 @@ class V2SettingsNote extends V2SettingsModule {
         });
       });
 
-      field.addButton((e) => {
-        e.textContent = '-';
-        e.style.width = '3rem';
+      menu.addElement('button', (e) => {
+        V2Web.addElement(e, 'i', (i) => {
+          i.classList.add('icon', '--nospace', '--minus');
+        });
         e.addEventListener('click', () => {
           update(Number(this.#note.value) - 1);
         });
       });
 
-      field.addButton((e) => {
-        e.textContent = '+';
-        e.style.width = '3rem';
+      menu.addElement('button', (e) => {
+        V2Web.addElement(e, 'i', (i) => {
+          i.classList.add('icon', '--nospace', '--plus');
+        });
         e.addEventListener('click', () => {
           update(Number(this.#note.value) + 1);
         });
@@ -924,7 +864,6 @@ class V2SettingsNote extends V2SettingsModule {
 
     V2Web.addElement(canvas, 'input', (e) => {
       range = e;
-      e.classList.add('range');
       e.type = 'range';
       e.min = this.#note.min;
       e.max = this.#note.max;
@@ -952,36 +891,22 @@ class V2SettingsToggle extends V2SettingsModule {
     super(device, settings, setting);
     super.addSection(canvas, setting);
 
-    new V2WebField(canvas, (field) => {
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         e.textContent = setting.label;
-        e.tabIndex = -1;
       });
 
       if (setting.text)
-        field.addButton((e) => {
-          e.classList.add('width-text');
-          e.classList.add('has-background-light');
-          e.classList.add('inactive');
+        menu.addElement('span', (e) => {
+          e.classList.add('text');
           e.textContent = setting.text;
-          e.tabIndex = -1;
         });
 
-      field.addElement('label', (label) => {
-        label.classList.add('switch');
-
-        V2Web.addElement(label, 'input', (e) => {
-          this.#toggle = e;
-          e.type = 'checkbox';
-          e.checked = this.getConfiguration(data.configuration);
-        });
-
-        V2Web.addElement(label, 'span', (e) => {
-          e.classList.add('check');
-        });
+      menu.addElement('input', (e) => {
+        this.#toggle = e;
+        e.type = 'checkbox';
+        e.checked = this.getConfiguration(data.configuration);
       });
     });
 
@@ -993,7 +918,7 @@ class V2SettingsToggle extends V2SettingsModule {
   }
 }
 
-// Numeric field.
+// Numeric menu.
 class V2SettingsNumber extends V2SettingsModule {
   static type = 'number';
 
@@ -1020,36 +945,29 @@ class V2SettingsNumber extends V2SettingsModule {
       range.value = value;
 
       if (!isNull(setting.default)) {
-        if (value === setting.default)
-          number.classList.add('has-text-grey-lighter');
+        if (this.#number === setting.default)
+          number.classList.add('dim');
         else
-          number.classList.remove('has-text-grey-lighter');
+          number.classList.remove('dim');
       }
     };
 
-    new V2WebField(canvas, (field) => {
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         e.textContent = setting.label;
-        e.tabIndex = -1;
       });
 
       if (setting.text) {
-        field.addButton((e) => {
-          e.classList.add('width-text');
-          e.classList.add('inactive');
-          e.classList.add('has-background-light');
+        menu.addElement('span', (e) => {
           e.textContent = setting.text;
-          e.tabIndex = -1;
         });
       }
 
       if (!select) {
-        field.addInput('number', (e) => {
+        menu.addElement('input', (e) => {
           number = e;
-          e.classList.add((step === 1) ? 'width-number' : 'width-number-wide');
+          e.type = 'number';
           e.min = min;
           e.max = max;
           e.step = step;
@@ -1060,17 +978,19 @@ class V2SettingsNumber extends V2SettingsModule {
         });
 
         if (step === 1) {
-          field.addButton((e) => {
-            e.textContent = '-';
-            e.style.width = '3rem';
+          menu.addElement('button', (e) => {
+            V2Web.addElement(e, 'i', (i) => {
+              i.classList.add('icon', '--nospace', '--minus');
+            });
             e.addEventListener('click', () => {
               update(this.#number - 1);
             });
           });
 
-          field.addButton((e) => {
-            e.textContent = '+';
-            e.style.width = '3rem';
+          menu.addElement('button', (e) => {
+            V2Web.addElement(e, 'i', (i) => {
+              i.classList.add('icon', '--nospace', '--plus');
+            });
             e.addEventListener('click', () => {
               update(this.#number + 1);
             });
@@ -1080,26 +1000,21 @@ class V2SettingsNumber extends V2SettingsModule {
       } else {
         this.#number = this.getConfiguration(data.configuration);
 
-        field.addElement('span', (e) => {
-          e.classList.add('select');
-          e.classList.add('is-rounded');
+        menu.addElement('select', (select) => {
+          for (let i = min; i < max + 1; i++) {
+            V2Web.addElement(select, 'option', (e) => {
+              e.value = i;
+              e.text = i;
+              if (setting.names && setting.names[i])
+                e.text += ' – ' + setting.names[i];
 
-          V2Web.addElement(e, 'select', (select) => {
-            for (let i = min; i < max + 1; i++) {
-              V2Web.addElement(select, 'option', (e) => {
-                e.value = i;
-                e.text = i;
-                if (setting.names && setting.names[i])
-                  e.text += ' – ' + setting.names[i];
-
-                if (i === this.#number)
-                  e.selected = true;
-              });
-            }
-
-            select.addEventListener('change', () => {
-              this.#number = Number(select.value);
+              if (i === this.#number)
+                e.selected = true;
             });
+          }
+
+          select.addEventListener('change', () => {
+            this.#number = Number(select.value);
           });
         });
       }
@@ -1108,7 +1023,6 @@ class V2SettingsNumber extends V2SettingsModule {
     if (!select) {
       V2Web.addElement(canvas, 'input', (e) => {
         range = e;
-        e.classList.add('range');
         e.type = 'range';
         e.min = number.min;
         e.max = number.max;
@@ -1160,8 +1074,8 @@ class V2SettingsPulse extends V2SettingsModule {
     if (setting.limit?.seconds)
       this.#seconds.limit = setting.limit.seconds;
 
-    V2Web.addButtons(canvas, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Reset';
         e.addEventListener('click', () => {
           if (setting.default?.watts) {
@@ -1176,7 +1090,7 @@ class V2SettingsPulse extends V2SettingsModule {
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Test';
         e.disabled = isNull(setting.index);
         e.addEventListener('click', () => {
@@ -1192,25 +1106,21 @@ class V2SettingsPulse extends V2SettingsModule {
     });
 
     const pulse = this.getConfiguration(data.configuration);
-    new V2WebField(canvas, (field) => {
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         e.textContent = setting.label;
-        e.tabIndex = -1;
       });
 
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('inactive');
+      menu.addElement('span', (e) => {
+        e.classList.add('text');
         e.textContent = 'Watts';
-        e.tabIndex = -1;
       });
 
-      field.addInput('number', (e) => {
+      menu.addElement('input', (e) => {
         this.#watts.number = e;
-        e.classList.add('width-number-wide');
+        e.classList.add('large');
+        e.type = 'number';
         e.min = 0;
         e.max = this.#watts.limit;
         e.addEventListener('input', () => {
@@ -1222,11 +1132,11 @@ class V2SettingsPulse extends V2SettingsModule {
           e.step = (e.value < 10) ? 0.1 : 1;
 
           if (!isNull(setting.default?.watts)) {
-            if (e.value === setting.default.watts)
-              e.classList.add('has-text-grey-lighter');
+            if (Number(e.value) === setting.default.watts)
+              e.classList.add('dim');
 
             else
-              e.classList.remove('has-text-grey-lighter');
+              e.classList.remove('dim');
           }
         };
 
@@ -1239,7 +1149,6 @@ class V2SettingsPulse extends V2SettingsModule {
     });
 
     V2Web.addElement(canvas, 'input', (e) => {
-      e.classList.add('range');
       e.type = 'range';
       e.min = 0.11;
       e.max = 1;
@@ -1253,25 +1162,21 @@ class V2SettingsPulse extends V2SettingsModule {
       };
     });
 
-    new V2WebField(canvas, (field) => {
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         e.textContent = setting.label;
-        e.tabIndex = -1;
       });
 
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('inactive');
+      menu.addElement('span', (e) => {
+        e.classList.add('text');
         e.textContent = 'Seconds';
-        e.tabIndex = -1;
       });
 
-      field.addInput('number', (e) => {
+      menu.addElement('input', (e) => {
         this.#seconds.number = e;
-        e.classList.add('width-number-wide');
+        e.classList.add('large');
+        e.type = 'number';
         e.min = 0;
         e.max = this.#seconds.limit;
         e.addEventListener('input', () => {
@@ -1283,11 +1188,11 @@ class V2SettingsPulse extends V2SettingsModule {
           e.step = (e.value < 0.1) ? 0.001 : (e.value < 1) ? 0.01 : (e.value < 10) ? 0.1 : 1;
 
           if (!isNull(setting.default?.seconds)) {
-            if (e.value === setting.default.seconds)
-              e.classList.add('has-text-grey-lighter');
+            if (Number(e.value) === setting.default.seconds)
+              e.classList.add('dim');
 
             else
-              e.classList.remove('has-text-grey-lighter');
+              e.classList.remove('dim');
           }
         };
 
@@ -1300,7 +1205,6 @@ class V2SettingsPulse extends V2SettingsModule {
     });
 
     V2Web.addElement(canvas, 'input', (e) => {
-      e.classList.add('range');
       e.type = 'range';
       e.min = 0.22;
       e.max = 1;
@@ -1329,7 +1233,7 @@ class V2SettingsPulse extends V2SettingsModule {
   }
 }
 
-// Text field.
+// Text menu.
 class V2SettingsText extends V2SettingsModule {
   static type = 'text';
 
@@ -1339,18 +1243,16 @@ class V2SettingsText extends V2SettingsModule {
     super(device, settings, setting);
     super.addSection(canvas, setting);
 
-    new V2WebField(canvas, (field) => {
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         e.textContent = setting.label;
-        e.tabIndex = -1;
       });
 
-      field.addInput('text', (e) => {
+      menu.addElement('input', (e) => {
         this.#text = e;
-        e.classList.add('text-wide');
+        e.type = 'text';
+        e.classList.add('text');
         e.maxLength = 31;
         e.value = this.getConfiguration(data.configuration);
       });
@@ -1386,20 +1288,21 @@ class V2SettingsUSB extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addHeading(canvas, 'USB');
+    V2Web.addElement(canvas, 'p', (e) => {
+      e.classList.add('title');
+      e.textContent = 'USB';
+    });
 
-    new V2WebField(canvas, (field) => {
-      field.addButton((e) => {
-        e.classList.add('width-label');
-        e.classList.add('has-background-grey-lighter');
-        e.classList.add('inactive');
+    new V2WebMenu(canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
         e.textContent = 'Name';
-        e.tabIndex = -1;
       });
 
-      field.addInput('text', (e) => {
+      menu.addElement('input', (e) => {
         this.#name = e;
-        e.classList.add('text-wide');
+        e.type = 'text';
+        e.classList.add('text');
         e.maxLength = 31;
         if (data.system.name)
           e.value = data.system.name;
@@ -1415,18 +1318,16 @@ class V2SettingsUSB extends V2SettingsModule {
     };
 
     if (!isNull(data.configuration.usb.vid)) {
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Vendor';
-          e.tabIndex = -1;
         });
 
-        field.addInput('text', (e) => {
+        menu.addElement('input', (e) => {
           this.#vid = e;
-          e.classList.add('width-number');
+          e.type = 'text';
+          e.classList.add('text');
           e.maxLength = 4;
           if (data.configuration.usb.vid > 0)
             e.value = usbID(data.configuration.usb.vid);
@@ -1437,18 +1338,16 @@ class V2SettingsUSB extends V2SettingsModule {
     }
 
     if (!isNull(data.configuration.usb.pid)) {
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Product';
-          e.tabIndex = -1;
         });
 
-        field.addInput('text', (e) => {
+        menu.addElement('input', (e) => {
           this.#pid = e;
-          e.classList.add('width-number');
+          e.type = 'text';
+          e.classList.add('text');
           e.maxLength = 4;
           if (data.configuration.usb.pid > 0)
             e.value = usbID(data.configuration.usb.pid);
@@ -1460,31 +1359,23 @@ class V2SettingsUSB extends V2SettingsModule {
 
     // The number of MIDI ports.
     if (data.system.hardware?.usb?.ports?.standard > 0) {
-      new V2WebField(canvas, (field) => {
-        field.addButton((e) => {
-          e.classList.add('width-label');
-          e.classList.add('has-background-grey-lighter');
-          e.classList.add('inactive');
+      new V2WebMenu(canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
           e.textContent = 'Ports';
-          e.tabIndex = -1;
         });
 
-        field.addElement('span', (e) => {
-          e.classList.add('select');
-          e.classList.add('is-rounded');
+        menu.addElement('select', (select) => {
+          this.#ports = select;
 
-          V2Web.addElement(e, 'select', (select) => {
-            this.#ports = select;
-
-            for (let i = 0; i < 17; i++) {
-              V2Web.addElement(select, 'option', (e) => {
-                e.value = i;
-                e.text = i > 0 ? i : '–';
-                if (i === data.configuration.usb.ports)
-                  e.selected = true;
-              });
-            }
-          });
+          for (let i = 0; i < 17; i++) {
+            V2Web.addElement(select, 'option', (e) => {
+              e.value = i;
+              e.text = i > 0 ? i : '–';
+              if (i === data.configuration.usb.ports)
+                e.selected = true;
+            });
+          }
         });
       });
     }

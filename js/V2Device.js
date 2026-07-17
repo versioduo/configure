@@ -3,7 +3,7 @@ class V2Device extends V2Connection {
   #title = null;
   #tabs = null;
   #device = null;
-  #details = null;
+  #statistics = null;
   #update = Object.seal({
     element: null,
     elementSelect: null,
@@ -23,6 +23,8 @@ class V2Device extends V2Connection {
 
   constructor(log, connect) {
     super(log, connect);
+
+    this.select.element.classList.add('center');
 
     this.device.addNotifier('systemExclusive', (message) => {
       const json = new TextDecoder().decode(message);
@@ -128,33 +130,19 @@ class V2Device extends V2Connection {
     this.#data = data;
 
     if (!this.#title) {
-      V2Web.addElement(this.canvas, 'div', (container) => {
-        this.#title = container;
-        container.classList.add('my-5');
-
-        V2Web.addElement(container, 'h2', (e) => {
-          e.classList.add('title');
-          e.textContent = data.metadata.product;
-        });
-
-        V2Web.addElement(container, 'p', (e) => {
-          e.classList.add('subtitle');
-          e.textContent = data.metadata.description;
-        });
-      });
+      this.title(data.metadata.product, data.metadata.description);
     }
 
     if (!this.#tabs) {
-      new V2WebTabs(this.canvas, (tabs, element) => {
+      new V2WebTabs(this.canvas, (tabs) => {
         this.#tabs = tabs;
-        element.classList.add('mt-4');
 
         tabs.addTab('device', 'Device', 'plug', (e) => {
           this.#device = e;
         });
 
-        tabs.addTab('details', 'Statistics', 'magnifying-glass-chart', (e) => {
-          this.#details = e;
+        tabs.addTab('statistics', 'Statistics', 'magnifying-glass-chart', (e) => {
+          this.#statistics = e;
         });
 
         tabs.addTab('firmware', 'Firmware', 'microchip', (e) => {
@@ -170,111 +158,72 @@ class V2Device extends V2Connection {
 
     } else {
       this.#tabs.resetTab('device');
-      this.#tabs.resetTab('details');
+      this.#tabs.resetTab('statistics');
       this.#tabs.resetTab('firmware');
       this.#update.firmware.bytes = null;
       this.#update.firmware.hash = null;
     }
 
     // The Information tab.
-    V2Web.addElement(this.#device, 'div', (container) => {
-      container.classList.add('my-3');
-
-      if (data.help?.device) {
+    if (data.help?.device) {
+      V2Web.addElement(this.#device, 'header', (e) => {
         const paragraphs = data.help.device.split("\n");
         for (const p of paragraphs) {
-          V2Web.addElement(container, 'p', (e) => {
-            e.classList.add('content');
+          V2Web.addElement(e, 'p', (e) => {
             e.textContent = p;
           });
         }
-      }
-    });
-
-    V2Web.addElement(this.#device, 'div', (container) => {
-      container.classList.add('table-container');
-
-      V2Web.addElement(container, 'table', (e) => {
-        e.classList.add('table');
-        e.classList.add('is-fullwidth');
-        e.classList.add('is-striped');
-        e.classList.add('is-narrow');
-
-        V2Web.addElement(e, 'tbody', (body) => {
-          for (const key of Object.keys(data.metadata)) {
-            if (key === 'product' || key === 'description')
-              continue;
-
-            const name = key.charAt(0).toUpperCase() + key.slice(1);
-            const value = data.metadata[key];
-
-            V2Web.addElement(body, 'tr', (row) => {
-              V2Web.addElement(row, 'td', (e) => {
-                e.textContent = name;
-              });
-
-              V2Web.addElement(row, 'td', (e) => {
-                if (typeof value === 'string' && value.match(/^https?:\/\//)) {
-                  V2Web.addElement(e, 'a', (a) => {
-                    a.href = value;
-                    a.target = 'home';
-                    a.textContent = value.replace(/^https?:\/\//, '');
-                  });
-                } else
-                  e.textContent = value;
-              });
-            });
-          }
-        });
       });
-    });
+    }
 
-    V2Web.addElement(this.#device, 'div', (container) => {
-      if (data.links?.length > 0) {
-        V2Web.addElement(container, 'hr', (e) => {
-          e.classList.add('subsection');
-        });
+    V2Web.addElement(this.#device, 'table', (e) => {
+      V2Web.addElement(e, 'tbody', (body) => {
+        for (const key of Object.keys(data.metadata)) {
+          if (key === 'product' || key === 'description')
+            continue;
 
-        V2Web.addElement(container, 'h3', (e) => {
-          e.classList.add('title');
-          e.classList.add('subsection');
-          e.textContent = 'Links';
-        });
+          const name = key.charAt(0).toUpperCase() + key.slice(1);
+          const value = data.metadata[key];
 
-        for (const link of data.links) {
-          V2Web.addElement(container, 'div', (entry) => {
-            entry.classList.add('mt-5');
-
-            V2Web.addElement(entry, 'p', (e) => {
-              e.innerText = link.description;
+          V2Web.addElement(body, 'tr', (row) => {
+            V2Web.addElement(row, 'td', (e) => {
+              e.textContent = name;
             });
 
-            V2Web.addElement(entry, 'a', (anchor) => {
-              anchor.classList.add('mt-2');
-              anchor.classList.add('button');
-
-              anchor.href = link.target;
-              anchor.target = 'links';
-
-              V2Web.addElement(anchor, 'span', (e) => {
-                e.classList.add('icon');
-                e.classList.add('icon-link');
-              });
-
-              V2Web.addElement(anchor, 'span', (e) => {
-                const target = link.target.replace(/^https?:\/\//, '');
-                e.innerText = target.split("?")[0];
-              });
+            V2Web.addElement(row, 'td', (e) => {
+              if (typeof value === 'string' && value.match(/^https?:\/\//)) {
+                V2Web.addElement(e, 'a', (a) => {
+                  a.href = value;
+                  a.target = 'home';
+                  a.textContent = value.replace(/^https?:\/\//, '');
+                });
+              } else
+                e.textContent = value;
             });
           });
         }
-      }
+      });
     });
 
+    for (const link of data.links) {
+      new V2WebMenu(this.#device, (menu) => {
+        menu.addElement('span', (e) => {
+          e.textContent = link.description;
+        });
+
+        menu.addElement('a', (e) => {
+          e.href = link.target;
+          const target = link.target.replace(/^https?:\/\//, '');
+          e.innerText = target.split("?")[0];
+        });
+      });
+    }
+
+
     // The Details tab.
-    V2Web.addButtons(this.#details, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
-        e.classList.add('is-link');
+    new V2WebMenu(this.#statistics, (menu) => {
+      menu.addElement('button', (e) => {
+        e.classList.add('link');
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
           this.sendGetAll();
@@ -282,56 +231,47 @@ class V2Device extends V2Connection {
       });
     });
 
-    V2Web.addElement(this.#details, 'div', (container) => {
-      container.classList.add('table-container');
+    V2Web.addElement(this.#statistics, 'table', (e) => {
+      V2Web.addElement(e, 'tbody', (body) => {
+        const printObject = (parent, object) => {
+          for (const key of Object.keys(object)) {
+            let name = key;
+            if (parent)
+              name = parent + '.' + name;
 
-      V2Web.addElement(container, 'table', (e) => {
-        e.classList.add('table');
-        e.classList.add('is-fullwidth');
-        e.classList.add('is-striped');
-        e.classList.add('is-narrow');
+            const value = object[key];
+            if (!isNull(value) && (typeof value === 'object')) {
+              printObject(name, value);
 
-        V2Web.addElement(e, 'tbody', (body) => {
-          const printObject = (parent, object) => {
-            for (const key of Object.keys(object)) {
-              let name = key;
-              if (parent)
-                name = parent + '.' + name;
+            } else {
+              V2Web.addElement(body, 'tr', (row) => {
 
-              const value = object[key];
-              if (!isNull(value) && (typeof value === 'object')) {
-                printObject(name, value);
-
-              } else {
-                V2Web.addElement(body, 'tr', (row) => {
-
-                  V2Web.addElement(row, 'td', (e) => {
-                    e.textContent = name;
-                  });
-
-                  V2Web.addElement(row, 'td', (e) => {
-                    e.textContent = value;
-                  });
+                V2Web.addElement(row, 'td', (e) => {
+                  e.textContent = name;
                 });
-              }
-            }
-          };
-          printObject(null, data.system);
 
-        });
+                V2Web.addElement(row, 'td', (e) => {
+                  e.textContent = value;
+                });
+              });
+            }
+          }
+        };
+        printObject(null, data.system);
+
       });
     });
 
-    // The Update tab.
-    V2Web.addButtons(this.#update.element, (buttons) => {
-      V2Web.addButton(buttons, (e) => {
+    // The Firmware tab.
+    new V2WebMenu(this.#update.element, (menu) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Boot';
         e.addEventListener('click', () => {
           this.sendReboot();
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Ports';
         if (!data.system.hardware?.usb?.ports?.access && !data.system.usb?.ports?.access)
           e.disabled = true;
@@ -341,7 +281,7 @@ class V2Device extends V2Connection {
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'Loader';
 
         e.addEventListener('click', () => {
@@ -349,20 +289,20 @@ class V2Device extends V2Connection {
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         e.textContent = 'File';
         e.addEventListener('click', () => {
           this.#openFirmware();
         });
 
-        V2Web.addFileDrop(e, this.#update.element, ['is-focused', 'is-link', 'is-light'], (file) => {
+        V2Web.addFileDrop(e, this.#update.element, ['is-focused', 'link', 'is-light'], (file) => {
           this.#readFirmware(file);
         });
       });
 
-      V2Web.addButton(buttons, (e) => {
+      menu.addElement('button', (e) => {
         this.#update.elementUpload = e;
-        e.classList.add('is-link');
+        e.classList.add('link');
         e.disabled = true;
         e.textContent = 'Install';
         e.addEventListener('click', () => {
@@ -374,8 +314,6 @@ class V2Device extends V2Connection {
     V2Web.addElement(this.#update.element, 'progress', (e) => {
       this.#update.elementProgress = e;
       e.style.display = 'none';
-      e.classList.add('progress');
-      e.classList.add('is-small');
       e.value = 0;
     });
 
@@ -383,7 +321,6 @@ class V2Device extends V2Connection {
 
     V2Web.addElement(this.#update.element, 'div', (e) => {
       this.#update.elementSelect = e;
-      e.classList.add('mb-5');
     });
 
     V2Web.addElement(this.#update.element, 'div', (e) => {
@@ -395,9 +332,7 @@ class V2Device extends V2Connection {
   }
 
   #clear() {
-    while (this.#title.firstChild)
-      this.#title.firstChild.remove();
-    this.#title = null;
+    this.title();
 
     if (this.#timeout) {
       clearTimeout(this.#timeout);
@@ -498,8 +433,6 @@ class V2Device extends V2Connection {
       this.log.print('Unable to connect to device <b>' + device.name + '</b>');
       this.disconnect();
     }, 2000);
-
-    this.select.setConnecting();
   }
 
   // Load 'index.json' and from the 'download' URL and check if there is a firmware update available.
@@ -523,7 +456,7 @@ class V2Device extends V2Connection {
 
         let updates = json[this.#data.system.firmware.id];
         if (!updates) {
-          this.#update.notify.warn('No firmware update found for this device.');
+          this.#update.notify.info('No firmware update found for this device.');
           this.printDevice('No firmware update found for this device.');
           return;
         }
@@ -536,7 +469,7 @@ class V2Device extends V2Connection {
         }
 
         if (updates.length === 0) {
-          this.#update.notify.warn('No firmware update found for this board.');
+          this.#update.notify.info('No firmware update found for this board.');
           this.printDevice('No firmware update found for this board.');
           return;
         }
@@ -560,51 +493,36 @@ class V2Device extends V2Connection {
         const updateIndex = useRelease ? releaseIndex : 0;
 
         if (this.#data.metadata.version > updates[updateIndex].version)
-          this.#update.notify.warn('A more recent firmware is already installed.');
+          this.#update.notify.info('A more recent firmware is already installed.');
 
         while (this.#update.elementSelect.firstChild)
           this.#update.elementSelect.firstChild.remove();
 
-        V2Web.addElement(this.#update.elementSelect, 'p', (e) => {
-          e.classList.add('title');
-          e.classList.add('subsection');
-          e.textContent = 'Available Firmware';
-        });
-
-        new V2WebField(this.#update.elementSelect, (field) => {
-          field.addButton((e) => {
-            e.classList.add('width-label');
-            e.classList.add('has-background-grey-lighter');
-            e.classList.add('inactive');
+        new V2WebMenu(this.#update.elementSelect, (menu) => {
+          menu.addElement('button', (e) => {
             e.textContent = 'Version';
-            e.tabIndex = -1;
           });
 
-          field.addElement('span', (e) => {
-            e.classList.add('select');
-            e.classList.add('is-rounded');
+          menu.addElement('select', (select) => {
+            if (updates.length === 1)
+              select.disabled = true;
 
-            V2Web.addElement(e, 'select', (select) => {
-              if (updates.length === 1)
-                select.disabled = true;
-
-              for (let i = 0; i < updates.length; i++) {
-                V2Web.addElement(select, 'option', (e) => {
-                  e.value = i;
-                  e.text = updates[i].version + (i < releaseIndex ? ' (preview)' : '');
-                  e.selected = i === updateIndex;
-                });
-              }
-
-              select.addEventListener('change', () => {
-                this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[select.value].file);
+            for (let i = 0; i < updates.length; i++) {
+              V2Web.addElement(select, 'option', (e) => {
+                e.value = i;
+                e.text = updates[i].version + (i < releaseIndex ? ' (preview)' : '');
+                e.selected = i === updateIndex;
               });
+            }
+
+            select.addEventListener('change', () => {
+              this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[select.value].file);
             });
           });
         });
 
         if (this.#data.system.firmware.hash === updates[updateIndex].hash)
-          this.#update.notify.success('The firmware is up-to-date.');
+          this.#update.notify.info('The firmware is up-to-date.');
 
         else
           this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[updateIndex].file);
@@ -687,13 +605,13 @@ class V2Device extends V2Connection {
       meta = JSON.parse(metaString);
 
     } catch (error) {
-      this.#update.notify.warn('Unknown file type. Unable to parse metadata.');
+      this.#update.notify.error('Unknown file type. Unable to parse metadata.');
       return;
     }
 
     const firmware = meta['com.versioduo.firmware'];
     if (!firmware) {
-      this.#update.notify.warn('Unknown file type. Missing metadata.');
+      this.#update.notify.error('Unknown file type. Missing metadata.');
       return;
     }
 
@@ -702,50 +620,41 @@ class V2Device extends V2Connection {
 
     let elementHash = null;
 
-    V2Web.addElement(this.#update.elementNewFirmware, 'div', (e) => {
-      e.classList.add('table-container');
-
-      V2Web.addElement(e, 'table', (table) => {
-        table.classList.add('table');
-        table.classList.add('is-fullwidth');
-        table.classList.add('is-striped');
-        table.classList.add('is-narrow');
-
-        V2Web.addElement(table, 'tbody', (body) => {
-          V2Web.addElement(body, 'tr', (row) => {
-            V2Web.addElement(row, 'td', (e) => {
-              e.textContent = 'Version';
-            });
-            V2Web.addElement(row, 'td', (e) => {
-              e.textContent = firmware.version;
-            });
+    V2Web.addElement(this.#update.elementNewFirmware, 'table', (table) => {
+      V2Web.addElement(table, 'tbody', (body) => {
+        V2Web.addElement(body, 'tr', (row) => {
+          V2Web.addElement(row, 'td', (e) => {
+            e.textContent = 'Version';
           });
-
-          V2Web.addElement(body, 'tr', (row) => {
-            V2Web.addElement(row, 'td', (e) => {
-              e.textContent = 'Id';
-            });
-            V2Web.addElement(row, 'td', (e) => {
-              e.textContent = firmware.id;
-            });
+          V2Web.addElement(row, 'td', (e) => {
+            e.textContent = firmware.version;
           });
+        });
 
-          V2Web.addElement(body, 'tr', (row) => {
-            V2Web.addElement(row, 'td', (e) => {
-              e.textContent = 'Board';
-            });
-            V2Web.addElement(row, 'td', (e) => {
-              e.textContent = firmware.board;
-            });
+        V2Web.addElement(body, 'tr', (row) => {
+          V2Web.addElement(row, 'td', (e) => {
+            e.textContent = 'Id';
           });
+          V2Web.addElement(row, 'td', (e) => {
+            e.textContent = firmware.id;
+          });
+        });
 
-          V2Web.addElement(body, 'tr', (row) => {
-            V2Web.addElement(row, 'td', (e) => {
-              e.textContent = 'Hash';
-            });
-            V2Web.addElement(row, 'td', (e) => {
-              elementHash = e;
-            });
+        V2Web.addElement(body, 'tr', (row) => {
+          V2Web.addElement(row, 'td', (e) => {
+            e.textContent = 'Board';
+          });
+          V2Web.addElement(row, 'td', (e) => {
+            e.textContent = firmware.board;
+          });
+        });
+
+        V2Web.addElement(body, 'tr', (row) => {
+          V2Web.addElement(row, 'td', (e) => {
+            e.textContent = 'Hash';
+          });
+          V2Web.addElement(row, 'td', (e) => {
+            elementHash = e;
           });
         });
       });
@@ -773,7 +682,7 @@ class V2Device extends V2Connection {
         this.#update.notify.info('This firmware is currently installed.');
 
       else
-        this.#update.notify.info('A firmware update is available.' + backup);
+        this.#update.notify.warn('A firmware update is available.' + backup);
 
       this.#update.elementUpload.disabled = false;
     });

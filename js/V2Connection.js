@@ -16,8 +16,17 @@ class V2Connection extends V2WebModule {
     this.midi = new V2MIDI();
     this.bannerNotify = new V2WebNotify(this.canvas);
 
-    this.select = new V2MIDISelect(this.canvas, (e) => {
-      e.classList.add('is-link');
+    new V2WebMenu(this.canvas, (menu) => {
+      menu.element.classList.add('center');
+
+      menu.addElement('span', (e) => {
+        e.textContent = 'Device';
+      });
+
+      menu.addItem((li) => {
+        this.select = new V2MIDISelect(li);
+        this.select.element.classList.add('link');
+      });
     });
 
     this.select.addNotifier('select', (device) => {
@@ -129,11 +138,9 @@ class V2Connection extends V2WebModule {
       }
     });
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
+    V2Web.addElement(this.canvas, 'p', (e) => {
       this.version = e;
-      e.classList.add('mt-4');
-      e.classList.add('is-flex');
-      e.classList.add('is-justify-content-end');
+      e.classList.add('center');
       e.innerHTML = '<a href=' + document.querySelector('link[rel="source"]').href +
         ' target="software">' + document.querySelector('meta[name="name"]').content +
         '</a>, version ' + Number(document.querySelector('meta[name="version"]').content);

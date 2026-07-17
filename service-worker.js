@@ -1,10 +1,9 @@
 const name = 'configure';
-const version = 307;
+const version = 314;
 const files = [
   './',
-  'css/bulma-addons.css',
-  'css/bulma.min.css',
   'css/fonts.css',
+  'css/style.css',
   'icons/logo-black.svg',
   'icons/logo-boxed.png',
   'icons/logo-boxed.svg',
