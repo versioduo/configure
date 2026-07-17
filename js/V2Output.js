@@ -321,7 +321,8 @@ class V2Output extends V2WebModule {
       e.style.display = 'none';
 
       V2Web.addElement(e, 'hr');
-      V2Web.addElement(e, 'h3', (e) => {
+      V2Web.addElement(e, 'p', (e) => {
+        e.classList.add('title');
         e.textContent = 'Controllers';
       });
 
@@ -335,7 +336,8 @@ class V2Output extends V2WebModule {
       e.style.display = 'none';
 
       V2Web.addElement(e, 'hr');
-      V2Web.addElement(e, 'h3', (e) => {
+      V2Web.addElement(e, 'p', (e) => {
+        e.classList.add('title');
         e.textContent = 'Notes';
       });
 

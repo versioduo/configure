@@ -197,31 +197,56 @@ html {
         height: 1rem;
       }
 
+      &::-moz-range-track {
+        border: none;
+        border-top-left-radius: 50vh;
+        border-bottom-left-radius: 50vh;
+        height: 1rem;
+      }
+
       &::-webkit-slider-thumb {
         appearance: none;
-        aspect-ratio: 1;
         background-color: hsl(from var(--colour) h s l / 90%);
         border: none;
         border-radius: 50vh;
         height: 2rem;
         margin-top: -0.5rem;
+        width: 2rem;
+      }
+
+      &::-moz-range-thumb {
+        appearance: none;
+        background-color: hsl(from var(--colour) h s l / 90%);
+        border: none;
+        border-radius: 50vh;
+        height: 2rem;
+        margin-top: -0.5rem;
+        width: 2rem;
       }
     }
 
     progress {
       appearance: none;
+      border: none;
       height: 1rem;
       margin-bottom: 2rem;
       width: 100%;
+      background-color: hsl(from var(--colour) h s l / 10%);
 
       &::-webkit-progress-bar {
-        background-color: hsl(from var(--colour) h s l / 20%);
+        background-color: hsl(from var(--colour) h s l / 10%);
+        border-top-left-radius: 50vh;
+        border-bottom-left-radius: 50vh;
+      }
+
+      &::-moz-progress-bar {
+        background-color: hsl(from var(--colour) h s l / 70%);
         border-top-left-radius: 50vh;
         border-bottom-left-radius: 50vh;
       }
 
       &::-webkit-progress-value {
-        background-color: hsl(from var(--colour) h s l / 60%);
+        background-color: hsl(from var(--colour) h s l / 70%);
         border-top-left-radius: 50vh;
         border-bottom-left-radius: 50vh;
       }

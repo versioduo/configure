@@ -7,7 +7,7 @@ files=$(find -s\
  css\
  icons\
  js\
- site.webmanifest\
+ manifest.json\
  webfonts\
  -type f)
 
