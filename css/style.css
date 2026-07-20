@@ -274,11 +274,19 @@ html {
         &:first-child {
           border-top-left-radius: 50vh;
           border-bottom-left-radius: 50vh;
+
+          >* {
+            padding-left: 1rem;
+          }
         }
 
         &:last-child {
           border-top-right-radius: 50vh;
           border-bottom-right-radius: 50vh;
+
+          >* {
+            padding-right: 1rem;
+          }
         }
 
         >input {
@@ -305,7 +313,7 @@ html {
           }
 
           &[type=text] {
-            padding-left: 0.5rem;
+            padding-left: 0.75rem;
 
             &::placeholder {
               color: hsl(from var(--colour) h s l / 60%);
@@ -336,23 +344,38 @@ html {
           text-decoration: none;
         }
 
-        >a,
-        >button,
-        >select,
-        >span,
-        >i.icon {
+        >* {
           align-content: center;
           border-radius: inherit;
           display: inline-block;
           height: 100%;
-          padding: 0.5rem 1rem;
-          text-align: center;
+          padding: 0.5rem 0.75rem;
         }
 
         >button,
         >span,
         >i.icon {
+          background-color: hsl(from var(--colour) h s l / 20%);
           font-family: inherit;
+          text-align: center;
+
+          &.label {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            width: 6rem;
+          }
+
+          &.text {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            width: 10rem;
+          }
+
+          &.field {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            width: 4rem;
+          }
 
           &.light {
             background-color: hsl(from var(--colour-dark) h s l / 70%);
@@ -390,7 +413,6 @@ html {
 
         >button,
         >select {
-          background-color: hsl(from var(--colour) h s l / 20%);
           border-style: none;
           font-family: inherit;
           font-size: 1em;
@@ -420,31 +442,8 @@ html {
         }
 
         >select {
+          background-color: hsl(from var(--colour) h s l / 20%);
           border-right: 1rem solid transparent;
-        }
-
-        >button,
-        >span,
-        >i.icon {
-          background-color: hsl(from var(--colour) h s l / 10%);
-
-          &.label {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-            width: 6rem;
-          }
-
-          &.text {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-            width: 10rem;
-          }
-
-          &.field {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-            width: 4rem;
-          }
         }
 
         >a,
@@ -484,12 +483,7 @@ html {
           border-top-right-radius: 0;
           border-bottom-right-radius: 0;
 
-          >a,
-          >button,
-          >input,
-          >select,
-          >span,
-          >i.icon {
+          >* {
             padding: 0;
             width: 100%;
           }
