@@ -1,7 +1,7 @@
 class V2Connection extends V2WebModule {
   log = null;
   midi = null;
-  bannerNotify = null;
+  notify = null;
   select = null;
   device = null;
   version = null;
@@ -14,7 +14,7 @@ class V2Connection extends V2WebModule {
     super();
     this.log = log;
     this.midi = new V2MIDI();
-    this.bannerNotify = new V2WebNotify(this.canvas);
+    this.notify = new V2WebNotify(this.canvas);
 
     new V2WebMenu(this.canvas, (menu) => {
       menu.element.classList.add('center');
@@ -23,31 +23,51 @@ class V2Connection extends V2WebModule {
         e.textContent = 'Device';
       });
 
+      let reset = null;
       menu.addItem((li) => {
         this.select = new V2MIDISelect(li);
         this.select.element.classList.add('link');
+
+        this.select.addNotifier('select', (device) => {
+          if (device) {
+            this.log.attach();
+            this.connect(device);
+            reset.disabled = false;
+
+          } else {
+            this.log.detach();
+            this.disconnect();
+            reset.disabled = true;
+          }
+        });
+
+        this.select.addNotifier('disconnect', () => {
+          reset.disabled = true;
+        });
+
+        // Focus the device selector when new devices arrive and we are
+        // not currently connected.
+        this.select.addNotifier('add', () => {
+          if (this.device.input)
+            return;
+
+          this.select.focus();
+          window.scroll(0, 0);
+        });
       });
-    });
 
-    this.select.addNotifier('select', (device) => {
-      if (device) {
-        this.log.attach();
-        this.connect(device);
+      menu.addElement('button', (e) => {
+        reset = e;
+        e.disabled = true;
 
-      } else {
-        this.log.detach();
-        this.disconnect();
-      }
-    });
+        V2Web.addElement(e, 'i', (i) => {
+          i.classList.add('icon', '--rotate', '--nospace');
+        });
 
-    // Focus the device selector when new devices arrive and we are
-    // not currently connected.
-    this.select.addNotifier('add', () => {
-      if (this.device.input)
-        return;
-
-      this.select.focus();
-      window.scroll(0, 0);
+        e.addEventListener('click', () => {
+          this.sendReset('token');
+        });
+      });
     });
 
     this.device = new V2MIDIDevice();
@@ -86,7 +106,7 @@ class V2Connection extends V2WebModule {
     this.midi.setup((error) => {
       if (error) {
         this.log.print(error);
-        this.bannerNotify.error(error);
+        this.notify.error(error);
         return;
       }
 
@@ -119,7 +139,6 @@ class V2Connection extends V2WebModule {
           this.log.print('Trying to connect to <b>' + name + '</b> ...');
           this.select.update(this.midi.getDevices('both'));
           this.select.select(device);
-          this.connect(device);
           return true;
         };
 

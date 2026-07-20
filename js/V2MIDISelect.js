@@ -93,6 +93,8 @@ class V2MIDISelect {
         continue;
 
       option.selected = true;
+      for (const notifier of this.#notifiers.select)
+        notifier(device);
       break;
     }
   }
@@ -104,6 +106,9 @@ class V2MIDISelect {
   setDisconnected() {
     this.element.options[0].text = 'Connect to ...';
     this.element.selectedIndex = 0;
+
+    for (const notifier of this.#notifiers.disconnect)
+      notifier();
   }
 
   focus() {

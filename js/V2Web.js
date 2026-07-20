@@ -230,6 +230,10 @@ class V2WebMenu {
       });
     });
   }
+
+  remove() {
+    this.element.remove();
+  }
 }
 
 class V2WebTabs {

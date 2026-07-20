@@ -48,18 +48,24 @@ class V2Input extends V2WebModule {
     super('input', 'MIDI In', 'Play notes and adjust controllers');
     this.#device = device;
 
+    const reset = () => {
+      this.#channel.value = null;
+      this.detach();
+      this.#clear();
+    };
+
     this.#device.addNotifier('show', (data) => {
-      if (!data.input)
+      if (!data.input) {
+        reset();
         return;
+      }
 
       this.#show(data);
       this.attach();
     });
 
     this.#device.addNotifier('reset', () => {
-      this.#channel.value = null;
-      this.detach();
-      this.#clear();
+      reset();
     });
 
     return Object.seal(this);

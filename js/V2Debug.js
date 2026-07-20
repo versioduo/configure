@@ -16,10 +16,11 @@ class V2Debug extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
-      V2Web.addElement(e, 'pre', (pre) => {
-        this.#element = pre;
-      });
+    V2Web.addElement(this.canvas, 'pre', (e) => {
+      this.#element = e;
+      e.style.overflowX = 'auto';
+      e.style.paddingRight = '0.5rem';
+      e.style.width = 'calc(100vw - 2rem)';
     });
 
     this.#device.addNotifier('show', (data) => {

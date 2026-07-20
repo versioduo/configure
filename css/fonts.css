@@ -21,19 +21,14 @@ i.icon {
     margin: 0;
   }
 
-  &.--microchip:before {
+  &.--address-card:before {
     font-family: 'Font Awesome Solid';
-    content: '\f2db';
+    content: '\f2bb';
   }
 
-  &.--magnifying-glass-chart:before {
+  &.--at:before {
     font-family: 'Font Awesome Solid';
-    content: '\e522';
-  }
-
-  &.--computer:before {
-    font-family: 'Font Awesome Solid';
-    content: '\e4e5';
+    content: '\40';
   }
 
   &.--book-open-reader:before {
@@ -41,34 +36,14 @@ i.icon {
     content: '\f5da';
   }
 
-  &.--screwdriver-wrench:before {
+  &.--code-branch:before {
     font-family: 'Font Awesome Solid';
-    content: '\f7d9';
+    content: '\f126';
   }
 
-  &.--file-code:before {
+  &.--computer:before {
     font-family: 'Font Awesome Solid';
-    content: '\f1c9';
-  }
-
-  &.--music:before {
-    font-family: 'Font Awesome Solid';
-    content: '\f001';
-  }
-
-  &.--sliders:before {
-    font-family: 'Font Awesome Solid';
-    content: '\f1de';
-  }
-
-  &.--plug:before {
-    font-family: 'Font Awesome Solid';
-    content: '\f1e6';
-  }
-
-  &.--link:before {
-    font-family: 'Font Awesome Solid';
-    content: '\f0c1';
+    content: '\e4e5';
   }
 
   &.--envelope:before {
@@ -76,14 +51,29 @@ i.icon {
     content: '\f0e0';
   }
 
-  &.--play:before {
+  &.--file-code:before {
     font-family: 'Font Awesome Solid';
-    content: '\f04b';
+    content: '\f1c9';
   }
 
-  &.--plus:before {
+  &.--icons:before {
     font-family: 'Font Awesome Solid';
-    content: '\2b';
+    content: '\f86d';
+  }
+
+  &.--link:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f0c1';
+  }
+
+  &.--magnifying-glass-chart:before {
+    font-family: 'Font Awesome Solid';
+    content: '\e522';
+  }
+
+  &.--microchip:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f2db';
   }
 
   &.--minus:before {
@@ -91,19 +81,54 @@ i.icon {
     content: '\f068';
   }
 
+  &.--music:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f001';
+  }
+
+  &.--play:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f04b';
+  }
+
+  &.--plug:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f1e6';
+  }
+
+  &.--plus:before {
+    font-family: 'Font Awesome Solid';
+    content: '\2b';
+  }
+
+  &.--rotate:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f2f1';
+  }
+
+  &.--screwdriver-wrench:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f7d9';
+  }
+
+  &.--sliders:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f1de';
+  }
+
   &.--github:before {
     font-family: 'Font Awesome Brands';
     content: '\f09b';
   }
 
-  &.--mastodon:before {
-    font-family: 'Font Awesome Brands';
-    content: '\f4f6';
-  }
-
   &.--instagram:before {
     font-family: 'Font Awesome Brands';
     content: '\f16d';
+  }
+
+  &.--mastodon:before {
+    font-family: 'Font Awesome Brands';
+    content: '\f4f6';
   }
 
   &.--youtube:before {

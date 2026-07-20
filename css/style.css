@@ -4,9 +4,9 @@
   --colour-dark: hsl(190deg 8% 96%);
   --colour: light-dark(var(--colour-light), var(--colour-dark));
   --colour-background: light-dark(hsl(from var(--colour) h s 98%), hsl(from var(--colour) h s 12%));
-  --colour-background-section: light-dark(hsl(from var(--colour-background) calc(h - 10) s calc(l - 6)), hsl(from var(--colour-background) calc(h + 10) s calc(l + 10)));
-  --colour-background-card: light-dark(hsl(from var(--colour-background) calc(h - 20) s calc(l - 12)), hsl(from var(--colour-background) calc(h + 20) s calc(l + 20)));
-  --colour-link: light-dark(hsl(220, 70%, 85%), hsl(220deg 50% 45%));
+  --colour-background-section: light-dark(hsl(from var(--colour-background) h s calc(l - 6)), hsl(from var(--colour-background) h s calc(l + 10)));
+  --colour-background-card: light-dark(hsl(from var(--colour-background) h s calc(l - 12)), hsl(from var(--colour-background) h s calc(l + 20)));
+  --colour-link: light-dark(hsl(220, 70%, 70%), hsl(220deg 50% 45%));
 }
 
 * {
@@ -98,11 +98,11 @@ html {
           width: 100%;
 
           &:hover {
-            background-color: hsl(from var(--colour-link) h s calc(l + 5));
+            background-color: hsl(from var(--colour-link) h s l / 80%);
           }
 
           &:active {
-            background-color: hsl(from var(--colour-link) h s calc(l + 10));
+            background-color: hsl(from var(--colour-link) h s l / 90%);
           }
         }
 
@@ -339,7 +339,8 @@ html {
         >a,
         >button,
         >select,
-        >span {
+        >span,
+        >i.icon {
           align-content: center;
           border-radius: inherit;
           display: inline-block;
@@ -349,7 +350,8 @@ html {
         }
 
         >button,
-        >span {
+        >span,
+        >i.icon {
           font-family: inherit;
 
           &.light {
@@ -422,7 +424,8 @@ html {
         }
 
         >button,
-        >span {
+        >span,
+        >i.icon {
           background-color: hsl(from var(--colour) h s l / 10%);
 
           &.label {
@@ -448,14 +451,14 @@ html {
         >button.link,
         >select.link,
         >input[type=checkbox] {
-          background-color: var(--colour-link);
+          background-color: hsl(from var(--colour-link) h s l / 70%);
 
           &:hover {
-            background-color: hsl(from var(--colour-link) h s calc(l + 5));
+            background-color: hsl(from var(--colour-link) h s l / 80%);
           }
 
           &:active {
-            background-color: hsl(from var(--colour-link) h s calc(l + 10));
+            background-color: hsl(from var(--colour-link) h s l / 90%);
           }
 
           &:disabled {
@@ -485,7 +488,8 @@ html {
           >button,
           >input,
           >select,
-          >span {
+          >span,
+          >i.icon {
             padding: 0;
             width: 100%;
           }

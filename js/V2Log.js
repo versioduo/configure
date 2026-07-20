@@ -23,10 +23,13 @@ class V2Log extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.canvas, 'header', (e) => {
+    V2Web.addElement(this.canvas, 'div', (e) => {
       this.#element = e;
       e.style.height = '12rem';
       e.style.overflow = 'auto';
+      e.style.paddingRight = '0.5rem';
+      e.style.whiteSpace = 'nowrap';
+      e.style.width = 'calc(100vw - 2rem)';
     });
 
     return Object.seal(this);

@@ -23,18 +23,24 @@ class V2Output extends V2WebModule {
     super('output', 'MIDI Out', 'Receive notes and control changes');
     this.#device = device;
 
+    const reset = () => {
+      this.#channel.value = null;
+      this.detach();
+      this.#clear();
+    };
+
     this.#device.addNotifier('show', (data) => {
-      if (!data.output)
+      if (!data.output) {
+        reset();
         return;
+      }
 
       this.#show(data);
       this.attach();
     });
 
     this.#device.addNotifier('reset', () => {
-      this.#channel.value = null;
-      this.detach();
-      this.#clear();
+      reset();
     });
 
     const updateNote = (channel, note, velocity) => {
