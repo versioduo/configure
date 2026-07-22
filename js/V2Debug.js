@@ -4,7 +4,7 @@ class V2Debug extends V2WebModule {
   #element = null;
 
   constructor(device) {
-    super('debug', 'Debug', 'Show the last reply');
+    super('debug', '--bug', 'Debug', 'Show the Device Reply');
     this.#device = device;
 
     new V2WebMenu(this.canvas, (menu) => {

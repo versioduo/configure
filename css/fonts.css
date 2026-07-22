@@ -15,6 +15,7 @@
 
 i.icon {
   font-style: normal;
+  font-weight: normal;
   margin-right: 0.5rem;
 
   &.--nospace {
@@ -36,14 +37,29 @@ i.icon {
     content: '\f5da';
   }
 
+  &.--bug:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f188';
+  }
+
   &.--code-branch:before {
     font-family: 'Font Awesome Solid';
     content: '\f126';
   }
 
+  &.--compass:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f14e';
+  }
+
   &.--computer:before {
     font-family: 'Font Awesome Solid';
     content: '\e4e5';
+  }
+
+  &.--console:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f120';
   }
 
   &.--envelope:before {
@@ -54,6 +70,12 @@ i.icon {
   &.--file-code:before {
     font-family: 'Font Awesome Solid';
     content: '\f1c9';
+  }
+
+
+  &.--gear:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f013';
   }
 
   &.--icons:before {
@@ -99,6 +121,16 @@ i.icon {
   &.--plus:before {
     font-family: 'Font Awesome Solid';
     content: '\2b';
+  }
+
+  &.--right-to-bracket:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f2f6';
+  }
+
+  &.--right-from-bracket:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f2f5';
   }
 
   &.--rotate:before {

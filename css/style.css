@@ -41,45 +41,52 @@ html {
     position: fixed;
     top: 0;
     width: 100%;
-    z-index: 1;
 
     a {
       text-decoration: none;
     }
 
+    >h1 {
+      align-content: center;
+      font-size: 2rem;
+      font-weight: normal;
+      height: 3rem;
+      left: 3rem;
+      position: fixed;
+      text-align: center;
+      top: 0;
+      width: calc(100vw - 3rem);
+
+      >a {
+        align-content: center;
+        display: inline-block;
+        height: 100%;
+        padding-right: 3rem;
+        width: 100%;
+      }
+    }
+
     >details {
+      &:not(:has(>ul>li)) {
+        display: none;
+      }
+
       >summary {
+        align-content: center;
+        cursor: pointer;
         font-size: 2rem;
         height: 3rem;
-        list-style: none;
+        text-align: center;
+        width: 3rem;
 
-        &::before {
-          align-content: center;
-          content: '\f0c9';
+        &::marker {
           font-family: 'Font Awesome Solid';
-          height: inherit;
-          padding-left: 0.5rem;
-          padding-right: 0.5rem;
-          position: fixed;
-          z-index: 2;
+          content: '\f0c9';
         }
 
-        [open] &::before {
+        [open] &::marker {
+          font-family: 'Font Awesome Solid';
           content: '\f00d';
-        }
-
-        >h1 {
-          font-size: inherit;
-          font-weight: inherit;
-          height: 100%;
-
-          >a {
-            align-content: center;
-            display: inline-block;
-            height: 100%;
-            text-align: center;
-            width: 100%;
-          }
         }
       }
 
@@ -114,7 +121,7 @@ html {
             font-weight: bolder;
           }
 
-          @media all and (max-width: 60rem) {
+          @media all and (max-width: 80rem) {
             & {
               flex-basis: 50%;
             }
@@ -135,6 +142,13 @@ html {
     gap: 1rem;
     padding-top: 3rem;
     padding-left: 0.5rem;
+
+    &.horizontal {
+      @media all and (min-width: 130rem) {
+        grid-auto-columns: minmax(0, 1fr);
+        grid-auto-flow: column;
+      }
+    }
 
     p {
       margin-bottom: 1rem;
@@ -159,7 +173,7 @@ html {
         column-count: 3;
         column-gap: 1rem;
 
-        @media all and (max-width: 60rem) {
+        @media all and (max-width: 80rem) {
           & {
             column-count: 2;
 
@@ -368,7 +382,13 @@ html {
           &.text {
             padding-left: 0.5rem;
             padding-right: 0.5rem;
-            width: 10rem;
+            width: 12rem;
+          }
+
+          &.text-small {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            width: 8rem;
           }
 
           &.field {
@@ -378,12 +398,12 @@ html {
           }
 
           &.light {
-            background-color: hsl(from var(--colour-dark) h s l / 70%);
+            background-color: hsl(from var(--colour-dark) h s l / 80%);
             color: hsl(from var(--colour-light) h s l / 90%);
           }
 
           &.dark {
-            background-color: hsl(from var(--colour-light) h s l / 60%);
+            background-color: hsl(from var(--colour-light) h s l / 50%);
             color: hsl(from var(--colour-dark) h s l / 90%);
           }
         }
@@ -391,21 +411,21 @@ html {
         >button {
           &.light {
             &:hover {
-              background-color: hsl(from var(--colour-dark) h s l / 80%);
+              background-color: hsl(from var(--colour-dark) h s l / 90%);
             }
 
             &:active {
-              background-color: hsl(from var(--colour-dark) h s l / 90%);
+              background-color: hsl(from var(--colour-dark) h s l / 95%);
             }
           }
 
           &.dark {
             &:hover {
-              background-color: hsl(from var(--colour-light) h s l / 70%);
+              background-color: hsl(from var(--colour-light) h s l / 60%);
             }
 
             &:active {
-              background-color: hsl(from var(--colour-light) h s l / 80%);
+              background-color: hsl(from var(--colour-light) h s l / 70%);
             }
           }
         }
@@ -616,11 +636,11 @@ html {
       >ul.cards {
         display: grid;
         gap: 1rem;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
 
-        @media all and (max-width: 60rem) {
+        @media all and (max-width: 80rem) {
           & {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
 

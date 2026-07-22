@@ -45,7 +45,7 @@ class V2Input extends V2WebModule {
   });
 
   constructor(device) {
-    super('input', 'MIDI In', 'Play notes and adjust controllers');
+    super('input', '--right-to-bracket', 'MIDI In', 'Play Notes and Adjust Controllers');
     this.#device = device;
 
     const reset = () => {
@@ -86,7 +86,7 @@ class V2Input extends V2WebModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+          e.classList.add(isNull(controller.valueFine) ? 'text' : 'text-small');
         e.textContent = controller.name;
       });
 
@@ -178,7 +178,7 @@ class V2Input extends V2WebModule {
 
         } else {
           e.min = controller.min ?? 0;
-          e.max = controller.max ?? (127 << 7) + 127;;
+          e.max = controller.max ?? (127 << 7) + 127;
           e.value = (value << 7) + controller.valueFine;
         }
 

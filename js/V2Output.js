@@ -20,7 +20,7 @@ class V2Output extends V2WebModule {
   });
 
   constructor(device) {
-    super('output', 'MIDI Out', 'Receive notes and control changes');
+    super('output', '--right-to-bracket', 'MIDI Out', 'Receive Notes and Control Changes');
     this.#device = device;
 
     const reset = () => {
@@ -128,7 +128,7 @@ class V2Output extends V2WebModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add(isNull(controller.valueFine) ? 'text' : 'text-small');
         e.textContent = controller.name;
       });
 

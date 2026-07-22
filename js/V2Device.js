@@ -195,7 +195,7 @@ class V2Device extends V2Connection {
     this.#data = data;
 
     if (!this.#title) {
-      this.title(data.metadata.product, data.metadata.description);
+      this.title(null, data.metadata.product, data.metadata.description);
     }
 
     this.#showNode();
@@ -204,15 +204,15 @@ class V2Device extends V2Connection {
       new V2WebTabs(this.canvas, (tabs) => {
         this.#tabs = tabs;
 
-        tabs.addTab('device', 'Device', 'plug', (e) => {
+        tabs.addTab('device', '--plug', 'Device', (e) => {
           this.#device = e;
         });
 
-        tabs.addTab('statistics', 'Statistics', 'magnifying-glass-chart', (e) => {
+        tabs.addTab('statistics', '--magnifying-glass-chart', 'Statistics', (e) => {
           this.#statistics = e;
         });
 
-        tabs.addTab('firmware', 'Firmware', 'microchip', (e) => {
+        tabs.addTab('firmware', '--microchip', 'Firmware', (e) => {
           this.#firmware.element = e;
         });
 

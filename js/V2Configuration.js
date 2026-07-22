@@ -14,22 +14,22 @@ class V2Configuration extends V2WebModule {
   });
 
   constructor(device) {
-    super('configuration', 'Configuration', 'Edit, backup, restore, reset');
+    super('configuration', '--gear', 'Configuration', 'Edit, Backup, Restore, Reset');
     this.#device = device;
 
     new V2WebTabs(this.canvas, (tabs) => {
       this.#tabs = tabs;
 
-      tabs.addTab('overview', 'Overview', 'book-open-reader', (e) => {
+      tabs.addTab('overview', '--book-open-reader', 'Overview', (e) => {
         this.#overview.element = e;
       });
 
-      tabs.addTab('edit', 'Edit', 'sliders', (e) => {
+      tabs.addTab('edit', '--sliders', 'Edit', (e) => {
         this.#edit.element = e;
         this.#edit.object = new V2ConfigurationEdit(device, this.#edit.element);
       });
 
-      tabs.addTab('file', 'File', 'file-code', (e) => {
+      tabs.addTab('file', '--file-code', 'File', (e) => {
         this.#file.element = e;
         this.#file.object = new V2ConfigurationFile(device, this.#file.element);
       });

@@ -5,7 +5,7 @@ class V2Log extends V2WebModule {
 
   // Early initialization to store messages before the section is added.
   constructor() {
-    super('log', 'Log', 'View system events');
+    super('log', '--console', 'Log', 'View System Events');
 
     new V2WebMenu(this.canvas, (menu) => {
       menu.addElement('button', (e) => {
