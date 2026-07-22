@@ -120,15 +120,16 @@ class V2Output extends V2WebModule {
 
   #addController(controller) {
     const type = controller.type || 'range';
+    const fine = !isNull(controller.valueFine);
 
     new V2WebMenu(this.#controllers.elementList, (menu) => {
       menu.addElement('span', (e) => {
         e.classList.add('label');
-        e.textContent = 'CC ' + controller.number;
+        e.textContent = 'CC ' + controller.number + (fine ? ' / ' + (controller.number + V2MIDI.CC.controllerLSB) : '');
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add(isNull(controller.valueFine) ? 'text' : 'text-small');
+        e.classList.add(!fine ? 'text' : 'text-small');
         e.textContent = controller.name;
       });
 
@@ -144,7 +145,7 @@ class V2Output extends V2WebModule {
 
           // Support high-resolution, 14 bits controllers. Controllers 0-31 (MSB)
           // have matching high-resolution values with controllers 32-63 (LSB).
-          if (!isNull(controller.valueFine)) {
+          if (fine) {
             menu.addElement('span', (e) => {
               e.classList.add('field');
               e.textContent = controller.valueFine;

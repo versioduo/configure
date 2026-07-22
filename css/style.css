@@ -143,13 +143,6 @@ html {
     padding-top: 3rem;
     padding-left: 0.5rem;
 
-    &.horizontal {
-      @media all and (min-width: 130rem) {
-        grid-auto-columns: minmax(0, 1fr);
-        grid-auto-flow: column;
-      }
-    }
-
     p {
       margin-bottom: 1rem;
 
@@ -511,7 +504,7 @@ html {
       }
 
       &.font-scale {
-        font-size: clamp(0.5rem, 2vw, 1rem);
+        font-size: clamp(0.75rem, 2.5vw, 1rem);
       }
     }
 

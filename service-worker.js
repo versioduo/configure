@@ -1,5 +1,5 @@
 const name = 'configure';
-const version = 354;
+const version = 356;
 const files = [
   './',
   'css/fonts.css',
