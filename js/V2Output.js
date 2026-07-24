@@ -1,6 +1,7 @@
 // MIDI Output controllers and notes.
 class V2Output extends V2WebModule {
   #device = null;
+  #elements = null;
   #channel = Object.seal({
     value: null,
     addEntry: null
@@ -22,6 +23,11 @@ class V2Output extends V2WebModule {
   constructor(device) {
     super('output', '--right-to-bracket', 'MIDI Out', 'Receive Notes and Control Changes');
     this.#device = device;
+
+    V2Web.addElement(this.canvas, 'div', (e) => {
+      this.#elements = e;
+      e.id = this.id + '.elements';
+    });
 
     const reset = () => {
       this.#channel.value = null;
@@ -281,7 +287,7 @@ class V2Output extends V2WebModule {
     if (!data.output)
       return;
 
-    new V2WebMenu(this.canvas, (menu) => {
+    new V2WebMenu(this.#elements, (menu) => {
       menu.addElement('button', (e) => {
         e.classList.add('link');
         e.textContent = 'Refresh';
@@ -291,7 +297,7 @@ class V2Output extends V2WebModule {
       });
     });
 
-    new V2WebMenu(this.canvas, (menu) => {
+    new V2WebMenu(this.#elements, (menu) => {
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = 'Channel';
@@ -323,8 +329,9 @@ class V2Output extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
+    V2Web.addElement(this.#elements, 'div', (e) => {
       this.#controllers.element = e;
+      e.id = this.id + '.controllers';
       e.style.display = 'none';
 
       V2Web.addElement(e, 'hr');
@@ -338,8 +345,9 @@ class V2Output extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
+    V2Web.addElement(this.#elements, 'div', (e) => {
       this.#notes.element = e;
+      e.id = this.id + '.notes';
       e.style.display = 'none';
 
       V2Web.addElement(e, 'hr');
@@ -396,6 +404,7 @@ class V2Output extends V2WebModule {
   }
 
   #clear() {
-    super.reset();
+    while (this.#elements.firstChild)
+      this.#elements.firstChild.remove();
   }
 }

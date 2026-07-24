@@ -20,7 +20,7 @@ class V2Debug extends V2WebModule {
       this.#element = e;
       e.style.overflowX = 'auto';
       e.style.paddingRight = '0.5rem';
-      e.style.width = 'calc(100vw - 2rem)';
+      e.style.width = '100%';
     });
 
     this.#device.addNotifier('show', (data) => {

@@ -72,7 +72,6 @@ i.icon {
     content: '\f1c9';
   }
 
-
   &.--gear:before {
     font-family: 'Font Awesome Solid';
     content: '\f013';

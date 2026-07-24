@@ -1,6 +1,7 @@
 // MIDI Input controllers and notes.
 class V2Input extends V2WebModule {
   #device = null;
+  #elements = null;
   #channel = Object.seal({
     value: null,
     addEntry: null
@@ -47,6 +48,11 @@ class V2Input extends V2WebModule {
   constructor(device) {
     super('input', '--right-to-bracket', 'MIDI In', 'Play Notes and Adjust Controllers');
     this.#device = device;
+
+    V2Web.addElement(this.canvas, 'div', (e) => {
+      this.#elements = e;
+      e.id = this.id + '.elements';
+    });
 
     const reset = () => {
       this.#channel.value = null;
@@ -562,7 +568,7 @@ class V2Input extends V2WebModule {
   #show(data) {
     this.#clear();
 
-    new V2WebMenu(this.canvas, (menu) => {
+    new V2WebMenu(this.#elements, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Notes Off';
         e.addEventListener('click', () => {
@@ -587,7 +593,7 @@ class V2Input extends V2WebModule {
       });
     });
 
-    new V2WebMenu(this.canvas, (menu) => {
+    new V2WebMenu(this.#elements, (menu) => {
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = 'Channel';
@@ -619,12 +625,14 @@ class V2Input extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
+    V2Web.addElement(this.#elements, 'div', (e) => {
       this.#controls.element = e;
+      e.id = this.id + '.controls';
     });
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
+    V2Web.addElement(this.#elements, 'div', (e) => {
       this.#controllers.element = e;
+      e.id = this.id + '.controllers';
       e.style.display = 'none';
 
       V2Web.addElement(e, 'hr', (e) => {
@@ -640,9 +648,10 @@ class V2Input extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
+    V2Web.addElement(this.#elements, 'div', (e) => {
       this.#notes.element = e;
       e.style.display = 'none';
+      e.id = this.id + '.notes';
 
       V2Web.addElement(e, 'hr', (e) => {
       });
@@ -662,6 +671,7 @@ class V2Input extends V2WebModule {
 
       V2Web.addElement(e, 'div', (e) => {
         this.#notes.chromatic.element = e;
+        e.id = 'input-notes-chromatic';
       });
     });
 
@@ -709,6 +719,7 @@ class V2Input extends V2WebModule {
     if (this.#notes.chromatic.keyboard)
       this.#notes.chromatic.keyboard.cleanup();
 
-    super.reset();
+    while (this.#elements.firstChild)
+      this.#elements.firstChild.remove();
   }
 }

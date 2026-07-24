@@ -11,7 +11,7 @@ class V2Connection extends V2WebModule {
   });
 
   constructor(log, connect) {
-    super();
+    super('connection');
     this.log = log;
     this.midi = new V2MIDI();
     this.notify = new V2WebNotify(this.canvas);

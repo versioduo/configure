@@ -30,6 +30,7 @@ class V2Device extends V2Connection {
     super(log, connect);
 
     V2Web.addElement(this.canvas, 'div', (e) => {
+      e.id = this.id + '.node';
       this.#node.element = e;
     });
 
@@ -200,20 +201,27 @@ class V2Device extends V2Connection {
 
     this.#showNode();
 
+
+
     if (!this.#tabs) {
       new V2WebTabs(this.canvas, (tabs) => {
         this.#tabs = tabs;
+        tabs.element.id = this.id + '.tabs';
+        tabs.element.id = this.id + '.tabs';
 
         tabs.addTab('device', '--plug', 'Device', (e) => {
           this.#device = e;
+          e.id = tabs.element.id + '.device';
         });
 
         tabs.addTab('statistics', '--magnifying-glass-chart', 'Statistics', (e) => {
           this.#statistics = e;
+          e.id = tabs.element.id + '.statistics';
         });
 
         tabs.addTab('firmware', '--microchip', 'Firmware', (e) => {
           this.#firmware.element = e;
+          e.id = tabs.element.id + '.firmware';
         });
 
         // Check for firmware updates when activating the tab.
@@ -298,9 +306,10 @@ class V2Device extends V2Connection {
     });
 
     V2Web.addElement(this.#statistics, 'div', (scroll) => {
+      scroll.id = this.id + '.statistics';
       scroll.style.overflowX = 'auto';
       scroll.style.hyphens = 'none';
-      scroll.style.width = 'calc(100vw - 2rem)';
+      scroll.style.width = '100%';
       scroll.style.whiteSpace = 'nowrap';
 
       V2Web.addElement(scroll, 'table', (e) => {
@@ -393,10 +402,12 @@ class V2Device extends V2Connection {
     this.#firmware.notify = new V2WebNotify(this.#firmware.element);
 
     V2Web.addElement(this.#firmware.element, 'div', (e) => {
+      e.id = this.id + '.firmware.seclect';
       this.#firmware.elementSelect = e;
     });
 
     V2Web.addElement(this.#firmware.element, 'div', (e) => {
+      e.id = this.id + '.firmware.list';
       this.#firmware.elementNewFirmware = e;
     });
 

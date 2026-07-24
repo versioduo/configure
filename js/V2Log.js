@@ -29,7 +29,7 @@ class V2Log extends V2WebModule {
       e.style.overflow = 'auto';
       e.style.paddingRight = '0.5rem';
       e.style.whiteSpace = 'nowrap';
-      e.style.width = 'calc(100vw - 2rem)';
+      e.style.width = '100%';
     });
 
     return Object.seal(this);
