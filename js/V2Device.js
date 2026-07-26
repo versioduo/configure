@@ -12,10 +12,10 @@ class V2Device extends V2Connection {
   #firmware = Object.seal({
     element: null,
     elementSelect: null,
+    notify: null,
     elementNewFirmware: null,
     elementUpload: null,
     elementProgress: null,
-    notify: null,
     update: Object.seal({
       bytes: null,
       hash: null,
@@ -148,14 +148,13 @@ class V2Device extends V2Connection {
 
     new V2WebMenu(this.#node.element, (menu) => {
       this.#node.menu = menu;
-      menu.element.classList.add('center');
 
       menu.addElement('span', (e) => {
         e.textContent = 'Node';
       });
 
       menu.addElement('select', (s) => {
-        s.classList.add('link');
+        s.classList.add('primary');
 
         for (let i = 0; i < this.#data.system.hardware.usb.ports.current; i++) {
           V2Web.addElement(s, 'option', (e) => {
@@ -288,6 +287,7 @@ class V2Device extends V2Connection {
 
         menu.addElement('a', (e) => {
           e.href = link.target;
+          e.target = 'links';
           const target = link.target.replace(/^https?:\/\//, '');
           e.innerText = target.split("?")[0];
         });
@@ -297,7 +297,6 @@ class V2Device extends V2Connection {
     // The Statistics tab.
     new V2WebMenu(this.#statistics, (menu) => {
       menu.addElement('button', (e) => {
-        e.classList.add('link');
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
           this.sendGetAll();
@@ -384,7 +383,7 @@ class V2Device extends V2Connection {
 
       menu.addElement('button', (e) => {
         this.#firmware.elementUpload = e;
-        e.classList.add('link');
+        e.classList.add('primary');
         e.disabled = true;
         e.textContent = 'Install';
         e.addEventListener('click', () => {
@@ -399,12 +398,12 @@ class V2Device extends V2Connection {
       e.value = 0;
     });
 
-    this.#firmware.notify = new V2WebNotify(this.#firmware.element);
-
     V2Web.addElement(this.#firmware.element, 'div', (e) => {
       e.id = this.id + '.firmware.seclect';
       this.#firmware.elementSelect = e;
     });
+
+    this.#firmware.notify = new V2WebNotify(this.#firmware.element);
 
     V2Web.addElement(this.#firmware.element, 'div', (e) => {
       e.id = this.id + '.firmware.list';
@@ -612,9 +611,7 @@ class V2Device extends V2Connection {
         if (this.#data.system.firmware.hash === updates[updateIndex].hash)
           this.#firmware.notify.info('The firmware is up-to-date.');
 
-        else
-          this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[updateIndex].file);
-
+        this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[updateIndex].file);
       })
       .catch((error) => {
         this.printDevice('Error requesting firmware info: ' + error.message);

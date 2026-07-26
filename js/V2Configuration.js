@@ -129,6 +129,7 @@ class V2ConfigurationEdit {
 
     new V2WebMenu(this.#canvas, (menu) => {
       menu.addElement('button', (e) => {
+        e.classList.add('danger');
         e.textContent = 'Erase';
         e.addEventListener('click', () => {
           this.#erase();
@@ -143,7 +144,7 @@ class V2ConfigurationEdit {
       });
 
       menu.addElement('button', (e) => {
-        e.classList.add('link');
+        e.classList.add('primary');
         e.textContent = 'Save';
         e.addEventListener('click', () => {
           this.save();
@@ -266,7 +267,7 @@ class V2ConfigurationFile {
       });
 
       menu.addElement('button', (e) => {
-        e.classList.add('link');
+        e.classList.add('primary');
         e.textContent = 'Save';
         e.addEventListener('click', () => {
           this.#send();

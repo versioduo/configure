@@ -42,8 +42,6 @@ class V2Web {
       });
 
       new V2WebMenu(section, (menu) => {
-        menu.element.classList.add('center');
-
         menu.addElement('button', (e) => {
           e.textContent = 'Close';
           e.addEventListener('click', () => {
@@ -52,8 +50,8 @@ class V2Web {
         });
 
         menu.addElement('button', (e) => {
-          e.classList.add('link');
-          e.textContent = 'Update';
+          e.classList.add('primary');
+          e.textContent = 'Reload';
           e.addEventListener('click', () => {
             handler();
           });
@@ -255,7 +253,7 @@ class V2WebTabs {
       this.element = tabs;
 
       new V2WebMenu(tabs, (menu) => {
-        menu.element.classList.add('full');
+        menu.element.classList.add('bar');
         this.#elementsTabs = menu;
       });
     });
@@ -285,7 +283,7 @@ class V2WebTabs {
       V2Web.addElement(e, 'i', (i) => {
         i.classList.add('icon', icon);
       });
-      V2Web.addElement(e, 'span', (s) => { s.textContent = text; });
+      e.append(text);
       this.#tabs[name].tab = e;
     });
 
@@ -301,11 +299,11 @@ class V2WebTabs {
   switchTab(name) {
     for (const id of Object.keys(this.#tabs)) {
       if (id === name) {
-        this.#tabs[id].tab.classList.add('link');
+        this.#tabs[id].tab.classList.add('primary');
         this.#tabs[id].canvas.style.display = '';
 
       } else {
-        this.#tabs[id].tab.classList.remove('link');
+        this.#tabs[id].tab.classList.remove('primary');
         this.#tabs[id].canvas.style.display = 'none';
       }
     }

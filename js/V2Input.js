@@ -1,7 +1,7 @@
 // MIDI Input controllers and notes.
 class V2Input extends V2WebModule {
   #device = null;
-  #elements = null;
+  #element = null;
   #channel = Object.seal({
     value: null,
     addEntry: null
@@ -15,7 +15,6 @@ class V2Input extends V2WebModule {
 
   #controllers = Object.seal({
     element: null,
-    elementList: null
   });
 
   #notes = Object.seal({
@@ -36,7 +35,6 @@ class V2Input extends V2WebModule {
       })
     }),
 
-    elementList: null,
     chromatic: Object.seal({
       element: null,
       start: 0,
@@ -50,8 +48,8 @@ class V2Input extends V2WebModule {
     this.#device = device;
 
     V2Web.addElement(this.canvas, 'div', (e) => {
-      this.#elements = e;
-      e.id = this.id + '.elements';
+      this.#element = e;
+      e.id = this.id + '.element';
     });
 
     const reset = () => {
@@ -86,14 +84,16 @@ class V2Input extends V2WebModule {
     let inputFine = null;
     let range = null;
 
-    new V2WebMenu(this.#controllers.elementList, (menu) => {
+    new V2WebMenu(this.#controllers.element, (menu) => {
+      menu.element.classList.add('full');
+
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = 'CC ' + controller.number + (fine ? ' / ' + (controller.number + V2MIDI.CC.controllerLSB) : '');
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add(!fine ? 'text' : 'text-small');
+        e.classList.add('text');
         e.textContent = controller.name;
       });
 
@@ -149,7 +149,6 @@ class V2Input extends V2WebModule {
 
         case 'momentary':
           menu.addElement('button', (e) => {
-            e.classList.add('link');
             e.classList.add('momentary');
 
             e.addEventListener('mousedown', () => {
@@ -174,9 +173,8 @@ class V2Input extends V2WebModule {
     });
 
     if (type === 'range') {
-      V2Web.addElement(this.#controllers.elementList, 'input', (e) => {
+      V2Web.addElement(this.#controllers.element, 'input', (e) => {
         range = e;
-        e.classList.add('range');
         e.type = 'range';
         if (!inputFine) {
           e.min = controller.min ?? 0;
@@ -208,7 +206,9 @@ class V2Input extends V2WebModule {
   }
 
   #addNote(name, note) {
-    new V2WebMenu(this.#notes.elementList, (menu) => {
+    new V2WebMenu(this.#notes.element, (menu) => {
+      menu.element.classList.add('full');
+
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
@@ -221,7 +221,6 @@ class V2Input extends V2WebModule {
       });
 
       menu.addElement('button', (e) => {
-        e.classList.add('link');
         e.classList.add('momentary');
         e.addEventListener('mousedown', () => {
           this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
@@ -323,8 +322,15 @@ class V2Input extends V2WebModule {
       };
 
       new V2WebMenu(this.#notes.controls.element, (menu) => {
+        menu.element.classList.add('full');
+
         menu.addElement('span', (e) => {
           e.classList.add('label');
+          e.textContent = 'Note';
+        });
+
+        menu.addElement('span', (e) => {
+          e.classList.add('text');
           e.textContent = 'Velocity';
         });
 
@@ -367,9 +373,16 @@ class V2Input extends V2WebModule {
       };
 
       new V2WebMenu(this.#notes.controls.element, (menu) => {
+        menu.element.classList.add('full');
+
         menu.addElement('span', (e) => {
           e.classList.add('label');
-          e.textContent = 'Release';
+          e.textContent = 'Note';
+        });
+
+        menu.addElement('span', (e) => {
+          e.classList.add('text');
+          e.textContent = 'Release Velocity';
         });
 
         menu.addElement('input', (e) => {
@@ -415,8 +428,15 @@ class V2Input extends V2WebModule {
         };
 
         new V2WebMenu(this.#notes.controls.element, (menu) => {
+          menu.element.classList.add('full');
+
           menu.addElement('span', (e) => {
             e.classList.add('label');
+            e.textContent = 'Channel';
+          });
+
+          menu.addElement('span', (e) => {
+            e.classList.add('text');
             e.textContent = 'Aftertouch';
           });
 
@@ -476,8 +496,15 @@ class V2Input extends V2WebModule {
         };
 
         new V2WebMenu(this.#notes.controls.element, (menu) => {
+          menu.element.classList.add('full');
+
           menu.addElement('span', (e) => {
             e.classList.add('label');
+            e.textContent = 'Channel';
+          });
+
+          menu.addElement('span', (e) => {
+            e.classList.add('text');
             e.textContent = channel.pitchbend.name || 'Pitch Bend';
           });
 
@@ -568,7 +595,7 @@ class V2Input extends V2WebModule {
   #show(data) {
     this.#clear();
 
-    new V2WebMenu(this.#elements, (menu) => {
+    new V2WebMenu(this.#element, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Notes Off';
         e.addEventListener('click', () => {
@@ -585,7 +612,6 @@ class V2Input extends V2WebModule {
       });
 
       menu.addElement('button', (e) => {
-        e.classList.add('link');
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
           this.#device.sendGetAll();
@@ -593,7 +619,7 @@ class V2Input extends V2WebModule {
       });
     });
 
-    new V2WebMenu(this.#elements, (menu) => {
+    new V2WebMenu(this.#element, (menu) => {
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = 'Channel';
@@ -625,36 +651,30 @@ class V2Input extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.#elements, 'div', (e) => {
+    V2Web.addElement(this.#element, 'div', (e) => {
       this.#controls.element = e;
       e.id = this.id + '.controls';
     });
 
-    V2Web.addElement(this.#elements, 'div', (e) => {
+    V2Web.addElement(this.#element, 'div', (e) => {
       this.#controllers.element = e;
       e.id = this.id + '.controllers';
       e.style.display = 'none';
 
-      V2Web.addElement(e, 'hr', (e) => {
-      });
+      V2Web.addElement(e, 'hr');
 
       V2Web.addElement(e, 'p', (e) => {
         e.classList.add('title');
         e.textContent = 'Controllers';
       });
-
-      V2Web.addElement(e, 'div', (e) => {
-        this.#controllers.elementList = e;
-      });
     });
 
-    V2Web.addElement(this.#elements, 'div', (e) => {
+    V2Web.addElement(this.#element, 'div', (e) => {
       this.#notes.element = e;
-      e.style.display = 'none';
       e.id = this.id + '.notes';
+      e.style.display = 'none';
 
-      V2Web.addElement(e, 'hr', (e) => {
-      });
+      V2Web.addElement(e, 'hr');
 
       V2Web.addElement(e, 'p', (e) => {
         e.classList.add('title');
@@ -663,15 +683,12 @@ class V2Input extends V2WebModule {
 
       V2Web.addElement(e, 'div', (e) => {
         this.#notes.controls.element = e;
-      });
-
-      V2Web.addElement(e, 'div', (e) => {
-        this.#notes.elementList = e;
+        e.id = this.id + '.notes.controls';
       });
 
       V2Web.addElement(e, 'div', (e) => {
         this.#notes.chromatic.element = e;
-        e.id = 'input-notes-chromatic';
+        e.id = this.id + 'notes.chromatic';
       });
     });
 
@@ -719,7 +736,7 @@ class V2Input extends V2WebModule {
     if (this.#notes.chromatic.keyboard)
       this.#notes.chromatic.keyboard.cleanup();
 
-    while (this.#elements.firstChild)
-      this.#elements.firstChild.remove();
+    while (this.#element.firstChild)
+      this.#element.firstChild.remove();
   }
 }

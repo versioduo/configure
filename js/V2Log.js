@@ -27,7 +27,7 @@ class V2Log extends V2WebModule {
       this.#element = e;
       e.style.height = '12rem';
       e.style.overflow = 'auto';
-      e.style.paddingRight = '0.5rem';
+      e.style.padding = '0.5rem';
       e.style.whiteSpace = 'nowrap';
       e.style.width = '100%';
     });

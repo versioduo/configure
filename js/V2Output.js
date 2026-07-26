@@ -1,14 +1,13 @@
 // MIDI Output controllers and notes.
 class V2Output extends V2WebModule {
   #device = null;
-  #elements = null;
+  #element = null;
   #channel = Object.seal({
     value: null,
     addEntry: null
   });
   #controllers = Object.seal({
     element: null,
-    elementList: null,
     list: null
   });
   #aftertouch = Object.seal({
@@ -16,7 +15,6 @@ class V2Output extends V2WebModule {
   });
   #notes = Object.seal({
     element: null,
-    elementList: null,
     list: null
   });
 
@@ -25,8 +23,8 @@ class V2Output extends V2WebModule {
     this.#device = device;
 
     V2Web.addElement(this.canvas, 'div', (e) => {
-      this.#elements = e;
-      e.id = this.id + '.elements';
+      this.#element = e;
+      e.id = this.id + '.element';
     });
 
     const reset = () => {
@@ -115,9 +113,9 @@ class V2Output extends V2WebModule {
 
       } else if (this.#controllers.list[controller].button) {
         if (value > 63)
-          this.#controllers.list[controller].button.classList.add('link');
+          this.#controllers.list[controller].button.classList.add('primary');
         else
-          this.#controllers.list[controller].button.classList.remove('link');
+          this.#controllers.list[controller].button.classList.remove('primary');
       }
     });
 
@@ -128,14 +126,16 @@ class V2Output extends V2WebModule {
     const type = controller.type || 'range';
     const fine = !isNull(controller.valueFine);
 
-    new V2WebMenu(this.#controllers.elementList, (menu) => {
+    new V2WebMenu(this.#controllers.element, (menu) => {
+      menu.element.classList.add('full');
+
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = 'CC ' + controller.number + (fine ? ' / ' + (controller.number + V2MIDI.CC.controllerLSB) : '');
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add(!fine ? 'text' : 'text-small');
+        e.classList.add('text');
         e.textContent = controller.name;
       });
 
@@ -180,7 +180,7 @@ class V2Output extends V2WebModule {
             e.disabled = true;
             e.classList.add('momentary');
             if (controller.value > 63)
-              e.classList.add('link');
+              e.classList.add('primary');
             this.#controllers.list[controller.number] = {
               'button': e
             };
@@ -190,7 +190,7 @@ class V2Output extends V2WebModule {
     });
 
     if (type === 'range') {
-      V2Web.addElement(this.#controllers.elementList, 'progress', (e) => {
+      V2Web.addElement(this.#controllers.element, 'progress', (e) => {
         e.value = controller.value || 0;
         e.min = controller.min ?? 0;
         e.max = controller.max ?? 127;
@@ -200,7 +200,9 @@ class V2Output extends V2WebModule {
   }
 
   #addNote(name, note, hasAftertouch) {
-    new V2WebMenu(this.#notes.elementList, (menu) => {
+    new V2WebMenu(this.#notes.element, (menu) => {
+      menu.element.classList.add('full');
+
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
@@ -220,14 +222,14 @@ class V2Output extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.#notes.elementList, 'progress', (e) => {
+    V2Web.addElement(this.#notes.element, 'progress', (e) => {
       e.value = '0';
       e.max = '127';
       this.#notes.list[note].progress = e;
     });
 
     if (hasAftertouch) {
-      V2Web.addElement(this.#notes.elementList, 'progress', (e) => {
+      V2Web.addElement(this.#notes.element, 'progress', (e) => {
         e.value = '0';
         e.max = '127';
         this.#notes.list[note].aftertouch = e;
@@ -249,7 +251,7 @@ class V2Output extends V2WebModule {
         let input = null;
         let progress = null;
 
-        new V2WebMenu(this.#notes.elementList, (menu) => {
+        new V2WebMenu(this.#notes.element, (menu) => {
           menu.addElement('span', (e) => {
             e.textContent = 'Aftertouch';
           });
@@ -262,7 +264,7 @@ class V2Output extends V2WebModule {
           });
         });
 
-        V2Web.addElement(this.#notes.elementList, 'progress', (e) => {
+        V2Web.addElement(this.#notes.element, 'progress', (e) => {
           progress = e;
           e.value = channel.aftertouch.value;
           e.max = '127';
@@ -287,9 +289,8 @@ class V2Output extends V2WebModule {
     if (!data.output)
       return;
 
-    new V2WebMenu(this.#elements, (menu) => {
+    new V2WebMenu(this.#element, (menu) => {
       menu.addElement('button', (e) => {
-        e.classList.add('link');
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
           this.#device.sendGetAll();
@@ -297,7 +298,7 @@ class V2Output extends V2WebModule {
       });
     });
 
-    new V2WebMenu(this.#elements, (menu) => {
+    new V2WebMenu(this.#element, (menu) => {
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = 'Channel';
@@ -329,7 +330,7 @@ class V2Output extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.#elements, 'div', (e) => {
+    V2Web.addElement(this.#element, 'div', (e) => {
       this.#controllers.element = e;
       e.id = this.id + '.controllers';
       e.style.display = 'none';
@@ -339,13 +340,9 @@ class V2Output extends V2WebModule {
         e.classList.add('title');
         e.textContent = 'Controllers';
       });
-
-      V2Web.addElement(e, 'div', (e) => {
-        this.#controllers.elementList = e;
-      });
     });
 
-    V2Web.addElement(this.#elements, 'div', (e) => {
+    V2Web.addElement(this.#element, 'div', (e) => {
       this.#notes.element = e;
       e.id = this.id + '.notes';
       e.style.display = 'none';
@@ -354,10 +351,6 @@ class V2Output extends V2WebModule {
       V2Web.addElement(e, 'p', (e) => {
         e.classList.add('title');
         e.textContent = 'Notes';
-      });
-
-      V2Web.addElement(e, 'div', (e) => {
-        this.#notes.elementList = e;
       });
     });
 
@@ -404,7 +397,7 @@ class V2Output extends V2WebModule {
   }
 
   #clear() {
-    while (this.#elements.firstChild)
-      this.#elements.firstChild.remove();
+    while (this.#element.firstChild)
+      this.#element.firstChild.remove();
   }
 }
