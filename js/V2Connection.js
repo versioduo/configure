@@ -43,13 +43,10 @@ class V2Connection extends V2WebModule {
           reset.disabled = true;
         });
 
-        // Focus the device selector when new devices arrive and we are
-        // not currently connected.
         this.select.addNotifier('add', () => {
           if (this.device.input)
             return;
 
-          this.select.focus();
           window.scroll(0, 0);
         });
       });

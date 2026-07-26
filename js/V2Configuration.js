@@ -234,7 +234,6 @@ class V2ConfigurationFile {
   #notify = null;
   #elementJSON = null;
   #timeout = null;
-  #maximized = false;
 
   constructor(device, canvas) {
     this.#device = device;
@@ -261,7 +260,7 @@ class V2ConfigurationFile {
           this.#openFile();
         });
 
-        V2Web.addFileDrop(e, this.#canvas, ['link'], (file) => {
+        V2Web.addFileDrop(e, this.#canvas, ['warn'], (file) => {
           this.#readFile(file);
         });
       });
@@ -280,15 +279,11 @@ class V2ConfigurationFile {
     V2Web.addElement(this.#canvas, 'textarea', (e) => {
       this.#elementJSON = e;
       e.placeholder = 'No configuration loaded';
-      e.rows = 1;
       e.disabled = true;
-      e.addEventListener('click', (event) => {
-        this.#expand(event);
-      });
     });
 
     this.#elementJSON.value = JSON.stringify(data, null, '  ');
-    this.#resize();
+    this.#elementJSON.rows = this.#elementJSON.value.split('\n').length + 1;
     this.#elementJSON.disabled = false;
 
     if (notify)
@@ -300,30 +295,6 @@ class V2ConfigurationFile {
       clearTimeout(this.#timeout);
       this.#timeout = null;
     }
-  }
-
-  #resize() {
-    const lines = this.#elementJSON.value.split('\n').length;
-    if (this.#maximized) {
-      this.#elementJSON.rows = lines;
-
-    } else {
-      this.#elementJSON.style.height = 'initial';
-      this.#elementJSON.rows = Math.min(15, lines);
-    }
-  }
-
-  // Click to maximize, many-click to minimize.
-  #expand(event) {
-    if (this.#maximized && event.detail > 3) {
-      this.#elementJSON.setSelectionRange(1, 1);
-      this.#maximized = false;
-      this.#elementJSON.style.width = '100%';
-
-    } else if (!this.#maximized)
-      this.#maximized = true;
-
-    this.#resize();
   }
 
   // Parse the JSON text field and reformat it.
@@ -420,6 +391,7 @@ class V2ConfigurationFile {
 
   // Load a JSON file into the text field.
   #openFile() {
+    // Create a temporary 'browse button' and trigger a file upload.
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json,.txt,.conf';
@@ -429,9 +401,6 @@ class V2ConfigurationFile {
     }, false);
 
     input.click();
-
-    this.#maximized = true;
-    this.#resize();
   }
 
   // Send the configuration to the device.

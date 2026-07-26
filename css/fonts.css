@@ -77,6 +77,11 @@ i.icon {
     content: '\f013';
   }
 
+  &.--guitar:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f7a6';
+  }
+
   &.--icons:before {
     font-family: 'Font Awesome Solid';
     content: '\f86d';

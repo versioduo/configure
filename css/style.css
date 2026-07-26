@@ -8,12 +8,13 @@
   --colour-background: light-dark(var(--colour-background-light), var(--colour-background-dark));
   --colour-background-section: light-dark(hsl(from var(--colour-background) h s calc(l - 5)), hsl(from var(--colour-background) h s calc(l + 10)));
   --colour-background-card: light-dark(hsl(from var(--colour-background) h s calc(l - 10)), hsl(from var(--colour-background) h s calc(l + 20)));
-  --colour-element: light-dark(hsl(from var(--colour-background) h s 70%), hsl(from var(--colour-background) h s 50%));
+  --colour-element: light-dark(hsl(from var(--colour-background) h s 75%), hsl(from var(--colour-background) h s 50%));
   --colour-primary: light-dark(hsl(145deg 20% 80%), hsl(145deg 30% 40%));
   --colour-link: light-dark(hsl(220deg 60% 85%), hsl(220deg 50% 45%));
   --colour-info: light-dark(hsl(210deg 50% 80%), hsl(210, 30%, 50%));
   --colour-warn: light-dark(hsl(25deg 40% 70%), hsl(25deg 50% 50%));
   --colour-danger: light-dark(hsl(350deg 40% 80%), hsl(350deg 50% 50%));
+  --colour-highlight: light-dark(hsl(210deg 80% 80%), hsl(210, 80%, 80%));
   --content-width: 24rem;
 }
 
@@ -107,7 +108,8 @@ html {
         padding: 0.5rem;
 
         a {
-          border-radius: 50vh;
+          align-content: center;
+          border-radius: 1.5rem;
           display: inline-block;
           padding: 0.5rem;
           text-align: center;
@@ -122,9 +124,16 @@ html {
           }
         }
 
+        >a {
+          border-radius: 0.75rem;
+          height: 1.5rem;
+        }
+
         >li>a {
+          border-radius: 1.5rem;
           font-size: 1.5rem;
           font-weight: bolder;
+          height: 3rem;
         }
       }
     }
@@ -163,10 +172,10 @@ html {
         margin-right: 0.5rem;
       }
 
-      &.center {
+      &.content {
         margin-left: auto;
         margin-right: auto;
-        max-width: calc(var(--content-width) * 2);
+        max-width: calc(var(--content-width) * 2 - 1rem);
       }
     }
 
@@ -180,10 +189,13 @@ html {
     input[type=range] {
       appearance: none;
       background-color: hsl(from var(--colour-element) h s l / 80%);
-      border-radius: 50vh;
+      border-radius: 0.5rem;
+      display: block;
       margin-bottom: 2rem;
-      margin-left: 0.5rem;
+      margin-left: auto;
+      margin-right: auto;
       width: calc(100% - 1rem);
+      max-width: calc(var(--content-width) * 2 - 1rem);
 
       &:hover {
         background-color: hsl(from var(--colour-element) h s l / 90%);
@@ -195,13 +207,11 @@ html {
 
       &::-webkit-slider-runnable-track {
         border: none;
-        border-radius: 50vh;
         height: 1rem;
       }
 
       &::-moz-range-track {
         border: none;
-        border-radius: 50vh;
         height: 1rem;
       }
 
@@ -209,7 +219,7 @@ html {
         appearance: none;
         background-color: var(--colour);
         border: none;
-        border-radius: 50vh;
+        border-radius: 50%;
         height: 2rem;
         margin-top: -0.5rem;
         width: 2rem;
@@ -219,7 +229,7 @@ html {
         appearance: none;
         background-color: var(--colour);
         border: none;
-        border-radius: 50vh;
+        border-radius: 50%;
         height: 2rem;
         margin-top: -0.5rem;
         width: 2rem;
@@ -230,11 +240,14 @@ html {
       appearance: none;
       background-color: hsl(from var(--colour-element) h s l / 80%);
       border: none;
-      border-radius: 50vh;
+      border-radius: 0.5rem;
+      display: block;
       height: 1rem;
       margin-bottom: 2rem;
-      margin-left: 0.5rem;
+      margin-left: auto;
+      margin-right: auto;
       width: calc(100% - 1rem);
+      max-width: calc(var(--content-width) * 2 - 1rem);
 
       &:has(+ progress) {
         margin-bottom: 1rem;
@@ -242,17 +255,17 @@ html {
 
       &::-webkit-progress-bar {
         background-color: hsl(from var(--colour-element) h s l / 80%);
-        border-radius: 50vh;
+        border-radius: 0.5rem;
       }
 
       &::-moz-progress-bar {
         background-color: hsl(from var(--colour) h s l / 80%);
-        border-radius: 50vh;
+        border-radius: 0.5rem;
       }
 
       &::-webkit-progress-value {
         background-color: var(--colour);
-        border-radius: 50vh;
+        border-radius: 0.5rem;
       }
     }
 
@@ -260,12 +273,15 @@ html {
       border: none;
       background-color: hsl(from var(--colour-element) h s l / 30%);
       width: 100%;
+      overflow-x: auto;
       padding: 0.5rem;
+      resize: none;
+      white-space: nowrap;
     }
 
     menu {
-      border-radius: 50vh;
-      box-shadow: hsl(0 0 40% / 15%) -0.1rem 0.1rem 0.2rem;
+      border-radius: 1.25rem;
+      box-shadow: hsl(from black h s l / 5%) -0.1rem 0.1rem 0.2rem 0.1rem;
       display: flex;
       gap: 0.25rem;
       height: 2.5rem;
@@ -274,11 +290,12 @@ html {
       margin-right: auto;
       margin-left: auto;
       width: max-content;
+      max-width: calc(var(--content-width) * 2 - 1rem);
 
       >li {
         &:first-child {
-          border-top-left-radius: 50vh;
-          border-bottom-left-radius: 50vh;
+          border-top-left-radius: 1.25rem;
+          border-bottom-left-radius: 1.25rem;
 
           >*,
           >i.icon {
@@ -287,8 +304,8 @@ html {
         }
 
         &:last-child {
-          border-top-right-radius: 50vh;
-          border-bottom-right-radius: 50vh;
+          border-top-right-radius: 1.25rem;
+          border-bottom-right-radius: 1.25rem;
 
           >*,
           >i.icon {
@@ -296,11 +313,15 @@ html {
           }
         }
 
-        &:has(>input.text, >span.text) {
+        &:has(>.text, >.full) {
           flex-grow: 1;
         }
 
         >button {
+          &:focus {
+            outline: none;
+          }
+
           &.momentary {
             width: 4rem;
 
@@ -324,7 +345,7 @@ html {
           }
 
           &.dim {
-            color: var(--colour-element);
+            color: hsl(from var(--colour) h s l / 60%);
           }
 
           &[type=number] {
@@ -424,7 +445,7 @@ html {
         }
 
         >button,
-        >input[type=checkbox],
+        >input,
         >select {
           &:hover {
             background-color: hsl(from var(--colour-element) h s l / 90%);
@@ -463,7 +484,7 @@ html {
 
         >a.primary,
         >button.primary,
-        >input[type=checkbox].primary,
+        >input.primary,
         >select.primary {
           background-color: hsl(from var(--colour-primary) h s l / 80%);
 
@@ -477,25 +498,6 @@ html {
 
           &:disabled {
             background-color: hsl(from var(--colour-primary) h s l / 30%);
-          }
-        }
-
-        >a.danger,
-        >button.danger,
-        >input[type=checkbox].danger,
-        >select.danger {
-          background-color: hsl(from var(--colour-danger) h s l / 80%);
-
-          &:hover {
-            background-color: hsl(from var(--colour-danger) h s l / 90%);
-          }
-
-          &:active {
-            background-color: var(--colour-danger);
-          }
-
-          &:disabled {
-            background-color: hsl(from var(--colour-danger) h s l / 30%);
           }
         }
 
@@ -516,6 +518,72 @@ html {
             background-color: hsl(from var(--colour-link) h s l / 30%);
           }
         }
+
+        >a.info,
+        >button.info,
+        >input.info,
+        >select.info {
+          background-color: hsl(from var(--colour-info) h s l / 80%);
+
+          &:hover {
+            background-color: hsl(from var(--colour-info) h s l / 90%);
+          }
+
+          &:active {
+            background-color: var(--colour-info);
+          }
+
+          &:disabled {
+            background-color: hsl(from var(--colour-info) h s l / 30%);
+          }
+        }
+
+        >a.warn,
+        >button.warn,
+        >input.warn,
+        >select.warn {
+          background-color: hsl(from var(--colour-warn) h s l / 80%);
+
+          &:hover {
+            background-color: hsl(from var(--colour-warn) h s l / 90%);
+          }
+
+          &:active {
+            background-color: var(--colour-warn);
+          }
+
+          &:disabled {
+            background-color: hsl(from var(--colour-warn) h s l / 30%);
+          }
+        }
+
+        >a.danger,
+        >button.danger,
+        >input.danger,
+        >select.danger {
+          background-color: hsl(from var(--colour-danger) h s l / 80%);
+
+          &:hover {
+            background-color: hsl(from var(--colour-danger) h s l / 90%);
+          }
+
+          &:active {
+            background-color: var(--colour-danger);
+          }
+
+          &:disabled {
+            background-color: hsl(from var(--colour-danger) h s l / 30%);
+          }
+        }
+
+        >input[type=number]:focus,
+        >select:focus,
+        >button.focusable:focus,
+        >button.highlight,
+        >input.highlight,
+        >select.highlight {
+          outline: 0.15rem solid hsl(from var(--colour-highlight) h s l / 85%);
+        }
       }
 
       &.bar {
@@ -524,6 +592,7 @@ html {
         grid-auto-flow: column;
         grid-auto-columns: 1fr;
         width: 100%;
+        max-width: none;
 
         >li {
           border-radius: 0;
@@ -540,8 +609,6 @@ html {
       }
 
       &.full {
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
         width: calc(100% - 1rem);
       }
     }
@@ -581,7 +648,7 @@ html {
     }
 
     div.notify {
-      box-shadow: hsl(0 0 40% / 10%) -0.1rem 0.1rem 0.2rem;
+      box-shadow: hsl(from black h s l / 5%) -0.1rem 0.1rem 0.2rem 0.1rem;
       padding: 1rem;
       margin-bottom: 1rem;
 
@@ -644,7 +711,7 @@ html {
     >section {
       background-color: var(--colour-background-section);
       border-top-left-radius: 1rem;
-      box-shadow: hsl(0 0 40% / 20%) -0.1rem 0.1rem 0.2rem;
+      box-shadow: hsl(from black h s l / 5%) -0.1rem 0.1rem 0.2rem 0.1rem;
       container-name: section;
       container-type: inline-size;
       width: 100%;
@@ -674,7 +741,7 @@ html {
         >li {
           background-color: var(--colour-background-card);
           border-top-left-radius: 1rem;
-          box-shadow: hsl(0 0 40% / 10%) -0.1rem 0.1rem 0.2rem;
+          box-shadow: hsl(from black h s l / 5%) -0.1rem 0.1rem 0.2rem 0.1rem;
           container-name: card;
           container-type: inline-size;
           padding-top: 1rem;

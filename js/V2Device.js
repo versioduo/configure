@@ -103,7 +103,6 @@ class V2Device extends V2Connection {
     for (const notifier of this.notifiers.reset)
       notifier();
 
-    this.select.focus();
     window.scroll(0, 0);
   }
 
@@ -376,7 +375,7 @@ class V2Device extends V2Connection {
           this.#openFirmware();
         });
 
-        V2Web.addFileDrop(e, this.#firmware.element, ['link'], (file) => {
+        V2Web.addFileDrop(e, this.#firmware.element, ['warn'], (file) => {
           this.#readFirmware(file);
         });
       });
@@ -653,7 +652,7 @@ class V2Device extends V2Connection {
     this.#firmware.update.bytes = null;
     this.#firmware.update.hash = null;
 
-    // Temporarily create a hidden 'browse button' and trigger a file upload.
+    // Create a temporary 'browse button' and trigger a file upload.
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.bin';

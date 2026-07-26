@@ -87,16 +87,20 @@ class V2MIDISelect {
     return this.#devices || new Map();
   }
 
-  select(device) {
+  selectEntry(device) {
     for (const option of this.element.options) {
       if (option.value !== device.id)
         continue;
 
       option.selected = true;
-      for (const notifier of this.#notifiers.select)
-        notifier(device);
       break;
     }
+  }
+
+  select(device) {
+    this.selectEntry(device);
+    for (const notifier of this.#notifiers.select)
+      notifier(device);
   }
 
   setConnected() {
@@ -109,10 +113,6 @@ class V2MIDISelect {
 
     for (const notifier of this.#notifiers.disconnect)
       notifier();
-  }
-
-  focus() {
-    this.element.focus();
   }
 
   addNotifier(type, handler) {

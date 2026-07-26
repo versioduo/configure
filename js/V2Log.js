@@ -25,11 +25,12 @@ class V2Log extends V2WebModule {
 
     V2Web.addElement(this.canvas, 'div', (e) => {
       this.#element = e;
-      e.style.height = '12rem';
-      e.style.overflow = 'auto';
+      e.style.height = '20rem';
+      e.style.overflowX = 'auto';
+      e.style.overflowY = 'scroll';
       e.style.padding = '0.5rem';
-      e.style.whiteSpace = 'nowrap';
       e.style.width = '100%';
+      e.style.whiteSpace = 'nowrap';
     });
 
     return Object.seal(this);
