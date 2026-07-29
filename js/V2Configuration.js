@@ -107,6 +107,7 @@ class V2ConfigurationEdit {
     this.register(V2SettingsColour);
     this.register(V2SettingsController);
     this.register(V2SettingsDrum);
+    this.register(V2SettingsFilter);
     this.register(V2SettingsJSON);
     this.register(V2SettingsNote);
     this.register(V2SettingsToggle);

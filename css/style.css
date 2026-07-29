@@ -6,9 +6,9 @@
   --colour-background-light: hsl(from var(--colour) h s 98%);
   --colour-background-dark: hsl(from var(--colour) h s 12%);
   --colour-background: light-dark(var(--colour-background-light), var(--colour-background-dark));
-  --colour-background-section: light-dark(hsl(from var(--colour-background) h s calc(l - 5)), hsl(from var(--colour-background) h s calc(l + 10)));
-  --colour-background-card: light-dark(hsl(from var(--colour-background) h s calc(l - 10)), hsl(from var(--colour-background) h s calc(l + 20)));
-  --colour-element: light-dark(hsl(from var(--colour-background) h s 75%), hsl(from var(--colour-background) h s 50%));
+  --colour-background-section: light-dark(hsl(from var(--colour-background) h s calc(l - 4)), hsl(from var(--colour-background) h s calc(l + 10)));
+  --colour-background-card: light-dark(hsl(from var(--colour-background) h s calc(l - 8)), hsl(from var(--colour-background) h s calc(l + 20)));
+  --colour-element: light-dark(hsl(from var(--colour-background) h s 85%), hsl(from var(--colour-background) h s 50%));
   --colour-primary: light-dark(hsl(145deg 20% 80%), hsl(145deg 30% 40%));
   --colour-link: light-dark(hsl(220deg 60% 85%), hsl(220deg 50% 45%));
   --colour-info: light-dark(hsl(210deg 50% 80%), hsl(210, 30%, 50%));
@@ -238,7 +238,7 @@ html {
 
     progress {
       appearance: none;
-      background-color: hsl(from var(--colour-element) h s l / 80%);
+      background-color: hsl(from var(--colour-element) h s l / 30%);
       border: none;
       border-radius: 0.5rem;
       display: block;
@@ -246,6 +246,7 @@ html {
       margin-bottom: 2rem;
       margin-left: auto;
       margin-right: auto;
+      overflow: hidden;
       width: calc(100% - 1rem);
       max-width: calc(var(--content-width) * 2 - 1rem);
 
@@ -254,18 +255,22 @@ html {
       }
 
       &::-webkit-progress-bar {
-        background-color: hsl(from var(--colour-element) h s l / 80%);
+        background-color: hsl(from var(--colour-element) h s l / 30%);
         border-radius: 0.5rem;
       }
 
       &::-moz-progress-bar {
         background-color: hsl(from var(--colour) h s l / 80%);
-        border-radius: 0.5rem;
+        border-top-left-radius: 0.5rem;
+        border-bottom-left-radius: 0.5rem;
+        transition: width 0.05s ease-in-out;
       }
 
       &::-webkit-progress-value {
         background-color: var(--colour);
-        border-radius: 0.5rem;
+        border-top-left-radius: 0.5rem;
+        border-bottom-left-radius: 0.5rem;
+        transition: width 0.05s ease-in-out;
       }
     }
 
@@ -293,12 +298,15 @@ html {
       max-width: calc(var(--content-width) * 2 - 1rem);
 
       >li {
+        display: grid;
+        grid-auto-flow: column;
+
         &:first-child {
           border-top-left-radius: 1.25rem;
           border-bottom-left-radius: 1.25rem;
 
-          >*,
-          >i.icon {
+          >*:first-child {
+            border-radius: inherit;
             padding-left: 1rem;
           }
         }
@@ -307,8 +315,8 @@ html {
           border-top-right-radius: 1.25rem;
           border-bottom-right-radius: 1.25rem;
 
-          >*,
-          >i.icon {
+          >*:last-child {
+            border-radius: inherit;
             padding-right: 1rem;
           }
         }
@@ -332,9 +340,8 @@ html {
           }
         }
 
-        >input {
+        input {
           background-color: hsl(from var(--colour-element) h s l / 80%);
-          border-radius: inherit;
           border-style: none;
           font-family: inherit;
           font-size: 1rem;
@@ -393,10 +400,10 @@ html {
 
         >* {
           align-content: center;
-          border-radius: inherit;
           display: inline-block;
           height: 100%;
-          padding: 0.5rem 0.75rem;
+          padding-left: 0.75rem;
+          padding-right: 0.75rem;
           width: 100%;
         }
 
@@ -409,8 +416,6 @@ html {
         >span,
         >i.icon {
           font-family: inherit;
-          padding-left: 0.75rem;
-          padding-right: 0.75rem;
           text-align: center;
 
           &.label {

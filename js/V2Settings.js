@@ -733,6 +733,66 @@ class V2SettingsDrum extends V2SettingsModule {
 }
 
 
+// MIDI Message Filter
+class V2SettingsFilter extends V2SettingsModule {
+  static type = 'filter';
+
+  #notes = null;
+  #controller = null;
+
+  constructor(device, settings, canvas, setting, data) {
+    super(device, settings, setting);
+    super.addSection(canvas, setting);
+
+    const filter = this.getConfiguration(data.configuration);
+
+    new V2WebMenu(this.element, (menu) => {
+      menu.element.classList.add('full');
+
+      menu.addElement('span', (e) => {
+        e.classList.add('text');
+        e.textContent = setting.text;
+      });
+
+      menu.addItem((li) => {
+        V2Web.addElement(li, 'i', (e) => {
+          e.classList.add('icon', '--music', '--nospace');
+        });
+
+        V2Web.addElement(li, 'input', (e) => {
+          this.#notes = e;
+          e.type = 'checkbox';
+          e.checked = filter.notes || false;
+        });
+      });
+
+      menu.addItem((li) => {
+        V2Web.addElement(li, 'i', (e) => {
+          e.classList.add('icon', '--sliders', '--nospace');
+        });
+
+        V2Web.addElement(li, 'input', (e) => {
+          this.#controller = e;
+          e.type = 'checkbox';
+          e.checked = filter.controller || false;
+        });
+      });
+    });
+
+    return Object.seal(this);
+  }
+
+  save(configuration) {
+    const filter = {};
+
+    filter.notes = this.#notes.checked;
+    filter.controller = this.#controller.checked;
+    this.setConfiguration(configuration, filter);
+  }
+}
+
+
+
 // JSON text menu.
 class V2SettingsJSON extends V2SettingsModule {
   static type = 'json';
