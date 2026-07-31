@@ -8,12 +8,12 @@
   --colour-background: light-dark(var(--colour-background-light), var(--colour-background-dark));
   --colour-background-section: light-dark(hsl(from var(--colour-background) h s calc(l - 4)), hsl(from var(--colour-background) h s calc(l + 10)));
   --colour-background-card: light-dark(hsl(from var(--colour-background) h s calc(l - 8)), hsl(from var(--colour-background) h s calc(l + 20)));
-  --colour-element: light-dark(hsl(from var(--colour-background) h s 85%), hsl(from var(--colour-background) h s 50%));
+  --colour-element: light-dark(hsl(from var(--colour-background) h s 75%), hsl(from var(--colour-background) h s 70%));
   --colour-primary: light-dark(hsl(145deg 20% 80%), hsl(145deg 30% 40%));
-  --colour-link: light-dark(hsl(220deg 60% 85%), hsl(220deg 50% 45%));
-  --colour-info: light-dark(hsl(210deg 50% 80%), hsl(210, 30%, 50%));
-  --colour-warn: light-dark(hsl(25deg 40% 70%), hsl(25deg 50% 50%));
-  --colour-danger: light-dark(hsl(350deg 40% 80%), hsl(350deg 50% 50%));
+  --colour-link: light-dark(hsl(220deg 90% 75%), hsl(220deg 70% 50%));
+  --colour-info: light-dark(hsl(210deg 30% 70%), hsl(210, 30%, 50%));
+  --colour-warn: light-dark(hsl(25deg 70% 80%), hsl(35deg 50% 50%));
+  --colour-danger: light-dark(hsl(350deg 40% 80%), hsl(350deg 40% 50%));
   --colour-highlight: light-dark(hsl(210deg 80% 80%), hsl(210, 80%, 80%));
   --content-width: 24rem;
 }
@@ -90,13 +90,13 @@ html {
         width: 3rem;
 
         &::marker {
-          font-family: 'Font Awesome Solid';
           content: '\f0c9';
+          font-family: 'Font Awesome Solid';
         }
 
         [open] &::marker {
-          font-family: 'Font Awesome Solid';
           content: '\f00d';
+          font-family: 'Font Awesome Solid';
         }
       }
 
@@ -116,7 +116,7 @@ html {
           width: 100%;
 
           &:hover {
-            background-color: hsl(from var(--colour-link) h s l / 70%);
+            background-color: hsl(from var(--colour-link) h s l / 60%);
           }
 
           &:active {
@@ -132,7 +132,6 @@ html {
         >li>a {
           border-radius: 1.5rem;
           font-size: 1.5rem;
-          font-weight: bolder;
           height: 3rem;
         }
       }
@@ -159,7 +158,6 @@ html {
 
       &.title {
         font-size: 1.5rem;
-        font-weight: bolder;
         text-align: center;
       }
     }
@@ -188,7 +186,7 @@ html {
 
     input[type=range] {
       appearance: none;
-      background-color: hsl(from var(--colour-element) h s l / 80%);
+      background-color: hsl(from var(--colour-element) h s l / 60%);
       border-radius: 0.5rem;
       display: block;
       margin-bottom: 2rem;
@@ -198,7 +196,7 @@ html {
       max-width: calc(var(--content-width) * 2 - 1rem);
 
       &:hover {
-        background-color: hsl(from var(--colour-element) h s l / 90%);
+        background-color: hsl(from var(--colour-element) h s l / 70%);
       }
 
       &:focus {
@@ -255,12 +253,12 @@ html {
       }
 
       &::-webkit-progress-bar {
-        background-color: hsl(from var(--colour-element) h s l / 30%);
+        background-color: transparent;
         border-radius: 0.5rem;
       }
 
       &::-moz-progress-bar {
-        background-color: hsl(from var(--colour) h s l / 80%);
+        background-color: var(--colour);
         border-top-left-radius: 0.5rem;
         border-bottom-left-radius: 0.5rem;
         transition: width 0.05s ease-in-out;
@@ -338,17 +336,26 @@ html {
               font-family: 'Font Awesome Solid';
             }
           }
+
+          &.delete {
+            width: 4rem;
+
+            &:after {
+              content: '\f00d';
+              font-family: 'Font Awesome Solid';
+            }
+          }
         }
 
         input {
-          background-color: hsl(from var(--colour-element) h s l / 80%);
+          background-color: hsl(from var(--colour-element) h s l / 60%);
           border-style: none;
           font-family: inherit;
           font-size: 1rem;
           height: 100%;
 
           &:hover {
-            background-color: hsl(from var(--colour-element) h s l / 90%);
+            background-color: hsl(from var(--colour-element) h s l / 70%);
           }
 
           &.dim {
@@ -426,20 +433,26 @@ html {
             width: 4rem;
           }
 
+          &.ellipsis {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
           &.light {
-            background-color: hsl(from var(--colour-background-light) h s l / 80%);
+            background-color: hsl(from var(--colour-background-light) h s l / 90%);
             color: var(--colour-light);
           }
 
           &.dark {
-            background-color: hsl(from var(--colour-background-dark) h s l / 70%);
+            background-color: hsl(from var(--colour-background-dark) h s l / 60%);
             color: var(--colour-dark);
           }
         }
 
         >button,
         >select {
-          background-color: hsl(from var(--colour-element) h s l / 80%);
+          background-color: hsl(from var(--colour-element) h s l / 60%);
           border-style: none;
           font-family: inherit;
           font-size: 1em;
@@ -453,11 +466,11 @@ html {
         >input,
         >select {
           &:hover {
-            background-color: hsl(from var(--colour-element) h s l / 90%);
+            background-color: hsl(from var(--colour-element) h s l / 70%);
           }
 
           &:active {
-            background-color: var(--colour-element);
+            background-color: hsl(from var(--colour-element) h s l / 80%);
           }
 
           &:disabled {
@@ -468,7 +481,7 @@ html {
         >button {
           &.light {
             &:hover {
-              background-color: hsl(from var(--colour-background-light) h s l / 90%);
+              background-color: hsl(from var(--colour-background-light) h s l / 95%);
             }
 
             &:active {
@@ -478,7 +491,7 @@ html {
 
           &.dark {
             &:hover {
-              background-color: hsl(from var(--colour-background-dark) h s l / 80%);
+              background-color: hsl(from var(--colour-background-dark) h s l / 95%);
             }
 
             &:active {
@@ -491,14 +504,14 @@ html {
         >button.primary,
         >input.primary,
         >select.primary {
-          background-color: hsl(from var(--colour-primary) h s l / 80%);
+          background-color: hsl(from var(--colour-primary) h s l / 60%);
 
           &:hover {
-            background-color: hsl(from var(--colour-primary) h s l / 90%);
+            background-color: hsl(from var(--colour-primary) h s l / 70%);
           }
 
           &:active {
-            background-color: var(--colour-primary);
+            background-color: hsl(from var(--colour-primary) h s l / 80%);
           }
 
           &:disabled {
@@ -509,14 +522,14 @@ html {
         >a,
         >button.link,
         >select.link {
-          background-color: hsl(from var(--colour-link) h s l / 90%);
+          background-color: hsl(from var(--colour-link) h s l / 60%);
 
           &:hover {
-            background-color: hsl(from var(--colour-link) h s l / 95%);
+            background-color: hsl(from var(--colour-link) h s l / 70%);
           }
 
           &:active {
-            background-color: var(--colour-link);
+            background-color: hsl(from var(--colour-link) h s l / 80%);
           }
 
           &:disabled {
@@ -528,14 +541,14 @@ html {
         >button.info,
         >input.info,
         >select.info {
-          background-color: hsl(from var(--colour-info) h s l / 80%);
+          background-color: hsl(from var(--colour-info) h s l / 60%);
 
           &:hover {
-            background-color: hsl(from var(--colour-info) h s l / 90%);
+            background-color: hsl(from var(--colour-info) h s l / 70%);
           }
 
           &:active {
-            background-color: var(--colour-info);
+            background-color: hsl(from var(--colour-info) h s l / 80%);
           }
 
           &:disabled {
@@ -547,7 +560,7 @@ html {
         >button.warn,
         >input.warn,
         >select.warn {
-          background-color: hsl(from var(--colour-warn) h s l / 80%);
+          background-color: hsl(from var(--colour-warn) h s l / 60%);
 
           &:hover {
             background-color: hsl(from var(--colour-warn) h s l / 90%);
@@ -566,14 +579,14 @@ html {
         >button.danger,
         >input.danger,
         >select.danger {
-          background-color: hsl(from var(--colour-danger) h s l / 80%);
+          background-color: hsl(from var(--colour-danger) h s l / 60%);
 
           &:hover {
-            background-color: hsl(from var(--colour-danger) h s l / 90%);
+            background-color: hsl(from var(--colour-danger) h s l / 70%);
           }
 
           &:active {
-            background-color: var(--colour-danger);
+            background-color: hsl(from var(--colour-danger) h s l / 80%);
           }
 
           &:disabled {
@@ -601,6 +614,18 @@ html {
 
         >li {
           border-radius: 0;
+
+          &:first-child {
+            *:first-child {
+              padding-left: 0;
+            }
+          }
+
+          &:last-child {
+            *:last-child {
+              padding-right: 0;
+            }
+          }
 
           >* {
             padding: 0;
@@ -633,7 +658,6 @@ html {
       width: 100%;
 
       >caption {
-        font-weight: bolder;
         margin-top: 1rem;
         margin-bottom: 0.5rem;
       }
@@ -658,15 +682,29 @@ html {
       margin-bottom: 1rem;
 
       &.--info {
-        background-color: var(--colour-info);
+        background-color: hsl(from var(--colour-info) h s l / 60%);
       }
 
       &.--warn {
-        background-color: var(--colour-warn);
+        background-color: hsl(from var(--colour-warn) h s l / 60%);
       }
 
       &.--error {
-        background-color: var(--colour-danger);
+        background-color: hsl(from var(--colour-danger) h s l / 60%);
+      }
+    }
+
+    ul.line {
+      display: flex;
+      gap: 1rem;
+      margin-right: auto;
+      margin-left: auto;
+      margin-bottom: 1rem;
+      width: max-content;
+      max-width: calc(var(--content-width) * 2 - 1rem);
+
+      >li {
+        align-content: center;
       }
     }
 
@@ -721,15 +759,16 @@ html {
       container-type: inline-size;
       width: 100%;
 
-      >hgroup {
-        padding-top: 0.75rem;
-        padding-bottom: 0.75rem;
+      hgroup {
+        margin-top: 1rem;
+        margin-bottom: 1.5rem;
         text-align: center;
 
-        >h2 {
+        >h2,
+        >h3 {
           font-size: 1.5rem;
-          font-weight: bolder;
-          padding-bottom: 0.25rem;
+          font-weight: normal;
+          padding-bottom: 0.5rem;
         }
       }
 
@@ -749,23 +788,12 @@ html {
           box-shadow: hsl(from black h s l / 5%) -0.1rem 0.1rem 0.2rem 0.1rem;
           container-name: card;
           container-type: inline-size;
-          padding-top: 1rem;
-
-          >hgroup {
-            padding-bottom: 0.5rem;
-            text-align: center;
-
-            >h3 {
-              font-weight: bolder;
-              padding-bottom: 0.25rem;
-            }
-          }
         }
       }
 
       >address {
-        text-align: center;
         font-style: normal;
+        text-align: center;
       }
     }
   }

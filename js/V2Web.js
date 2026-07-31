@@ -299,11 +299,11 @@ class V2WebTabs {
   switchTab(name) {
     for (const id of Object.keys(this.#tabs)) {
       if (id === name) {
-        this.#tabs[id].tab.classList.add('primary');
+        this.#tabs[id].tab.classList.add('info');
         this.#tabs[id].canvas.style.display = '';
 
       } else {
-        this.#tabs[id].tab.classList.remove('primary');
+        this.#tabs[id].tab.classList.remove('info');
         this.#tabs[id].canvas.style.display = 'none';
       }
     }

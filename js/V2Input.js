@@ -124,6 +124,7 @@ class V2Input extends V2WebModule {
             menu.addElement('input', (e) => {
               inputFine = e;
               e.type = 'number';
+              e.min = 0;
               e.max = 127;
               e.value = value;
               e.addEventListener('input', () => {

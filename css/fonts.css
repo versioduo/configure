@@ -62,6 +62,11 @@ i.icon {
     content: '\f120';
   }
 
+  &.--copy:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f0c5';
+  }
+
   &.--envelope:before {
     font-family: 'Font Awesome Solid';
     content: '\f0e0';
@@ -90,6 +95,11 @@ i.icon {
   &.--link:before {
     font-family: 'Font Awesome Solid';
     content: '\f0c1';
+  }
+
+  &.--list:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f03a';
   }
 
   &.--magnifying-glass-chart:before {
@@ -150,6 +160,11 @@ i.icon {
   &.--sliders:before {
     font-family: 'Font Awesome Solid';
     content: '\f1de';
+  }
+
+  &.--xmark:before {
+    font-family: 'Font Awesome Solid';
+    content: '\f00d';
   }
 
   &.--github:before {

@@ -110,9 +110,6 @@ class V2MIDISelect {
   setDisconnected() {
     this.element.options[0].text = 'Connect to ...';
     this.element.selectedIndex = 0;
-
-    for (const notifier of this.#notifiers.disconnect)
-      notifier();
   }
 
   addNotifier(type, handler) {

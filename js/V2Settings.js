@@ -16,9 +16,16 @@ class V2SettingsModule {
     if (setting.title) {
       V2Web.addElement(canvas, 'hr');
 
-      V2Web.addElement(canvas, 'p', (e) => {
-        e.classList.add('title');
-        e.textContent = setting.title;
+      V2Web.addElement(canvas, 'hgroup', (hg) => {
+        V2Web.addElement(hg, 'h3', (e) => {
+          e.textContent = setting.title;
+        });
+
+        if (setting.subtitle) {
+          V2Web.addElement(hg, 'p', (e) => {
+            e.textContent = setting.subtitle;
+          });
+        }
       });
     }
 
@@ -481,6 +488,7 @@ class V2SettingsController extends V2SettingsModule {
         menu.addElement('button', (e) => {
           e.textContent = setting.label || 'Controller';
           e.classList.add('label');
+          e.classList.add('info');
           e.addEventListener('click', () => {
             device.sendSystemExclusive({
               test: {
@@ -749,6 +757,12 @@ class V2SettingsFilter extends V2SettingsModule {
     new V2WebMenu(this.element, (menu) => {
       menu.element.classList.add('full');
 
+      if (setting.label) {
+        menu.addElement('span', (e) => {
+          e.textContent = setting.label;
+        });
+      }
+
       menu.addElement('span', (e) => {
         e.classList.add('text');
         e.textContent = setting.text;
@@ -948,7 +962,7 @@ class V2SettingsNote extends V2SettingsModule {
           i.classList.add('icon', '--nospace', '--minus');
         });
         e.addEventListener('click', () => {
-          update(Number(this.#note.value) - 1);
+          this.#note.stepDown();
         });
       });
 
@@ -957,7 +971,7 @@ class V2SettingsNote extends V2SettingsModule {
           i.classList.add('icon', '--nospace', '--plus');
         });
         e.addEventListener('click', () => {
-          update(Number(this.#note.value) + 1);
+          this.#note.stepUp();
         });
       });
     });
@@ -1401,9 +1415,10 @@ class V2SettingsUSB extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
 
-    V2Web.addElement(canvas, 'p', (e) => {
-      e.classList.add('title');
-      e.textContent = 'USB';
+    V2Web.addElement(canvas, 'hgroup', (hg) => {
+      V2Web.addElement(hg, 'h3', (e) => {
+        e.textContent = 'USB';
+      });
     });
 
     V2Web.addElement(canvas, 'div', (e) => {
