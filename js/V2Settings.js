@@ -1,5 +1,4 @@
 class V2SettingsModule {
-  element = null;
   device = null;
   settings = null;
   setting = null;
@@ -14,8 +13,6 @@ class V2SettingsModule {
 
   addSection(canvas, setting) {
     if (setting.title) {
-      V2Web.addElement(canvas, 'hr');
-
       V2Web.addElement(canvas, 'hgroup', (hg) => {
         V2Web.addElement(hg, 'h3', (e) => {
           e.textContent = setting.title;
@@ -28,11 +25,6 @@ class V2SettingsModule {
         }
       });
     }
-
-    V2Web.addElement(canvas, 'div', (e) => {
-      this.element = e;
-      e.id = 'settings:' + setting.path;
-    });
 
     if (setting.ruler) {
       V2Web.addElement(canvas, 'hr');
@@ -158,7 +150,7 @@ class V2SettingsCalibration extends V2SettingsModule {
       }, 100);
     };
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Play Min';
         e.addEventListener('click', () => {
@@ -175,7 +167,7 @@ class V2SettingsCalibration extends V2SettingsModule {
     });
 
     const addCalibrationNote = (i, note) => {
-      new V2WebMenu(this.element, (menu) => {
+      new V2WebMenu(canvas, (menu) => {
         menu.addElement('span', (e) => {
           e.classList.add('label');
           e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
@@ -282,7 +274,7 @@ class V2SettingsColour extends V2SettingsModule {
 
     this.#configuration = setting.configuration;
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -312,7 +304,7 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebMenu(this.element, (menu) => {
+      new V2WebMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -336,7 +328,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(this.element, 'input', (e) => {
+      V2Web.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -359,7 +351,7 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebMenu(this.element, (menu) => {
+      new V2WebMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -383,7 +375,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(this.element, 'input', (e) => {
+      V2Web.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -406,7 +398,7 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebMenu(this.element, (menu) => {
+      new V2WebMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -430,7 +422,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(this.element, 'input', (e) => {
+      V2Web.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -481,7 +473,7 @@ class V2SettingsController extends V2SettingsModule {
       range.value = number;
     };
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       if (setting.test) {
@@ -520,7 +512,7 @@ class V2SettingsController extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(this.element, 'input', (e) => {
+    V2Web.addElement(canvas, 'input', (e) => {
       range = e;
       e.type = 'range';
       e.min = 0;
@@ -557,7 +549,7 @@ class V2SettingsDrum extends V2SettingsModule {
       let sensitivity = null;
       let range = null;
 
-      new V2WebMenu(this.element, (menu) => {
+      new V2WebMenu(canvas, (menu) => {
         menu.addElement('span', (e) => {
           e.classList.add('label');
           sensitivity = e;
@@ -577,7 +569,7 @@ class V2SettingsDrum extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(this.element, 'input', (e) => {
+      V2Web.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = -0.99;
@@ -610,7 +602,7 @@ class V2SettingsDrum extends V2SettingsModule {
           note.textContent = 'Disabled';
       };
 
-      new V2WebMenu(this.element, (menu) => {
+      new V2WebMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -638,7 +630,7 @@ class V2SettingsDrum extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(this.element, 'input', (e) => {
+      V2Web.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -652,7 +644,7 @@ class V2SettingsDrum extends V2SettingsModule {
     }
 
     if (!isNull(drum.aftertouch)) {
-      new V2WebMenu(this.element, (menu) => {
+      new V2WebMenu(canvas, (menu) => {
         menu.addElement('span', (e) => {
           e.classList.add('label');
           e.textContent = 'Aftertouch';
@@ -678,7 +670,7 @@ class V2SettingsDrum extends V2SettingsModule {
           text.textContent = 'Disabled';
       };
 
-      new V2WebMenu(this.element, (menu) => {
+      new V2WebMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -706,7 +698,7 @@ class V2SettingsDrum extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(this.element, 'input', (e) => {
+      V2Web.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -754,7 +746,7 @@ class V2SettingsFilter extends V2SettingsModule {
 
     const filter = this.getConfiguration(data.configuration);
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       if (setting.label) {
@@ -821,12 +813,12 @@ class V2SettingsJSON extends V2SettingsModule {
     super.addSection(canvas, setting);
 
     if (setting.text) {
-      V2Web.addElement(this.element, 'p', (e) => {
+      V2Web.addElement(canvas, 'p', (e) => {
         e.textContent = setting.text;
       });
     }
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Copy';
 
@@ -859,7 +851,7 @@ class V2SettingsJSON extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(this.element, 'textarea', (e) => {
+    V2Web.addElement(canvas, 'textarea', (e) => {
       this.#json = e;
 
       if (setting.name) {
@@ -934,7 +926,7 @@ class V2SettingsNote extends V2SettingsModule {
       }
     };
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -976,7 +968,7 @@ class V2SettingsNote extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(this.element, 'input', (e) => {
+    V2Web.addElement(canvas, 'input', (e) => {
       range = e;
       e.type = 'range';
       e.min = this.#note.min;
@@ -1005,7 +997,7 @@ class V2SettingsToggle extends V2SettingsModule {
     super(device, settings, setting);
     super.addSection(canvas, setting);
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = setting.label;
@@ -1069,7 +1061,7 @@ class V2SettingsNumber extends V2SettingsModule {
       }
     };
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = setting.label;
@@ -1141,7 +1133,7 @@ class V2SettingsNumber extends V2SettingsModule {
     });
 
     if (!select) {
-      V2Web.addElement(this.element, 'input', (e) => {
+      V2Web.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = number.min;
@@ -1194,7 +1186,7 @@ class V2SettingsPulse extends V2SettingsModule {
     if (setting.limit?.seconds)
       this.#seconds.limit = setting.limit.seconds;
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Reset';
         e.addEventListener('click', () => {
@@ -1226,7 +1218,7 @@ class V2SettingsPulse extends V2SettingsModule {
     });
 
     const pulse = this.getConfiguration(data.configuration);
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -1270,7 +1262,7 @@ class V2SettingsPulse extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(this.element, 'input', (e) => {
+    V2Web.addElement(canvas, 'input', (e) => {
       e.type = 'range';
       e.min = 0.11;
       e.max = 1;
@@ -1284,7 +1276,7 @@ class V2SettingsPulse extends V2SettingsModule {
       };
     });
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -1328,7 +1320,7 @@ class V2SettingsPulse extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(this.element, 'input', (e) => {
+    V2Web.addElement(canvas, 'input', (e) => {
       e.type = 'range';
       e.min = 0.22;
       e.max = 1;
@@ -1367,7 +1359,7 @@ class V2SettingsText extends V2SettingsModule {
     super(device, settings, setting);
     super.addSection(canvas, setting);
 
-    new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -1421,110 +1413,107 @@ class V2SettingsUSB extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(canvas, 'div', (e) => {
-      this.element = e;
-      e.id = 'settings.usb';
 
-      new V2WebMenu(this.element, (menu) => {
+    new V2WebMenu(canvas, (menu) => {
+      menu.element.classList.add('full');
+
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
+        e.textContent = 'Name';
+      });
+
+      menu.addElement('input', (e) => {
+        this.#name = e;
+        e.type = 'text';
+        e.classList.add('text');
+        e.maxLength = 31;
+        if (data.system.name)
+          e.value = data.system.name;
+        e.placeholder = data.metadata.product;
+      });
+    });
+
+    const usbID = (number) => {
+      if (isNull(number))
+        return '';
+
+      return ('0000' + number.toString(16)).substr(-4);
+    };
+
+    if (!isNull(data.configuration.usb.vid)) {
+      new V2WebMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
           e.classList.add('label');
-          e.textContent = 'Name';
+          e.textContent = 'Vendor';
         });
 
         menu.addElement('input', (e) => {
-          this.#name = e;
+          this.#vid = e;
           e.type = 'text';
           e.classList.add('text');
-          e.maxLength = 31;
-          if (data.system.name)
-            e.value = data.system.name;
-          e.placeholder = data.metadata.product;
+          e.maxLength = 4;
+          if (data.configuration.usb.vid > 0)
+            e.value = usbID(data.configuration.usb.vid);
+
+          e.placeholder = usbID(data.system.hardware?.usb?.vid);
         });
       });
+    }
 
-      const usbID = (number) => {
-        if (isNull(number))
-          return '';
+    if (!isNull(data.configuration.usb.pid)) {
+      new V2WebMenu(canvas, (menu) => {
+        menu.element.classList.add('full');
 
-        return ('0000' + number.toString(16)).substr(-4);
-      };
-
-      if (!isNull(data.configuration.usb.vid)) {
-        new V2WebMenu(this.element, (menu) => {
-          menu.element.classList.add('full');
-
-          menu.addElement('span', (e) => {
-            e.classList.add('label');
-            e.textContent = 'Vendor';
-          });
-
-          menu.addElement('input', (e) => {
-            this.#vid = e;
-            e.type = 'text';
-            e.classList.add('text');
-            e.maxLength = 4;
-            if (data.configuration.usb.vid > 0)
-              e.value = usbID(data.configuration.usb.vid);
-
-            e.placeholder = usbID(data.system.hardware?.usb?.vid);
-          });
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
+          e.textContent = 'Product';
         });
-      }
 
-      if (!isNull(data.configuration.usb.pid)) {
-        new V2WebMenu(this.element, (menu) => {
-          menu.element.classList.add('full');
+        menu.addElement('input', (e) => {
+          this.#pid = e;
+          e.type = 'text';
+          e.classList.add('text');
+          e.maxLength = 4;
+          if (data.configuration.usb.pid > 0)
+            e.value = usbID(data.configuration.usb.pid);
 
-          menu.addElement('span', (e) => {
-            e.classList.add('label');
-            e.textContent = 'Product';
-          });
-
-          menu.addElement('input', (e) => {
-            this.#pid = e;
-            e.type = 'text';
-            e.classList.add('text');
-            e.maxLength = 4;
-            if (data.configuration.usb.pid > 0)
-              e.value = usbID(data.configuration.usb.pid);
-
-            e.placeholder = usbID(data.system.hardware?.usb?.pid);
-          });
+          e.placeholder = usbID(data.system.hardware?.usb?.pid);
         });
-      }
+      });
+    }
 
-      // The number of MIDI ports.
-      if (data.system.hardware?.usb?.ports?.standard > 0) {
-        new V2WebMenu(this.element, (menu) => {
-          menu.element.classList.add('full');
+    // The number of MIDI ports.
+    if (data.system.hardware?.usb?.ports?.standard > 0) {
+      new V2WebMenu(canvas, (menu) => {
+        menu.element.classList.add('full');
 
-          menu.addElement('span', (e) => {
-            e.classList.add('label');
-            e.textContent = 'MIDI';
-          });
-
-          menu.addElement('span', (e) => {
-            e.classList.add('text');
-            e.textContent = 'Virtual Ports';
-          });
-
-          menu.addElement('select', (select) => {
-            this.#ports = select;
-
-            for (let i = 0; i < 17; i++) {
-              V2Web.addElement(select, 'option', (e) => {
-                e.value = i;
-                e.text = i > 0 ? i : '–';
-                if (i === data.configuration.usb.ports)
-                  e.selected = true;
-              });
-            }
-          });
+        menu.addElement('span', (e) => {
+          e.classList.add('label');
+          e.textContent = 'MIDI';
         });
-      }
-    });
+
+        menu.addElement('span', (e) => {
+          e.classList.add('text');
+          e.textContent = 'Virtual Ports';
+        });
+
+        menu.addElement('select', (select) => {
+          this.#ports = select;
+
+          for (let i = 0; i < 17; i++) {
+            V2Web.addElement(select, 'option', (e) => {
+              e.value = i;
+              e.text = i > 0 ? i : '–';
+              if (i === data.configuration.usb.ports)
+                e.selected = true;
+            });
+          }
+        });
+      });
+    }
+
 
     return Object.seal(this);
   }

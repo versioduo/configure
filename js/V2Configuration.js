@@ -161,25 +161,36 @@ class V2ConfigurationEdit {
       this.#timeout = null;
     }
 
-    // USB is a core part of V2Device, and not explicitley exported in the settings array.
-    const section = new this.#modules['usb'](this.#device, this, this.#canvas, null, data);
-    this.#sections.push(section);
+    V2Web.addElement(this.#canvas, 'ul', (cards) => {
+      cards.classList.add('cards');
 
-    // Iterate over the device's 'settings' entries. If we find a matching module,
-    // instantiate it and show its controls.
-    if (data.settings) {
-      for (const setting of data.settings) {
-        const module = this.#modules[setting.type];
-        if (!module)
-          continue;
-
-        if ('save' in module.prototype && !setting.path)
-          continue;
-
-        const section = new module(this.#device, this, this.#canvas, setting, data);
+      V2Web.addElement(cards, 'li', (c) => {
+        // USB is a core part of V2Device, and not explicitley exported in the settings array.
+        const section = new this.#modules['usb'](this.#device, this, c, null, data);
         this.#sections.push(section);
+      });
+
+      // Iterate over the device's 'settings' entries. If we find a matching module,
+      // instantiate it and show its controls.
+      if (data.settings) {
+        let card = null;
+
+        for (const setting of data.settings) {
+          const module = this.#modules[setting.type];
+          if (!module)
+            continue;
+
+          if ('save' in module.prototype && !setting.path)
+            continue;
+
+          if (!card || setting.title)
+            card = V2Web.addElement(cards, 'li');
+
+          const section = new module(this.#device, this, card, setting, data);
+          this.#sections.push(section);
+        }
       }
-    }
+    });
 
     if (notify)
       this.#notify.info('Configuration updated.');

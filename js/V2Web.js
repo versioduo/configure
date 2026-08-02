@@ -89,6 +89,7 @@ class V2Web {
       handler(e);
 
     element.appendChild(e);
+    return e;
   }
 
   static addElementAdjacent(element, position, type, handler) {
@@ -97,6 +98,7 @@ class V2Web {
       handler(e);
 
     element.insertAdjacentElement(position, e);
+    return e;
   }
 
   static addFileDrop(element, area, attributes, handler) {
