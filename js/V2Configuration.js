@@ -183,7 +183,7 @@ class V2ConfigurationEdit {
           if ('save' in module.prototype && !setting.path)
             continue;
 
-          if (!card || setting.title)
+          if (!card || setting.type === 'title')
             card = V2Web.addElement(cards, 'li');
 
           const section = new module(this.#device, this, card, setting, data);

@@ -135,7 +135,7 @@ class V2Output extends V2WebModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         e.textContent = controller.name;
       });
 
@@ -210,7 +210,7 @@ class V2Output extends V2WebModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         e.textContent = name;
       });
 
@@ -316,84 +316,92 @@ class V2Output extends V2WebModule {
           });
 
           select.disabled = select.options.length === 1;
-
-          select.addEventListener('change', () => {
-            this.#channel.value = data.output.channels[select.selectedIndex].number;
-
-            // Request a refresh with the values of the selected channel.
-            this.#device.sendRequest({
-              'method': 'switchChannel',
-              'channel': this.#channel.value
-            });
-          });
         };
+
+        select.addEventListener('change', () => {
+          this.#channel.value = data.output.channels[select.selectedIndex].number;
+
+          // Request a refresh with the values of the selected channel.
+          this.#device.sendRequest({
+            'method': 'switchChannel',
+            'channel': this.#channel.value
+          });
+        });
       });
     });
 
-    V2Web.addElement(this.#element, 'div', (e) => {
-      this.#controllers.element = e;
-      e.id = this.id + '.controllers';
-      e.style.display = 'none';
+    V2Web.addElement(this.#element, 'ul', (cards) => {
+      cards.classList.add('cards');
 
-      V2Web.addElement(e, 'hr');
-      V2Web.addElement(e, 'p', (e) => {
-        e.classList.add('title');
-        e.textContent = 'Controllers';
+      V2Web.addElement(cards, 'li', (e) => {
+        this.#controllers.element = e;
+        e.style.display = 'none';
+
+        V2Web.addElement(e, 'hgroup', (hg) => {
+          V2Web.addElement(hg, 'h3', (e) => {
+            e.textContent = 'Controllers';
+          });
+          V2Web.addElement(hg, 'p', (e) => {
+            e.textContent = 'Receive Control Messages';
+          });
+        });
       });
+
+      V2Web.addElement(cards, 'li', (e) => {
+        this.#notes.element = e;
+        e.style.display = 'none';
+
+        V2Web.addElement(e, 'hgroup', (hg) => {
+          V2Web.addElement(hg, 'h3', (e) => {
+            e.textContent = 'Notes';
+          });
+          V2Web.addElement(hg, 'p', (e) => {
+            e.textContent = 'Receive Notes';
+          });
+        });
+      });
+
+      this.#controllers.list = {};
+      this.#notes.list = {};
+
+      if (data.output.channels) {
+        // Find the currently selected channel number.
+        data.output.channels.find((channel) => {
+          if (!channel.selected)
+            return false;
+
+          this.#channel.value = channel.number;
+          return true;
+        });
+
+        // Use the first entry.
+        if (this.#channel.value === null)
+          this.#channel.value = data.output.channels[0].number;
+
+        // Update the channel selector.
+        for (const channel of data.output.channels)
+          this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
+
+        // Add the currently selected channel.
+        data.output.channels.find((channel) => {
+          if (channel.number !== this.#channel.value)
+            return false;
+
+          this.#addChannel(channel);
+          return true;
+        });
+
+      } else {
+        if (!isNull(data.output.channel))
+          this.#channel.value = data.output.channel;
+
+        else
+          this.#channel.value = 0;
+
+        this.#channel.addEntry(this.#channel.value);
+        this.#addChannel(data.output);
+      }
     });
-
-    V2Web.addElement(this.#element, 'div', (e) => {
-      this.#notes.element = e;
-      e.id = this.id + '.notes';
-      e.style.display = 'none';
-
-      V2Web.addElement(e, 'hr');
-      V2Web.addElement(e, 'p', (e) => {
-        e.classList.add('title');
-        e.textContent = 'Notes';
-      });
-    });
-
-    this.#controllers.list = {};
-    this.#notes.list = {};
-
-    if (data.output.channels) {
-      // Find the currently selected channel number.
-      data.output.channels.find((channel) => {
-        if (!channel.selected)
-          return false;
-
-        this.#channel.value = channel.number;
-        return true;
-      });
-
-      // Use the first entry.
-      if (this.#channel.value === null)
-        this.#channel.value = data.output.channels[0].number;
-
-      // Update the channel selector.
-      for (const channel of data.output.channels)
-        this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
-
-      // Add the currently selected channel.
-      data.output.channels.find((channel) => {
-        if (channel.number !== this.#channel.value)
-          return false;
-
-        this.#addChannel(channel);
-        return true;
-      });
-
-    } else {
-      if (!isNull(data.output.channel))
-        this.#channel.value = data.output.channel;
-
-      else
-        this.#channel.value = 0;
-
-      this.#channel.addEntry(this.#channel.value);
-      this.#addChannel(data.output);
-    }
   }
 
   #clear() {

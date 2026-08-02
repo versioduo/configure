@@ -11,10 +11,10 @@ class V2SettingsModule {
     return Object.seal(this);
   }
 
-  addSection(canvas, setting) {
+  addSetting(canvas, setting, level) {
     if (setting.title) {
       V2Web.addElement(canvas, 'hgroup', (hg) => {
-        V2Web.addElement(hg, 'h3', (e) => {
+        V2Web.addElement(hg, 'h' + level, (e) => {
           e.textContent = setting.title;
         });
 
@@ -83,7 +83,7 @@ class V2SettingsCalibration extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     // Find current program.
     const programs = data.input.channels?.[0].programs || data.input.programs;
@@ -270,7 +270,7 @@ class V2SettingsColour extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     this.#configuration = setting.configuration;
 
@@ -283,10 +283,9 @@ class V2SettingsColour extends V2SettingsModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         this.#colour.elementText = e;
       });
-
 
       menu.addElement('span', (e) => {
         this.#colour.element = e;
@@ -313,7 +312,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           e.textContent = 'Hue';
         });
 
@@ -324,6 +323,26 @@ class V2SettingsColour extends V2SettingsModule {
           e.max = 127;
           e.addEventListener('input', () => {
             update(e.value);
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2Web.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--minus');
+          });
+          e.addEventListener('click', () => {
+            this.#hue.stepDown();
+            this.#hue.dispatchEvent(new Event('input'));
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2Web.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--plus');
+          });
+          e.addEventListener('click', () => {
+            this.#hue.stepUp();
+            this.#hue.dispatchEvent(new Event('input'));
           });
         });
       });
@@ -360,7 +379,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           e.textContent = 'Saturation';
         });
 
@@ -371,6 +390,26 @@ class V2SettingsColour extends V2SettingsModule {
           e.max = 127;
           e.addEventListener('input', () => {
             update(e.value);
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2Web.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--minus');
+          });
+          e.addEventListener('click', () => {
+            this.#saturation.stepDown();
+            this.#saturation.dispatchEvent(new Event('input'));
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2Web.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--plus');
+          });
+          e.addEventListener('click', () => {
+            this.#saturation.stepUp();
+            this.#saturation.dispatchEvent(new Event('input'));
           });
         });
       });
@@ -407,7 +446,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           e.textContent = 'Brightness';
         });
 
@@ -418,6 +457,26 @@ class V2SettingsColour extends V2SettingsModule {
           e.max = 127;
           e.addEventListener('input', () => {
             update(e.value);
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2Web.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--minus');
+          });
+          e.addEventListener('click', () => {
+            this.#brightness.stepDown();
+            this.#brightness.dispatchEvent(new Event('input'));
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2Web.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--plus');
+          });
+          e.addEventListener('click', () => {
+            this.#brightness.stepUp();
+            this.#brightness.dispatchEvent(new Event('input'));
           });
         });
       });
@@ -458,7 +517,7 @@ class V2SettingsController extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     let text = null;
     let range = null;
@@ -497,7 +556,7 @@ class V2SettingsController extends V2SettingsModule {
       }
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         text = e;
       });
 
@@ -542,7 +601,7 @@ class V2SettingsDrum extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     const drum = this.getConfiguration(data.configuration);
     if (!isNull(drum.sensitivity)) {
@@ -550,9 +609,11 @@ class V2SettingsDrum extends V2SettingsModule {
       let range = null;
 
       new V2WebMenu(canvas, (menu) => {
+        menu.element.classList.add('full');
+
         menu.addElement('span', (e) => {
-          e.classList.add('label');
           sensitivity = e;
+          e.classList.add('grow');
           e.textContent = 'Sensitivity';
         });
 
@@ -611,7 +672,7 @@ class V2SettingsDrum extends V2SettingsModule {
         });
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           note = e;
         });
 
@@ -680,7 +741,7 @@ class V2SettingsDrum extends V2SettingsModule {
 
         menu.addElement('span', (e) => {
           text = e;
-          e.classList.add('text');
+          e.classList.add('grow');
         });
 
         menu.addElement('input', (e) => {
@@ -732,7 +793,6 @@ class V2SettingsDrum extends V2SettingsModule {
   }
 }
 
-
 // MIDI Message Filter
 class V2SettingsFilter extends V2SettingsModule {
   static type = 'filter';
@@ -742,7 +802,7 @@ class V2SettingsFilter extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     const filter = this.getConfiguration(data.configuration);
 
@@ -756,7 +816,7 @@ class V2SettingsFilter extends V2SettingsModule {
       }
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         e.textContent = setting.text;
       });
 
@@ -797,8 +857,6 @@ class V2SettingsFilter extends V2SettingsModule {
   }
 }
 
-
-
 // JSON text menu.
 class V2SettingsJSON extends V2SettingsModule {
   static type = 'json';
@@ -810,13 +868,7 @@ class V2SettingsJSON extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
-
-    if (setting.text) {
-      V2Web.addElement(canvas, 'p', (e) => {
-        e.textContent = setting.text;
-      });
-    }
+    super.addSetting(canvas, setting), 4;
 
     new V2WebMenu(canvas, (menu) => {
       menu.addElement('button', (e) => {
@@ -850,6 +902,13 @@ class V2SettingsJSON extends V2SettingsModule {
         });
       });
     });
+
+    if (setting.text) {
+      V2Web.addElement(canvas, 'p', (e) => {
+        e.classList.add('center');
+        e.textContent = setting.text;
+      });
+    }
 
     V2Web.addElement(canvas, 'textarea', (e) => {
       this.#json = e;
@@ -897,7 +956,7 @@ class V2SettingsNote extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     let note = null;
     let range = null;
@@ -935,7 +994,7 @@ class V2SettingsNote extends V2SettingsModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         note = e;
       });
 
@@ -955,6 +1014,7 @@ class V2SettingsNote extends V2SettingsModule {
         });
         e.addEventListener('click', () => {
           this.#note.stepDown();
+          this.#note.dispatchEvent(new Event('input'));
         });
       });
 
@@ -964,6 +1024,7 @@ class V2SettingsNote extends V2SettingsModule {
         });
         e.addEventListener('click', () => {
           this.#note.stepUp();
+          this.#note.dispatchEvent(new Event('input'));
         });
       });
     });
@@ -995,19 +1056,20 @@ class V2SettingsToggle extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     new V2WebMenu(canvas, (menu) => {
       menu.addElement('span', (e) => {
-        e.classList.add('label');
         e.textContent = setting.label;
+        if (setting.text)
+          e.classList.add('label');
       });
 
       if (setting.text) {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           e.textContent = setting.text;
         });
       }
@@ -1035,7 +1097,7 @@ class V2SettingsNumber extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     this.#number = null;
     let number = null;
@@ -1063,15 +1125,16 @@ class V2SettingsNumber extends V2SettingsModule {
 
     new V2WebMenu(canvas, (menu) => {
       menu.addElement('span', (e) => {
-        e.classList.add('label');
         e.textContent = setting.label;
+        if (setting.text)
+          e.classList.add('label');
       });
 
       if (setting.text) {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           e.textContent = setting.text;
         });
       }
@@ -1178,7 +1241,7 @@ class V2SettingsPulse extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 4);
 
     if (setting.limit?.watts)
       this.#watts.limit = setting.limit.watts;
@@ -1227,7 +1290,7 @@ class V2SettingsPulse extends V2SettingsModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         e.textContent = 'Watts';
       });
 
@@ -1285,7 +1348,7 @@ class V2SettingsPulse extends V2SettingsModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         e.textContent = 'Seconds';
       });
 
@@ -1357,7 +1420,7 @@ class V2SettingsText extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 3);
 
     new V2WebMenu(canvas, (menu) => {
       menu.element.classList.add('full');
@@ -1370,7 +1433,7 @@ class V2SettingsText extends V2SettingsModule {
       menu.addElement('input', (e) => {
         this.#text = e;
         e.type = 'text';
-        e.classList.add('text');
+        e.classList.add('grow');
         e.maxLength = 31;
         e.value = this.getConfiguration(data.configuration);
       });
@@ -1384,13 +1447,13 @@ class V2SettingsText extends V2SettingsModule {
   }
 }
 
-// Title / header.
+// Create a new section in the user interface.
 class V2SettingsTitle extends V2SettingsModule {
   static type = 'title';
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
-    super.addSection(canvas, setting);
+    super.addSetting(canvas, setting, 3);
   }
 }
 
@@ -1425,7 +1488,7 @@ class V2SettingsUSB extends V2SettingsModule {
       menu.addElement('input', (e) => {
         this.#name = e;
         e.type = 'text';
-        e.classList.add('text');
+        e.classList.add('grow');
         e.maxLength = 31;
         if (data.system.name)
           e.value = data.system.name;
@@ -1452,7 +1515,7 @@ class V2SettingsUSB extends V2SettingsModule {
         menu.addElement('input', (e) => {
           this.#vid = e;
           e.type = 'text';
-          e.classList.add('text');
+          e.classList.add('grow');
           e.maxLength = 4;
           if (data.configuration.usb.vid > 0)
             e.value = usbID(data.configuration.usb.vid);
@@ -1474,7 +1537,7 @@ class V2SettingsUSB extends V2SettingsModule {
         menu.addElement('input', (e) => {
           this.#pid = e;
           e.type = 'text';
-          e.classList.add('text');
+          e.classList.add('grow');
           e.maxLength = 4;
           if (data.configuration.usb.pid > 0)
             e.value = usbID(data.configuration.usb.pid);
@@ -1495,7 +1558,7 @@ class V2SettingsUSB extends V2SettingsModule {
         });
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           e.textContent = 'Virtual Ports';
         });
 

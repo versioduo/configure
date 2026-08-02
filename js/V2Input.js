@@ -93,7 +93,7 @@ class V2Input extends V2WebModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         e.textContent = controller.name;
       });
 
@@ -217,7 +217,7 @@ class V2Input extends V2WebModule {
       });
 
       menu.addElement('span', (e) => {
-        e.classList.add('text');
+        e.classList.add('grow');
         e.textContent = name;
       });
 
@@ -261,7 +261,6 @@ class V2Input extends V2WebModule {
 
       new V2WebMenu(this.#controls.element, (menu) => {
         menu.addElement('span', (e) => {
-          e.classList.add('label');
           e.textContent = 'Program';
         });
 
@@ -331,7 +330,7 @@ class V2Input extends V2WebModule {
         });
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           e.textContent = 'Velocity';
         });
 
@@ -382,7 +381,7 @@ class V2Input extends V2WebModule {
         });
 
         menu.addElement('span', (e) => {
-          e.classList.add('text');
+          e.classList.add('grow');
           e.textContent = 'Release Velocity';
         });
 
@@ -437,7 +436,7 @@ class V2Input extends V2WebModule {
           });
 
           menu.addElement('span', (e) => {
-            e.classList.add('text');
+            e.classList.add('grow');
             e.textContent = 'Aftertouch';
           });
 
@@ -505,7 +504,7 @@ class V2Input extends V2WebModule {
           });
 
           menu.addElement('span', (e) => {
-            e.classList.add('text');
+            e.classList.add('grow');
             e.textContent = channel.pitchbend.name || 'Pitch Bend';
           });
 
@@ -622,7 +621,6 @@ class V2Input extends V2WebModule {
 
     new V2WebMenu(this.#element, (menu) => {
       menu.addElement('span', (e) => {
-        e.classList.add('label');
         e.textContent = 'Channel';
       });
 
@@ -654,82 +652,87 @@ class V2Input extends V2WebModule {
 
     V2Web.addElement(this.#element, 'div', (e) => {
       this.#controls.element = e;
-      e.id = this.id + '.controls';
     });
 
-    V2Web.addElement(this.#element, 'div', (e) => {
-      this.#controllers.element = e;
-      e.id = this.id + '.controllers';
-      e.style.display = 'none';
+    V2Web.addElement(this.#element, 'ul', (cards) => {
+      cards.classList.add('cards');
 
-      V2Web.addElement(e, 'hr');
+      V2Web.addElement(cards, 'li', (e) => {
+        this.#controllers.element = e;
+        e.style.display = 'none';
 
-      V2Web.addElement(e, 'p', (e) => {
-        e.classList.add('title');
-        e.textContent = 'Controllers';
+        V2Web.addElement(e, 'hgroup', (hg) => {
+          V2Web.addElement(hg, 'h3', (e) => {
+            e.textContent = 'Controllers';
+          });
+          V2Web.addElement(hg, 'p', (e) => {
+            e.textContent = 'Send Control Messages';
+          });
+        });
       });
+
+      V2Web.addElement(cards, 'li', (e) => {
+        this.#notes.element = e;
+        e.style.display = 'none';
+
+        V2Web.addElement(e, 'hgroup', (hg) => {
+          V2Web.addElement(hg, 'h3', (e) => {
+            e.textContent = 'Notes';
+          });
+          V2Web.addElement(hg, 'p', (e) => {
+            e.textContent = 'Play Notes';
+          });
+        });
+
+        V2Web.addElement(e, 'div', (e) => {
+          this.#notes.controls.element = e;
+          e.id = this.id + '.notes.controls';
+        });
+
+        V2Web.addElement(e, 'div', (e) => {
+          this.#notes.chromatic.element = e;
+          e.id = this.id + 'notes.chromatic';
+        });
+      });
+
+      if (data.input.channels) {
+        // Find the currently selected channel number.
+        data.input.channels.find((channel) => {
+          if (!channel.selected)
+            return false;
+
+          this.#channel.value = channel.number;
+          return true;
+        });
+
+        // Use the first entry.
+        if (this.#channel.value === null)
+          this.#channel.value = data.input.channels[0].number;
+
+        // Update the channel selector.
+        for (const channel of data.input.channels)
+          this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
+
+        // Add the currently selected channel.
+        data.input.channels.find((channel) => {
+          if (channel.number !== this.#channel.value)
+            return false;
+
+          this.#addChannel(channel);
+          return true;
+        });
+
+      } else {
+        if (!isNull(data.input.channel))
+          this.#channel.value = data.input.channel;
+
+        else
+          this.#channel.value = 0;
+
+        this.#channel.addEntry(this.#channel.value);
+        this.#addChannel(data.input);
+      }
     });
-
-    V2Web.addElement(this.#element, 'div', (e) => {
-      this.#notes.element = e;
-      e.id = this.id + '.notes';
-      e.style.display = 'none';
-
-      V2Web.addElement(e, 'hr');
-
-      V2Web.addElement(e, 'p', (e) => {
-        e.classList.add('title');
-        e.textContent = 'Notes';
-      });
-
-      V2Web.addElement(e, 'div', (e) => {
-        this.#notes.controls.element = e;
-        e.id = this.id + '.notes.controls';
-      });
-
-      V2Web.addElement(e, 'div', (e) => {
-        this.#notes.chromatic.element = e;
-        e.id = this.id + 'notes.chromatic';
-      });
-    });
-
-    if (data.input.channels) {
-      // Find the currently selected channel number.
-      data.input.channels.find((channel) => {
-        if (!channel.selected)
-          return false;
-
-        this.#channel.value = channel.number;
-        return true;
-      });
-
-      // Use the first entry.
-      if (this.#channel.value === null)
-        this.#channel.value = data.input.channels[0].number;
-
-      // Update the channel selector.
-      for (const channel of data.input.channels)
-        this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
-
-      // Add the currently selected channel.
-      data.input.channels.find((channel) => {
-        if (channel.number !== this.#channel.value)
-          return false;
-
-        this.#addChannel(channel);
-        return true;
-      });
-
-    } else {
-      if (!isNull(data.input.channel))
-        this.#channel.value = data.input.channel;
-
-      else
-        this.#channel.value = 0;
-
-      this.#channel.addEntry(this.#channel.value);
-      this.#addChannel(data.input);
-    }
   }
 
   #clear() {
