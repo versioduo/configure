@@ -267,8 +267,8 @@ class V2Input extends V2WebModule {
         menu.addElement('select', (select) => {
           for (const [index, program] of channel.programs.entries())
             V2Web.addElement(select, 'option', (e) => {
-              if (this.#controls.bank !== null) {
-                const bankNumber = this.#controls.bank !== null ? ' Bank ' + (program.bank + 1) : '';
+              if (this.#controls.bank) {
+                const bankNumber = this.#controls.bank ? ' Bank ' + (program.bank + 1) : '';
                 e.text = (program.number + 1) + bankNumber + ' – ' + program.name;
                 e.selected = (program.number === this.#controls.program) && (program.bank === this.#controls.bank);
 

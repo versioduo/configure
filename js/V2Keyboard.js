@@ -57,7 +57,7 @@ class V2Keyboard {
         return;
 
       const note = this.#handleKey(ev);
-      if (note != null)
+      if (note)
         this.handler.down(note);
     }, {
       signal: this.#listener.signal

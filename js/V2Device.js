@@ -155,7 +155,7 @@ class V2Device extends V2Connection {
       menu.addElement('select', (s) => {
         s.classList.add('primary');
 
-        for (let i = 0; i < this.#data.system.hardware.usb.ports.current; i++) {
+        for (let i = 0; i < 16; i++) {
           V2Web.addElement(s, 'option', (e) => {
             e.value = i;
             e.text = (i === 0) ? '–' : '#' + i;
@@ -198,8 +198,6 @@ class V2Device extends V2Connection {
     }
 
     this.#showNode();
-
-
 
     if (!this.#tabs) {
       new V2WebTabs(this.canvas, (tabs) => {

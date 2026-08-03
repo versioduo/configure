@@ -1548,7 +1548,7 @@ class V2SettingsUSB extends V2SettingsModule {
     }
 
     // The number of MIDI ports.
-    if (data.system.hardware?.usb?.ports?.standard > 0) {
+    if (!data.system.hardware?.usb?.ports?.fixed && data.system.hardware?.usb?.ports?.standard > 0) {
       new V2WebMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 

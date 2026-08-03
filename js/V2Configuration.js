@@ -145,6 +145,13 @@ class V2ConfigurationEdit {
       });
 
       menu.addElement('button', (e) => {
+        e.textContent = 'Refresh';
+        e.addEventListener('click', () => {
+          this.#device.sendGetAll();
+        });
+      });
+
+      menu.addElement('button', (e) => {
         e.classList.add('primary');
         e.textContent = 'Save';
         e.addEventListener('click', () => {

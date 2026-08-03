@@ -60,7 +60,7 @@ class V2Web {
     });
   }
 
-  static addNavigation(id, icon, title, target) {
+  static addNavigationSection(id, icon, title, target) {
     this.addElement(document.querySelector('nav details ul'), 'li', (li) => {
       li.id = 'nav-' + id;
 
@@ -77,7 +77,7 @@ class V2Web {
     });
   }
 
-  static removeNavigation(id) {
+  static removeNavigationSection(id) {
     const e = document.querySelector('#nav-' + id);
     if (e)
       e.remove();
@@ -386,7 +386,7 @@ class V2WebModule {
       return;
 
     if (this.id && this.#header.title)
-      V2Web.addNavigation(this.id, this.#header.icon, this.#header.title, '#' + this.id);
+      V2Web.addNavigationSection(this.id, this.#header.icon, this.#header.title, '#' + this.id);
 
     document.querySelector('main').appendChild(this.canvas);
   }
@@ -396,21 +396,21 @@ class V2WebModule {
       return;
 
     if (this.id && this.#header.title)
-      V2Web.removeNavigation(this.id);
+      V2Web.removeNavigationSection(this.id);
 
     this.canvas.remove();
   }
 
   show() {
     if (this.id)
-      V2Web.addNavigation(this.id, this.#header.icon, this.#header.title, '#' + this.id);
+      V2Web.addNavigationSection(this.id, this.#header.icon, this.#header.title, '#' + this.id);
 
     this.canvas.style.display = '';
   }
 
   hide() {
     if (this.id)
-      V2Web.removeNavigation(this.id);
+      V2Web.removeNavigationSection(this.id);
 
     this.canvas.style.display = 'none';
   }
