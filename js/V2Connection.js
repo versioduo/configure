@@ -1,4 +1,4 @@
-class V2Connection extends V2WebModule {
+class V2Connection extends V2AppSection {
   log = null;
   midi = null;
   notify = null;
@@ -12,11 +12,13 @@ class V2Connection extends V2WebModule {
 
   constructor(log, connect) {
     super('connection');
+    this.addSection();
+
     this.log = log;
     this.midi = new V2MIDI();
-    this.notify = new V2WebNotify(this.canvas);
+    this.notify = new V2AppNotify(this.canvas);
 
-    new V2WebMenu(this.canvas, (menu) => {
+    new V2AppMenu(this.canvas, (menu) => {
       menu.addElement('span', (e) => {
         e.textContent = 'Device';
       });
@@ -28,12 +30,10 @@ class V2Connection extends V2WebModule {
 
         this.select.addNotifier('select', (device) => {
           if (device) {
-            this.log.attach();
             this.connect(device);
             reset.disabled = false;
 
           } else {
-            this.log.detach();
             this.disconnect();
             reset.disabled = true;
           }
@@ -56,7 +56,7 @@ class V2Connection extends V2WebModule {
         e.disabled = true;
         e.classList.add('icon', 'field');
 
-        V2Web.addElement(e, 'i', (i) => {
+        V2App.addElement(e, 'i', (i) => {
           i.classList.add('icon', '--rotate', '--nospace');
         });
 
@@ -153,15 +153,13 @@ class V2Connection extends V2WebModule {
       }
     });
 
-    V2Web.addElement(this.canvas, 'p', (e) => {
+    V2App.addElement(this.canvas, 'p', (e) => {
       this.version = e;
       e.classList.add('center');
       e.innerHTML = '<a href=' + document.querySelector('link[rel="source"]').href +
         ' target="software">' + document.querySelector('meta[name="name"]').content +
         '</a>, version ' + Number(document.querySelector('meta[name="version"]').content);
     });
-
-    this.attach();
   }
 
   addNotifier(type, handler) {

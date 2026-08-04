@@ -202,7 +202,7 @@ class V2Keyboard {
   };
 
   #addOctave(element, octave, firstIndex, lastIndex) {
-    new V2WebMenu(element, (menu) => {
+    new V2AppMenu(element, (menu) => {
       menu.element.classList.add('bar');
       menu.element.classList.add('full');
       menu.element.classList.add('font-scale');

@@ -1,7 +1,6 @@
 // MIDI Output controllers and notes.
-class V2Output extends V2WebModule {
+class V2Output extends V2AppSection {
   #device = null;
-  #element = null;
   #channel = Object.seal({
     value: null,
     addEntry: null
@@ -22,29 +21,19 @@ class V2Output extends V2WebModule {
     super('output', '--right-to-bracket', 'MIDI Out', 'Receive Notes and Control Changes');
     this.#device = device;
 
-    V2Web.addElement(this.canvas, 'div', (e) => {
-      this.#element = e;
-      e.id = this.id + '.element';
-    });
-
-    const reset = () => {
-      this.#channel.value = null;
-      this.detach();
-      this.#clear();
-    };
-
     this.#device.addNotifier('show', (data) => {
-      if (!data.output) {
-        reset();
-        return;
-      }
+      this.removeSection();
 
+      if (!data.output)
+        return;
+
+      this.addSection();
       this.#show(data);
-      this.attach();
     });
 
     this.#device.addNotifier('reset', () => {
-      reset();
+      this.#reset();
+      this.removeSection();
     });
 
     const updateNote = (channel, note, velocity) => {
@@ -126,7 +115,7 @@ class V2Output extends V2WebModule {
     const type = controller.type || 'range';
     const fine = !isNull(controller.valueFine);
 
-    new V2WebMenu(this.#controllers.element, (menu) => {
+    new V2AppMenu(this.#controllers.element, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -190,7 +179,7 @@ class V2Output extends V2WebModule {
     });
 
     if (type === 'range') {
-      V2Web.addElement(this.#controllers.element, 'progress', (e) => {
+      V2App.addElement(this.#controllers.element, 'progress', (e) => {
         e.value = controller.value || 0;
         e.min = controller.min ?? 0;
         e.max = controller.max ?? 127;
@@ -200,7 +189,7 @@ class V2Output extends V2WebModule {
   }
 
   #addNote(name, note, hasAftertouch) {
-    new V2WebMenu(this.#notes.element, (menu) => {
+    new V2AppMenu(this.#notes.element, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -222,14 +211,14 @@ class V2Output extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.#notes.element, 'progress', (e) => {
+    V2App.addElement(this.#notes.element, 'progress', (e) => {
       e.value = '0';
       e.max = '127';
       this.#notes.list[note].progress = e;
     });
 
     if (hasAftertouch) {
-      V2Web.addElement(this.#notes.element, 'progress', (e) => {
+      V2App.addElement(this.#notes.element, 'progress', (e) => {
         e.value = '0';
         e.max = '127';
         this.#notes.list[note].aftertouch = e;
@@ -251,7 +240,7 @@ class V2Output extends V2WebModule {
         let input = null;
         let progress = null;
 
-        new V2WebMenu(this.#notes.element, (menu) => {
+        new V2AppMenu(this.#notes.element, (menu) => {
           menu.addElement('span', (e) => {
             e.textContent = 'Aftertouch';
           });
@@ -264,7 +253,7 @@ class V2Output extends V2WebModule {
           });
         });
 
-        V2Web.addElement(this.#notes.element, 'progress', (e) => {
+        V2App.addElement(this.#notes.element, 'progress', (e) => {
           progress = e;
           e.value = channel.aftertouch.value;
           e.max = '127';
@@ -284,12 +273,7 @@ class V2Output extends V2WebModule {
   }
 
   #show(data) {
-    this.#clear();
-
-    if (!data.output)
-      return;
-
-    new V2WebMenu(this.#element, (menu) => {
+    new V2AppMenu(this.canvas, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
@@ -298,7 +282,7 @@ class V2Output extends V2WebModule {
       });
     });
 
-    new V2WebMenu(this.#element, (menu) => {
+    new V2AppMenu(this.canvas, (menu) => {
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = 'Channel';
@@ -306,7 +290,7 @@ class V2Output extends V2WebModule {
 
       menu.addElement('select', (select) => {
         this.#channel.addEntry = (channel, name, selected) => {
-          V2Web.addElement(select, 'option', (e) => {
+          V2App.addElement(select, 'option', (e) => {
             e.text = channel + 1;
             if (name)
               e.text += ' - ' + name;
@@ -330,32 +314,32 @@ class V2Output extends V2WebModule {
       });
     });
 
-    V2Web.addElement(this.#element, 'ul', (cards) => {
+    V2App.addElement(this.canvas, 'ul', (cards) => {
       cards.classList.add('cards');
 
-      V2Web.addElement(cards, 'li', (e) => {
+      V2App.addElement(cards, 'li', (e) => {
         this.#controllers.element = e;
         e.style.display = 'none';
 
-        V2Web.addElement(e, 'hgroup', (hg) => {
-          V2Web.addElement(hg, 'h3', (e) => {
+        V2App.addElement(e, 'hgroup', (hg) => {
+          V2App.addElement(hg, 'h3', (e) => {
             e.textContent = 'Controllers';
           });
-          V2Web.addElement(hg, 'p', (e) => {
+          V2App.addElement(hg, 'p', (e) => {
             e.textContent = 'Receive Control Messages';
           });
         });
       });
 
-      V2Web.addElement(cards, 'li', (e) => {
+      V2App.addElement(cards, 'li', (e) => {
         this.#notes.element = e;
         e.style.display = 'none';
 
-        V2Web.addElement(e, 'hgroup', (hg) => {
-          V2Web.addElement(hg, 'h3', (e) => {
+        V2App.addElement(e, 'hgroup', (hg) => {
+          V2App.addElement(hg, 'h3', (e) => {
             e.textContent = 'Notes';
           });
-          V2Web.addElement(hg, 'p', (e) => {
+          V2App.addElement(hg, 'p', (e) => {
             e.textContent = 'Receive Notes';
           });
         });
@@ -404,8 +388,7 @@ class V2Output extends V2WebModule {
     });
   }
 
-  #clear() {
-    while (this.#element.firstChild)
-      this.#element.firstChild.remove();
+  #reset() {
+    this.#channel.value = null;
   }
 }

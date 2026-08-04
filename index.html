@@ -5,8 +5,8 @@
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <meta name="name" content="configure">
     <meta name="description" content="MIDI Device Configuration">
-    <meta name="version" content="462">
-    <meta name="revised" content="2026-08-04">
+    <meta name="version" content="463">
+    <meta name="revised" content="2026-08-06">
     <meta name="copyright" content="Anyone can use this public domain work without having to seek authorisation, no one can ever own it.">
     <meta name="rating" content="safe for kids">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,28 +29,22 @@
       </details>
     </nav>
     <main class="--grid"></main>
-    <script src="js/V2Web.js"></script>
+    <script src="js/V2App.js"></script>
+    <script src="js/V2Configuration.js"></script>
+    <script src="js/V2Connection.js"></script>
+    <script src="js/V2Debug.js"></script>
+    <script src="js/V2Device.js"></script>
+    <script src="js/V2Input.js"></script>
     <script src="js/V2Log.js"></script>
     <script src="js/V2MIDI.js"></script>
     <script src="js/V2MIDISelect.js"></script>
-    <script src="js/V2Connection.js"></script>
-    <script src="js/V2Device.js"></script>
-    <script src="js/V2Configuration.js"></script>
+    <script src="js/V2Output.js"></script>
     <script src="js/V2Keyboard.js"></script>
     <script src="js/V2Settings.js"></script>
-    <script src="js/V2Input.js"></script>
-    <script src="js/V2Output.js"></script>
-    <script src="js/V2Debug.js"></script>
     <script>
       'use strict';
 
-      {
-        V2Web.setup();
-
-        // Early logging init, we don't have a device or the web sections yet, but we already
-        // record the messages. setup() is called later to attach the device.
-        const log = new V2Log();
-
+      new V2App((app) => {
         // Read commands from the URL.
         const url = new URL(window.location);
 
@@ -62,12 +56,21 @@
           window.history.pushState({}, '', url);
         }
 
-        // Add the sections.
-        const device = new V2Device(log, connect);
-        log.setup(device);
+        // Early logging init, we don't have a device but we already log messages.
+        new V2Log((log) => {
+          const device = new V2Device(log, connect);
+          app.addSection(new V2Configuration(device));
+          app.addSection(new V2Input(device));
+          app.addSection(new V2Output(device));
+
+          if (url.searchParams.get('debug'))
+            app.addSection(new V2Debug(device));
+
+          app.addSection(log.setup(device));
+        });
 
         // Cache the content for offline operation.
-        V2Web.registerServiceWorker('service-worker.js', (state, newWorker) => {
+        app.registerServiceWorker('service-worker.js', (state, newWorker) => {
           // There is no worker during the intial setup.
           if (!navigator.serviceWorker.controller)
             return;
@@ -75,7 +78,7 @@
           switch (state) {
             case 'installed':
               // A new version was installed into the cache and a new worker is waiting to take control.
-              V2Web.notifyUpdate('A fresh version is available', () => {
+              app.notifyUpdate('A fresh version is available', () => {
                 newWorker.postMessage({
                   type: 'skipWaiting'
                 });
@@ -88,14 +91,7 @@
               break;
           }
         });
-
-        new V2Configuration(device);
-        new V2Input(device);
-        new V2Output(device);
-
-        if (url.searchParams.get('debug'))
-          new V2Debug(device);
-      }
+      });
     </script>
   </body>
 </html>

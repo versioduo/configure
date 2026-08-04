@@ -13,13 +13,13 @@ class V2SettingsModule {
 
   addSetting(canvas, setting, level) {
     if (setting.title) {
-      V2Web.addElement(canvas, 'hgroup', (hg) => {
-        V2Web.addElement(hg, 'h' + level, (e) => {
+      V2App.addElement(canvas, 'hgroup', (hg) => {
+        V2App.addElement(hg, 'h' + level, (e) => {
           e.textContent = setting.title;
         });
 
         if (setting.subtitle) {
-          V2Web.addElement(hg, 'p', (e) => {
+          V2App.addElement(hg, 'p', (e) => {
             e.textContent = setting.subtitle;
           });
         }
@@ -27,7 +27,7 @@ class V2SettingsModule {
     }
 
     if (setting.ruler) {
-      V2Web.addElement(canvas, 'hr');
+      V2App.addElement(canvas, 'hr');
     }
   }
 
@@ -150,7 +150,7 @@ class V2SettingsCalibration extends V2SettingsModule {
       }, 100);
     };
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Play Min';
         e.addEventListener('click', () => {
@@ -167,7 +167,7 @@ class V2SettingsCalibration extends V2SettingsModule {
     });
 
     const addCalibrationNote = (i, note) => {
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.addElement('span', (e) => {
           e.classList.add('label');
           e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
@@ -274,7 +274,7 @@ class V2SettingsColour extends V2SettingsModule {
 
     this.#configuration = setting.configuration;
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -303,7 +303,7 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -327,7 +327,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('button', (e) => {
-          V2Web.addElement(e, 'i', (i) => {
+          V2App.addElement(e, 'i', (i) => {
             i.classList.add('icon', '--nospace', '--minus');
           });
           e.addEventListener('click', () => {
@@ -337,7 +337,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('button', (e) => {
-          V2Web.addElement(e, 'i', (i) => {
+          V2App.addElement(e, 'i', (i) => {
             i.classList.add('icon', '--nospace', '--plus');
           });
           e.addEventListener('click', () => {
@@ -347,7 +347,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(canvas, 'input', (e) => {
+      V2App.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -370,7 +370,7 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -394,7 +394,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('button', (e) => {
-          V2Web.addElement(e, 'i', (i) => {
+          V2App.addElement(e, 'i', (i) => {
             i.classList.add('icon', '--nospace', '--minus');
           });
           e.addEventListener('click', () => {
@@ -404,7 +404,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('button', (e) => {
-          V2Web.addElement(e, 'i', (i) => {
+          V2App.addElement(e, 'i', (i) => {
             i.classList.add('icon', '--nospace', '--plus');
           });
           e.addEventListener('click', () => {
@@ -414,7 +414,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(canvas, 'input', (e) => {
+      V2App.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -437,7 +437,7 @@ class V2SettingsColour extends V2SettingsModule {
         this.#updateColour();
       };
 
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -461,7 +461,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('button', (e) => {
-          V2Web.addElement(e, 'i', (i) => {
+          V2App.addElement(e, 'i', (i) => {
             i.classList.add('icon', '--nospace', '--minus');
           });
           e.addEventListener('click', () => {
@@ -471,7 +471,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
 
         menu.addElement('button', (e) => {
-          V2Web.addElement(e, 'i', (i) => {
+          V2App.addElement(e, 'i', (i) => {
             i.classList.add('icon', '--nospace', '--plus');
           });
           e.addEventListener('click', () => {
@@ -481,7 +481,7 @@ class V2SettingsColour extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(canvas, 'input', (e) => {
+      V2App.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -532,7 +532,7 @@ class V2SettingsController extends V2SettingsModule {
       range.value = number;
     };
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       if (setting.test) {
@@ -571,7 +571,7 @@ class V2SettingsController extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(canvas, 'input', (e) => {
+    V2App.addElement(canvas, 'input', (e) => {
       range = e;
       e.type = 'range';
       e.min = 0;
@@ -608,7 +608,7 @@ class V2SettingsDrum extends V2SettingsModule {
       let sensitivity = null;
       let range = null;
 
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -630,7 +630,7 @@ class V2SettingsDrum extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(canvas, 'input', (e) => {
+      V2App.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = -0.99;
@@ -663,7 +663,7 @@ class V2SettingsDrum extends V2SettingsModule {
           note.textContent = 'Disabled';
       };
 
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -691,7 +691,7 @@ class V2SettingsDrum extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(canvas, 'input', (e) => {
+      V2App.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -705,7 +705,7 @@ class V2SettingsDrum extends V2SettingsModule {
     }
 
     if (!isNull(drum.aftertouch)) {
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.addElement('span', (e) => {
           e.classList.add('label');
           e.textContent = 'Aftertouch';
@@ -731,7 +731,7 @@ class V2SettingsDrum extends V2SettingsModule {
           text.textContent = 'Disabled';
       };
 
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -759,7 +759,7 @@ class V2SettingsDrum extends V2SettingsModule {
         });
       });
 
-      V2Web.addElement(canvas, 'input', (e) => {
+      V2App.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = 0;
@@ -806,7 +806,7 @@ class V2SettingsFilter extends V2SettingsModule {
 
     const filter = this.getConfiguration(data.configuration);
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       if (setting.label) {
@@ -821,11 +821,11 @@ class V2SettingsFilter extends V2SettingsModule {
       });
 
       menu.addItem((li) => {
-        V2Web.addElement(li, 'i', (e) => {
+        V2App.addElement(li, 'i', (e) => {
           e.classList.add('icon', '--music', '--nospace');
         });
 
-        V2Web.addElement(li, 'input', (e) => {
+        V2App.addElement(li, 'input', (e) => {
           this.#notes = e;
           e.type = 'checkbox';
           e.checked = filter.notes || false;
@@ -833,11 +833,11 @@ class V2SettingsFilter extends V2SettingsModule {
       });
 
       menu.addItem((li) => {
-        V2Web.addElement(li, 'i', (e) => {
+        V2App.addElement(li, 'i', (e) => {
           e.classList.add('icon', '--sliders', '--nospace');
         });
 
-        V2Web.addElement(li, 'input', (e) => {
+        V2App.addElement(li, 'input', (e) => {
           this.#controller = e;
           e.type = 'checkbox';
           e.checked = filter.controller || false;
@@ -870,7 +870,7 @@ class V2SettingsJSON extends V2SettingsModule {
     super(device, settings, setting);
     super.addSetting(canvas, setting), 4;
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Copy';
 
@@ -904,13 +904,13 @@ class V2SettingsJSON extends V2SettingsModule {
     });
 
     if (setting.text) {
-      V2Web.addElement(canvas, 'p', (e) => {
+      V2App.addElement(canvas, 'p', (e) => {
         e.classList.add('center');
         e.textContent = setting.text;
       });
     }
 
-    V2Web.addElement(canvas, 'textarea', (e) => {
+    V2App.addElement(canvas, 'textarea', (e) => {
       this.#json = e;
 
       if (setting.name) {
@@ -985,7 +985,7 @@ class V2SettingsNote extends V2SettingsModule {
       }
     };
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -1009,7 +1009,7 @@ class V2SettingsNote extends V2SettingsModule {
       });
 
       menu.addElement('button', (e) => {
-        V2Web.addElement(e, 'i', (i) => {
+        V2App.addElement(e, 'i', (i) => {
           i.classList.add('icon', '--nospace', '--minus');
         });
         e.addEventListener('click', () => {
@@ -1019,7 +1019,7 @@ class V2SettingsNote extends V2SettingsModule {
       });
 
       menu.addElement('button', (e) => {
-        V2Web.addElement(e, 'i', (i) => {
+        V2App.addElement(e, 'i', (i) => {
           i.classList.add('icon', '--nospace', '--plus');
         });
         e.addEventListener('click', () => {
@@ -1029,7 +1029,7 @@ class V2SettingsNote extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(canvas, 'input', (e) => {
+    V2App.addElement(canvas, 'input', (e) => {
       range = e;
       e.type = 'range';
       e.min = this.#note.min;
@@ -1058,7 +1058,7 @@ class V2SettingsToggle extends V2SettingsModule {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.addElement('span', (e) => {
         e.textContent = setting.label;
         if (setting.text)
@@ -1123,7 +1123,7 @@ class V2SettingsNumber extends V2SettingsModule {
       }
     };
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.addElement('span', (e) => {
         e.textContent = setting.label;
         if (setting.text)
@@ -1154,7 +1154,7 @@ class V2SettingsNumber extends V2SettingsModule {
 
         if (step === 1) {
           menu.addElement('button', (e) => {
-            V2Web.addElement(e, 'i', (i) => {
+            V2App.addElement(e, 'i', (i) => {
               i.classList.add('icon', '--nospace', '--minus');
             });
             e.addEventListener('click', () => {
@@ -1163,7 +1163,7 @@ class V2SettingsNumber extends V2SettingsModule {
           });
 
           menu.addElement('button', (e) => {
-            V2Web.addElement(e, 'i', (i) => {
+            V2App.addElement(e, 'i', (i) => {
               i.classList.add('icon', '--nospace', '--plus');
             });
             e.addEventListener('click', () => {
@@ -1177,7 +1177,7 @@ class V2SettingsNumber extends V2SettingsModule {
 
         menu.addElement('select', (select) => {
           for (let i = min; i < max + 1; i++) {
-            V2Web.addElement(select, 'option', (e) => {
+            V2App.addElement(select, 'option', (e) => {
               e.value = i;
               e.text = i;
               if (setting.names && setting.names[i])
@@ -1196,7 +1196,7 @@ class V2SettingsNumber extends V2SettingsModule {
     });
 
     if (!select) {
-      V2Web.addElement(canvas, 'input', (e) => {
+      V2App.addElement(canvas, 'input', (e) => {
         range = e;
         e.type = 'range';
         e.min = number.min;
@@ -1249,7 +1249,7 @@ class V2SettingsPulse extends V2SettingsModule {
     if (setting.limit?.seconds)
       this.#seconds.limit = setting.limit.seconds;
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Reset';
         e.addEventListener('click', () => {
@@ -1281,7 +1281,7 @@ class V2SettingsPulse extends V2SettingsModule {
     });
 
     const pulse = this.getConfiguration(data.configuration);
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -1325,7 +1325,7 @@ class V2SettingsPulse extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(canvas, 'input', (e) => {
+    V2App.addElement(canvas, 'input', (e) => {
       e.type = 'range';
       e.min = 0.11;
       e.max = 1;
@@ -1339,7 +1339,7 @@ class V2SettingsPulse extends V2SettingsModule {
       };
     });
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -1383,7 +1383,7 @@ class V2SettingsPulse extends V2SettingsModule {
       });
     });
 
-    V2Web.addElement(canvas, 'input', (e) => {
+    V2App.addElement(canvas, 'input', (e) => {
       e.type = 'range';
       e.min = 0.22;
       e.max = 1;
@@ -1422,7 +1422,7 @@ class V2SettingsText extends V2SettingsModule {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 3);
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -1470,14 +1470,14 @@ class V2SettingsUSB extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
 
-    V2Web.addElement(canvas, 'hgroup', (hg) => {
-      V2Web.addElement(hg, 'h3', (e) => {
+    V2App.addElement(canvas, 'hgroup', (hg) => {
+      V2App.addElement(hg, 'h3', (e) => {
         e.textContent = 'USB';
       });
     });
 
 
-    new V2WebMenu(canvas, (menu) => {
+    new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
 
       menu.addElement('span', (e) => {
@@ -1504,7 +1504,7 @@ class V2SettingsUSB extends V2SettingsModule {
     };
 
     if (!isNull(data.configuration.usb.vid)) {
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -1526,7 +1526,7 @@ class V2SettingsUSB extends V2SettingsModule {
     }
 
     if (!isNull(data.configuration.usb.pid)) {
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -1549,7 +1549,7 @@ class V2SettingsUSB extends V2SettingsModule {
 
     // The number of MIDI ports.
     if (!data.system.hardware?.usb?.ports?.fixed && data.system.hardware?.usb?.ports?.standard > 0) {
-      new V2WebMenu(canvas, (menu) => {
+      new V2AppMenu(canvas, (menu) => {
         menu.element.classList.add('full');
 
         menu.addElement('span', (e) => {
@@ -1566,7 +1566,7 @@ class V2SettingsUSB extends V2SettingsModule {
           this.#ports = select;
 
           for (let i = 0; i < 17; i++) {
-            V2Web.addElement(select, 'option', (e) => {
+            V2App.addElement(select, 'option', (e) => {
               e.value = i;
               e.text = i > 0 ? i : '–';
               if (i === data.configuration.usb.ports)

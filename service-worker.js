@@ -1,5 +1,5 @@
 const name = 'configure';
-const version = 462;
+const version = 463;
 const files = [
   './',
   'css/fonts.css',
@@ -7,6 +7,7 @@ const files = [
   'icons/logo-black.svg',
   'icons/logo-maskable.svg',
   'icons/logo.svg',
+  'js/V2App.js',
   'js/V2Configuration.js',
   'js/V2Connection.js',
   'js/V2Debug.js',
@@ -18,7 +19,6 @@ const files = [
   'js/V2MIDISelect.js',
   'js/V2Output.js',
   'js/V2Settings.js',
-  'js/V2Web.js',
   'manifest.json',
   'webfonts/AlteDIN1451Mittelschrift.woff2',
   'webfonts/fa-brands-400.woff2',
