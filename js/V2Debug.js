@@ -1,26 +1,16 @@
 // Debug interface
 class V2Debug extends V2AppSection {
-  #device = null;
   #element = null;
 
-  constructor(device) {
+  constructor(app) {
     super('debug', '--bug', 'Debug', 'Show the Device Reply');
-    this.#device = device;
-
-    this.#device.addNotifier('show', (data) => {
-      this.removeSection();
-      this.addSection();
-      this.#show(data);
-    });
-
-    this.#device.addNotifier('reset', () => {
-      this.removeSection();
-    });
-
-    return Object.seal(this);
+    Object.seal(this);
   }
 
-  #show(data) {
+  show(data) {
+    this.removeSection();
+    this.addSection();
+
     new V2AppMenu(this.canvas, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Copy';
@@ -36,5 +26,9 @@ class V2Debug extends V2AppSection {
       e.style.width = '100%';
       e.textContent = '"com.versioduo.device": ' + JSON.stringify(data, null, '  ');
     });
+  }
+
+  reset() {
+    this.removeSection();
   }
 }

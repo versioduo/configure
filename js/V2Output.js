@@ -1,6 +1,5 @@
 // MIDI Output controllers and notes.
 class V2Output extends V2AppSection {
-  #device = null;
   #channel = Object.seal({
     value: null,
     addEntry: null
@@ -17,24 +16,9 @@ class V2Output extends V2AppSection {
     list: null
   });
 
-  constructor(device) {
-    super('output', '--right-to-bracket', 'MIDI Out', 'Receive Notes and Control Changes');
-    this.#device = device;
-
-    this.#device.addNotifier('show', (data) => {
-      this.removeSection();
-
-      if (!data.output)
-        return;
-
-      this.addSection();
-      this.#show(data);
-    });
-
-    this.#device.addNotifier('reset', () => {
-      this.#reset();
-      this.removeSection();
-    });
+  constructor(app) {
+    super(app, 'output', '--right-to-bracket', 'MIDI Out', 'Receive Notes and Control Changes');
+    Object.seal(this);
 
     const updateNote = (channel, note, velocity) => {
       if (this.#channel.value !== channel)
@@ -59,15 +43,15 @@ class V2Output extends V2AppSection {
       }
     };
 
-    this.#device.getDevice().addNotifier('note', (channel, note, velocity) => {
+    this.app.device.getDevice().addNotifier('note', (channel, note, velocity) => {
       updateNote(channel, note, velocity);
     });
 
-    this.#device.getDevice().addNotifier('noteOff', (channel, note, velocity) => {
+    this.app.device.getDevice().addNotifier('noteOff', (channel, note, velocity) => {
       updateNote(channel, note, 0);
     });
 
-    this.#device.getDevice().addNotifier('aftertouch', (channel, note, pressure) => {
+    this.app.device.getDevice().addNotifier('aftertouch', (channel, note, pressure) => {
       if (this.#channel.value !== channel)
         return;
 
@@ -77,7 +61,7 @@ class V2Output extends V2AppSection {
       this.#notes.list[note].aftertouch.value = pressure;
     });
 
-    this.#device.getDevice().addNotifier('aftertouchChannel', (channel, pressure) => {
+    this.app.device.getDevice().addNotifier('aftertouchChannel', (channel, pressure) => {
       if (this.#channel.value !== channel)
         return;
 
@@ -85,7 +69,7 @@ class V2Output extends V2AppSection {
         this.#aftertouch.update(pressure);
     });
 
-    this.#device.getDevice().addNotifier('controlChange', (channel, controller, value) => {
+    this.app.device.getDevice().addNotifier('controlChange', (channel, controller, value) => {
       if (this.#channel.value !== channel)
         return;
 
@@ -107,8 +91,134 @@ class V2Output extends V2AppSection {
           this.#controllers.list[controller].button.classList.remove('primary');
       }
     });
+  }
 
-    return Object.seal(this);
+  show(data) {
+    this.removeSection();
+
+    if (!data.output)
+      return;
+
+    this.addSection();
+
+    new V2AppMenu(this.canvas, (menu) => {
+      menu.addElement('button', (e) => {
+        e.textContent = 'Refresh';
+        e.addEventListener('click', () => {
+          this.app.device.sendGetAll();
+        });
+      });
+    });
+
+    new V2AppMenu(this.canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.classList.add('label');
+        e.textContent = 'Channel';
+      });
+
+      menu.addElement('select', (select) => {
+        this.#channel.addEntry = (channel, name, selected) => {
+          V2App.addElement(select, 'option', (e) => {
+            e.text = channel + 1;
+            if (name)
+              e.text += ' - ' + name;
+
+            if (selected)
+              e.selected = true;
+          });
+
+          select.disabled = select.options.length === 1;
+        };
+
+        select.addEventListener('change', () => {
+          this.#channel.value = data.output.channels[select.selectedIndex].number;
+
+          // Request a refresh with the values of the selected channel.
+          this.app.device.sendRequest({
+            'method': 'switchChannel',
+            'channel': this.#channel.value
+          });
+        });
+      });
+    });
+
+    V2App.addElement(this.canvas, 'ul', (cards) => {
+      cards.classList.add('cards');
+
+      V2App.addElement(cards, 'li', (e) => {
+        this.#controllers.element = e;
+        e.style.display = 'none';
+
+        V2App.addElement(e, 'hgroup', (hg) => {
+          V2App.addElement(hg, 'h3', (e) => {
+            e.textContent = 'Controllers';
+          });
+          V2App.addElement(hg, 'p', (e) => {
+            e.textContent = 'Receive Control Messages';
+          });
+        });
+      });
+
+      V2App.addElement(cards, 'li', (e) => {
+        this.#notes.element = e;
+        e.style.display = 'none';
+
+        V2App.addElement(e, 'hgroup', (hg) => {
+          V2App.addElement(hg, 'h3', (e) => {
+            e.textContent = 'Notes';
+          });
+          V2App.addElement(hg, 'p', (e) => {
+            e.textContent = 'Receive Notes';
+          });
+        });
+      });
+
+      this.#controllers.list = {};
+      this.#notes.list = {};
+
+      if (data.output.channels) {
+        // Find the currently selected channel number.
+        data.output.channels.find((channel) => {
+          if (!channel.selected)
+            return false;
+
+          this.#channel.value = channel.number;
+          return true;
+        });
+
+        // Use the first entry.
+        if (this.#channel.value === null)
+          this.#channel.value = data.output.channels[0].number;
+
+        // Update the channel selector.
+        for (const channel of data.output.channels)
+          this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
+
+        // Add the currently selected channel.
+        data.output.channels.find((channel) => {
+          if (channel.number !== this.#channel.value)
+            return false;
+
+          this.#addChannel(channel);
+          return true;
+        });
+
+      } else {
+        if (!isNull(data.output.channel))
+          this.#channel.value = data.output.channel;
+
+        else
+          this.#channel.value = 0;
+
+        this.#channel.addEntry(this.#channel.value);
+        this.#addChannel(data.output);
+      }
+    });
+  }
+
+  reset() {
+    this.removeSection();
+    this.#channel.value = null;
   }
 
   #addController(controller) {
@@ -270,125 +380,5 @@ class V2Output extends V2AppSection {
 
       this.#notes.element.style.display = '';
     }
-  }
-
-  #show(data) {
-    new V2AppMenu(this.canvas, (menu) => {
-      menu.addElement('button', (e) => {
-        e.textContent = 'Refresh';
-        e.addEventListener('click', () => {
-          this.#device.sendGetAll();
-        });
-      });
-    });
-
-    new V2AppMenu(this.canvas, (menu) => {
-      menu.addElement('span', (e) => {
-        e.classList.add('label');
-        e.textContent = 'Channel';
-      });
-
-      menu.addElement('select', (select) => {
-        this.#channel.addEntry = (channel, name, selected) => {
-          V2App.addElement(select, 'option', (e) => {
-            e.text = channel + 1;
-            if (name)
-              e.text += ' - ' + name;
-
-            if (selected)
-              e.selected = true;
-          });
-
-          select.disabled = select.options.length === 1;
-        };
-
-        select.addEventListener('change', () => {
-          this.#channel.value = data.output.channels[select.selectedIndex].number;
-
-          // Request a refresh with the values of the selected channel.
-          this.#device.sendRequest({
-            'method': 'switchChannel',
-            'channel': this.#channel.value
-          });
-        });
-      });
-    });
-
-    V2App.addElement(this.canvas, 'ul', (cards) => {
-      cards.classList.add('cards');
-
-      V2App.addElement(cards, 'li', (e) => {
-        this.#controllers.element = e;
-        e.style.display = 'none';
-
-        V2App.addElement(e, 'hgroup', (hg) => {
-          V2App.addElement(hg, 'h3', (e) => {
-            e.textContent = 'Controllers';
-          });
-          V2App.addElement(hg, 'p', (e) => {
-            e.textContent = 'Receive Control Messages';
-          });
-        });
-      });
-
-      V2App.addElement(cards, 'li', (e) => {
-        this.#notes.element = e;
-        e.style.display = 'none';
-
-        V2App.addElement(e, 'hgroup', (hg) => {
-          V2App.addElement(hg, 'h3', (e) => {
-            e.textContent = 'Notes';
-          });
-          V2App.addElement(hg, 'p', (e) => {
-            e.textContent = 'Receive Notes';
-          });
-        });
-      });
-
-      this.#controllers.list = {};
-      this.#notes.list = {};
-
-      if (data.output.channels) {
-        // Find the currently selected channel number.
-        data.output.channels.find((channel) => {
-          if (!channel.selected)
-            return false;
-
-          this.#channel.value = channel.number;
-          return true;
-        });
-
-        // Use the first entry.
-        if (this.#channel.value === null)
-          this.#channel.value = data.output.channels[0].number;
-
-        // Update the channel selector.
-        for (const channel of data.output.channels)
-          this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
-
-        // Add the currently selected channel.
-        data.output.channels.find((channel) => {
-          if (channel.number !== this.#channel.value)
-            return false;
-
-          this.#addChannel(channel);
-          return true;
-        });
-
-      } else {
-        if (!isNull(data.output.channel))
-          this.#channel.value = data.output.channel;
-
-        else
-          this.#channel.value = 0;
-
-        this.#channel.addEntry(this.#channel.value);
-        this.#addChannel(data.output);
-      }
-    });
-  }
-
-  #reset() {
-    this.#channel.value = null;
   }
 }

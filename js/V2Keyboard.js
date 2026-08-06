@@ -26,6 +26,7 @@ class V2Keyboard {
   #pads = null;
 
   constructor(element, noteStart, noteCount) {
+    Object.seal(this);
     this.#listener = new AbortController();
     this.#notes.start = noteStart;
     this.#notes.count = noteCount;
@@ -89,7 +90,6 @@ class V2Keyboard {
     }
 
     this.#pads = Object.seal(this.#pads);
-    return Object.seal(this);
   }
 
   // Unregister from global document events.

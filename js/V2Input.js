@@ -1,6 +1,5 @@
 // MIDI Input controllers and notes.
 class V2Input extends V2AppSection {
-  #device = null;
   #channel = Object.seal({
     value: null,
     addEntry: null
@@ -42,26 +41,167 @@ class V2Input extends V2AppSection {
     })
   });
 
-  constructor(device) {
-    super('input', '--right-to-bracket', 'MIDI In', 'Play Notes and Adjust Controllers');
-    this.#device = device;
+  constructor(app) {
+    super(app, 'input', '--right-to-bracket', 'MIDI In', 'Play Notes and Adjust Controllers');
+    Object.seal(this);
+  }
 
-    this.#device.addNotifier('show', (data) => {
-      this.removeSection();
+  show(data) {
+    this.removeSection();
 
-      if (!data.input)
-        return;
+    if (!data.input)
+      return;
 
-      this.addSection();
-      this.#show(data);
+    this.addSection();
+
+    new V2AppMenu(this.canvas, (menu) => {
+      menu.addElement('button', (e) => {
+        e.textContent = 'Notes Off';
+        e.addEventListener('click', () => {
+          this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.allNotesOff, 0);
+        });
+      });
+
+      menu.addElement('button', (e) => {
+        e.textContent = 'Reset';
+        e.addEventListener('click', () => {
+          this.#channel.value = null;
+          this.app.device.sendReset();
+        });
+      });
+
+      menu.addElement('button', (e) => {
+        e.textContent = 'Refresh';
+        e.addEventListener('click', () => {
+          this.app.device.sendGetAll();
+        });
+      });
     });
 
-    this.#device.addNotifier('reset', () => {
-      this.#reset();
-      this.removeSection();
+    new V2AppMenu(this.canvas, (menu) => {
+      menu.addElement('span', (e) => {
+        e.textContent = 'Channel';
+      });
+
+      menu.addElement('select', (select) => {
+        this.#channel.addEntry = (channel, name, selected) => {
+          V2App.addElement(select, 'option', (e) => {
+            e.text = channel + 1;
+            if (name)
+              e.text += ' - ' + name;
+
+            if (selected)
+              e.selected = true;
+          });
+
+          select.disabled = select.options.length === 1;
+
+          select.addEventListener('change', () => {
+            this.#channel.value = data.input.channels[select.selectedIndex].number;
+
+            // Request a refresh with the values of the selected channel.
+            this.app.device.sendRequest({
+              'method': 'switchChannel',
+              'channel': this.#channel.value
+            });
+          });
+        };
+      });
     });
 
-    return Object.seal(this);
+    V2App.addElement(this.canvas, 'div', (e) => {
+      this.#controls.element = e;
+    });
+
+    V2App.addElement(this.canvas, 'ul', (cards) => {
+      cards.classList.add('cards');
+
+      V2App.addElement(cards, 'li', (e) => {
+        this.#controllers.element = e;
+        e.style.display = 'none';
+
+        V2App.addElement(e, 'hgroup', (hg) => {
+          V2App.addElement(hg, 'h3', (e) => {
+            e.textContent = 'Controllers';
+          });
+          V2App.addElement(hg, 'p', (e) => {
+            e.textContent = 'Send Control Messages';
+          });
+        });
+      });
+
+      V2App.addElement(cards, 'li', (e) => {
+        this.#notes.element = e;
+        e.style.display = 'none';
+
+        V2App.addElement(e, 'hgroup', (hg) => {
+          V2App.addElement(hg, 'h3', (e) => {
+            e.textContent = 'Notes';
+          });
+          V2App.addElement(hg, 'p', (e) => {
+            e.textContent = 'Play Notes';
+          });
+        });
+
+        V2App.addElement(e, 'div', (e) => {
+          this.#notes.controls.element = e;
+          e.id = this.id + '.notes.controls';
+        });
+
+        V2App.addElement(e, 'div', (e) => {
+          this.#notes.chromatic.element = e;
+          e.id = this.id + 'notes.chromatic';
+        });
+      });
+
+      if (data.input.channels) {
+        // Find the currently selected channel number.
+        data.input.channels.find((channel) => {
+          if (!channel.selected)
+            return false;
+
+          this.#channel.value = channel.number;
+          return true;
+        });
+
+        // Use the first entry.
+        if (this.#channel.value === null)
+          this.#channel.value = data.input.channels[0].number;
+
+        // Update the channel selector.
+        for (const channel of data.input.channels)
+          this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
+
+        // Add the currently selected channel.
+        data.input.channels.find((channel) => {
+          if (channel.number !== this.#channel.value)
+            return false;
+
+          this.#addChannel(channel);
+          return true;
+        });
+
+      } else {
+        if (!isNull(data.input.channel))
+          this.#channel.value = data.input.channel;
+
+        else
+          this.#channel.value = 0;
+
+        this.#channel.addEntry(this.#channel.value);
+        this.#addChannel(data.input);
+      }
+    });
+  }
+
+  reset() {
+    this.removeSection();
+
+    this.#channel.value = null;
+    this.#controls.program = null;
+
+    if (this.#notes.chromatic.keyboard)
+      this.#notes.chromatic.keyboard.cleanup();
   }
 
   #addController(controller) {
@@ -97,12 +237,12 @@ class V2Input extends V2AppSection {
             e.addEventListener('input', () => {
               if (!inputFine) {
                 range.value = input.value;
-                this.#device.sendControlChange(this.#channel.value, controller.number, e.value);
+                this.app.device.sendControlChange(this.#channel.value, controller.number, e.value);
 
               } else {
                 range.value = (e.value << 7) | inputFine.value;
-                this.#device.sendControlChange(this.#channel.value, controller.number, e.value);
-                this.#device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, inputFine.value);
+                this.app.device.sendControlChange(this.#channel.value, controller.number, e.value);
+                this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, inputFine.value);
               }
             });
           });
@@ -118,8 +258,8 @@ class V2Input extends V2AppSection {
               e.value = value;
               e.addEventListener('input', () => {
                 range.value = (input.value << 7) | e.value;
-                this.#device.sendControlChange(this.#channel.value, controller.number, input.value);
-                this.#device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, e.value);
+                this.app.device.sendControlChange(this.#channel.value, controller.number, input.value);
+                this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, e.value);
               });
             });
           }
@@ -132,7 +272,7 @@ class V2Input extends V2AppSection {
             e.type = 'checkbox';
             e.checked = value > 63;
             e.addEventListener('input', () => {
-              this.#device.sendControlChange(this.#channel.value, controller.number, e.checked ? 127 : 0);
+              this.app.device.sendControlChange(this.#channel.value, controller.number, e.checked ? 127 : 0);
             });
           });
           break;
@@ -142,10 +282,10 @@ class V2Input extends V2AppSection {
             e.classList.add('momentary');
 
             e.addEventListener('mousedown', () => {
-              this.#device.sendControlChange(this.#channel.value, controller.number, 127);
+              this.app.device.sendControlChange(this.#channel.value, controller.number, 127);
             });
             e.addEventListener('mouseup', () => {
-              this.#device.sendControlChange(this.#channel.value, controller.number, 0);
+              this.app.device.sendControlChange(this.#channel.value, controller.number, 0);
             });
             e.addEventListener('touchstart', (event) => {
               e.dispatchEvent(new MouseEvent('mousedown'));
@@ -180,15 +320,15 @@ class V2Input extends V2AppSection {
         e.addEventListener('input', () => {
           if (!inputFine) {
             input.value = e.value;
-            this.#device.sendControlChange(this.#channel.value, controller.number, e.value);
+            this.app.device.sendControlChange(this.#channel.value, controller.number, e.value);
 
           } else {
             const msb = (e.value >> 7) & 0x7f;
             const lsb = e.value & 0x7f;
             input.value = msb;
             inputFine.value = lsb;
-            this.#device.sendControlChange(this.#channel.value, controller.number, msb);
-            this.#device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, lsb);
+            this.app.device.sendControlChange(this.#channel.value, controller.number, msb);
+            this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, lsb);
           }
         });
       });
@@ -213,10 +353,10 @@ class V2Input extends V2AppSection {
       menu.addElement('button', (e) => {
         e.classList.add('momentary');
         e.addEventListener('mousedown', () => {
-          this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
+          this.app.device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
         });
         e.addEventListener('mouseup', () => {
-          this.#device.sendNoteOff(this.#channel.value, note, this.#notes.controls.release.value);
+          this.app.device.sendNoteOff(this.#channel.value, note, this.#notes.controls.release.value);
         });
         e.addEventListener('touchstart', (event) => {
           e.dispatchEvent(new MouseEvent('mousedown'));
@@ -273,13 +413,13 @@ class V2Input extends V2AppSection {
 
               const msb = (channel.programs[select.selectedIndex].bank >> 7) & 0x7f;
               const lsb = channel.programs[select.selectedIndex].bank & 0x7f;
-              this.#device.sendControlChange(this.#channel.value, V2MIDI.CC.bankSelect, msb);
-              this.#device.sendControlChange(this.#channel.value, V2MIDI.CC.bankSelectLSB, lsb);
+              this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.bankSelect, msb);
+              this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.bankSelectLSB, lsb);
             }
 
             this.#controls.program = channel.programs[select.selectedIndex].number;
-            this.#device.sendProgramChange(this.#channel.value, channel.programs[select.selectedIndex].number);
-            this.#device.sendGetAll();
+            this.app.device.sendProgramChange(this.#channel.value, channel.programs[select.selectedIndex].number);
+            this.app.device.sendGetAll();
           });
         });
       });
@@ -437,7 +577,7 @@ class V2Input extends V2AppSection {
             e.value = channel.aftertouch.value;
             e.addEventListener('input', () => {
               update(e.value);
-              this.#device.sendAftertouchChannel(this.#channel.value, input.value);
+              this.app.device.sendAftertouchChannel(this.#channel.value, input.value);
             });
           });
         });
@@ -449,12 +589,12 @@ class V2Input extends V2AppSection {
           e.value = channel.aftertouch.value;
           e.addEventListener('input', () => {
             update(e.value);
-            this.#device.sendAftertouchChannel(this.#channel.value, input.value);
+            this.app.device.sendAftertouchChannel(this.#channel.value, input.value);
           });
 
           e.addEventListener('mouseup', () => {
             update(0);
-            this.#device.sendAftertouchChannel(this.#channel.value, 0);
+            this.app.device.sendAftertouchChannel(this.#channel.value, 0);
           });
 
           e.addEventListener('touchend', (event) => {
@@ -505,7 +645,7 @@ class V2Input extends V2AppSection {
             e.value = channel.pitchbend.value;
             e.addEventListener('input', () => {
               update(e.value);
-              this.#device.sendPitchBend(this.#channel.value, input.value);
+              this.app.device.sendPitchBend(this.#channel.value, input.value);
             });
           });
         });
@@ -518,7 +658,7 @@ class V2Input extends V2AppSection {
           e.value = channel.pitchbend.value;
           e.addEventListener('input', () => {
             update(e.value);
-            this.#device.sendPitchBend(this.#channel.value, input.value);
+            this.app.device.sendPitchBend(this.#channel.value, input.value);
           });
 
           e.addEventListener('mouseup', () => {
@@ -528,7 +668,7 @@ class V2Input extends V2AppSection {
 
             e.value = 0;
             input.value = 0;
-            this.#device.sendPitchBend(this.#channel.value, 0);
+            this.app.device.sendPitchBend(this.#channel.value, 0);
           });
 
           e.addEventListener('touchend', (event) => {
@@ -549,11 +689,11 @@ class V2Input extends V2AppSection {
 
         this.#notes.chromatic.keyboard = new V2Keyboard(this.#notes.chromatic.element, this.#notes.chromatic.start, this.#notes.chromatic.count);
         this.#notes.chromatic.keyboard.handler.down = (note) => {
-          this.#device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
+          this.app.device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
         };
 
         this.#notes.chromatic.keyboard.handler.up = (note) => {
-          this.#device.sendNoteOff(this.#channel.value, note, this.#notes.controls.release.value);
+          this.app.device.sendNoteOff(this.#channel.value, note, this.#notes.controls.release.value);
         };
 
         this.#notes.chromatic.keyboard.handler.velocity.down = () => {
@@ -579,154 +719,5 @@ class V2Input extends V2AppSection {
 
       this.#notes.element.style.display = '';
     }
-  }
-
-  #show(data) {
-    new V2AppMenu(this.canvas, (menu) => {
-      menu.addElement('button', (e) => {
-        e.textContent = 'Notes Off';
-        e.addEventListener('click', () => {
-          this.#device.sendControlChange(this.#channel.value, V2MIDI.CC.allNotesOff, 0);
-        });
-      });
-
-      menu.addElement('button', (e) => {
-        e.textContent = 'Reset';
-        e.addEventListener('click', () => {
-          this.#channel.value = null;
-          this.#device.sendReset();
-        });
-      });
-
-      menu.addElement('button', (e) => {
-        e.textContent = 'Refresh';
-        e.addEventListener('click', () => {
-          this.#device.sendGetAll();
-        });
-      });
-    });
-
-    new V2AppMenu(this.canvas, (menu) => {
-      menu.addElement('span', (e) => {
-        e.textContent = 'Channel';
-      });
-
-      menu.addElement('select', (select) => {
-        this.#channel.addEntry = (channel, name, selected) => {
-          V2App.addElement(select, 'option', (e) => {
-            e.text = channel + 1;
-            if (name)
-              e.text += ' - ' + name;
-
-            if (selected)
-              e.selected = true;
-          });
-
-          select.disabled = select.options.length === 1;
-
-          select.addEventListener('change', () => {
-            this.#channel.value = data.input.channels[select.selectedIndex].number;
-
-            // Request a refresh with the values of the selected channel.
-            this.#device.sendRequest({
-              'method': 'switchChannel',
-              'channel': this.#channel.value
-            });
-          });
-        };
-      });
-    });
-
-    V2App.addElement(this.canvas, 'div', (e) => {
-      this.#controls.element = e;
-    });
-
-    V2App.addElement(this.canvas, 'ul', (cards) => {
-      cards.classList.add('cards');
-
-      V2App.addElement(cards, 'li', (e) => {
-        this.#controllers.element = e;
-        e.style.display = 'none';
-
-        V2App.addElement(e, 'hgroup', (hg) => {
-          V2App.addElement(hg, 'h3', (e) => {
-            e.textContent = 'Controllers';
-          });
-          V2App.addElement(hg, 'p', (e) => {
-            e.textContent = 'Send Control Messages';
-          });
-        });
-      });
-
-      V2App.addElement(cards, 'li', (e) => {
-        this.#notes.element = e;
-        e.style.display = 'none';
-
-        V2App.addElement(e, 'hgroup', (hg) => {
-          V2App.addElement(hg, 'h3', (e) => {
-            e.textContent = 'Notes';
-          });
-          V2App.addElement(hg, 'p', (e) => {
-            e.textContent = 'Play Notes';
-          });
-        });
-
-        V2App.addElement(e, 'div', (e) => {
-          this.#notes.controls.element = e;
-          e.id = this.id + '.notes.controls';
-        });
-
-        V2App.addElement(e, 'div', (e) => {
-          this.#notes.chromatic.element = e;
-          e.id = this.id + 'notes.chromatic';
-        });
-      });
-
-      if (data.input.channels) {
-        // Find the currently selected channel number.
-        data.input.channels.find((channel) => {
-          if (!channel.selected)
-            return false;
-
-          this.#channel.value = channel.number;
-          return true;
-        });
-
-        // Use the first entry.
-        if (this.#channel.value === null)
-          this.#channel.value = data.input.channels[0].number;
-
-        // Update the channel selector.
-        for (const channel of data.input.channels)
-          this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
-
-        // Add the currently selected channel.
-        data.input.channels.find((channel) => {
-          if (channel.number !== this.#channel.value)
-            return false;
-
-          this.#addChannel(channel);
-          return true;
-        });
-
-      } else {
-        if (!isNull(data.input.channel))
-          this.#channel.value = data.input.channel;
-
-        else
-          this.#channel.value = 0;
-
-        this.#channel.addEntry(this.#channel.value);
-        this.#addChannel(data.input);
-      }
-    });
-  }
-
-  #reset() {
-    this.#channel.value = null;
-    this.#controls.program = null;
-
-    if (this.#notes.chromatic.keyboard)
-      this.#notes.chromatic.keyboard.cleanup();
   }
 }

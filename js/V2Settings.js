@@ -4,11 +4,11 @@ class V2SettingsModule {
   setting = null;
 
   constructor(device, settings, setting) {
+    Object.seal(this);
+
     this.device = device;
     this.settings = settings;
     this.setting = setting;
-
-    return Object.seal(this);
   }
 
   addSetting(canvas, setting, level) {
@@ -84,6 +84,7 @@ class V2SettingsCalibration extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     // Find current program.
     const programs = data.input.channels?.[0].programs || data.input.programs;
@@ -225,8 +226,6 @@ class V2SettingsCalibration extends V2SettingsModule {
 
     for (let i = 0; i < this.setting.chromatic.count; i++)
       addCalibrationNote(i, this.setting.chromatic.start + i);
-
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -271,6 +270,7 @@ class V2SettingsColour extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     this.#configuration = setting.configuration;
 
@@ -494,8 +494,6 @@ class V2SettingsColour extends V2SettingsModule {
 
       update(this.getConfiguration(data.configuration)[2]);
     }
-
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -518,6 +516,7 @@ class V2SettingsController extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     let text = null;
     let range = null;
@@ -582,7 +581,6 @@ class V2SettingsController extends V2SettingsModule {
     });
 
     update(this.getConfiguration(data.configuration));
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -602,6 +600,7 @@ class V2SettingsDrum extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     const drum = this.getConfiguration(data.configuration);
     if (!isNull(drum.sensitivity)) {
@@ -771,8 +770,6 @@ class V2SettingsDrum extends V2SettingsModule {
         });
       });
     }
-
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -803,6 +800,7 @@ class V2SettingsFilter extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     const filter = this.getConfiguration(data.configuration);
 
@@ -844,8 +842,6 @@ class V2SettingsFilter extends V2SettingsModule {
         });
       });
     });
-
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -869,6 +865,7 @@ class V2SettingsJSON extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting), 4;
+    Object.seal(this);
 
     new V2AppMenu(canvas, (menu) => {
       menu.addElement('button', (e) => {
@@ -923,8 +920,6 @@ class V2SettingsJSON extends V2SettingsModule {
       } else
         e.value = JSON.stringify(this.getConfiguration(data.configuration));
     });
-
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -957,6 +952,7 @@ class V2SettingsNote extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     let note = null;
     let range = null;
@@ -1040,7 +1036,6 @@ class V2SettingsNote extends V2SettingsModule {
     });
 
     update(this.getConfiguration(data.configuration));
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -1057,6 +1052,7 @@ class V2SettingsToggle extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     new V2AppMenu(canvas, (menu) => {
       menu.addElement('span', (e) => {
@@ -1080,8 +1076,6 @@ class V2SettingsToggle extends V2SettingsModule {
         e.checked = this.getConfiguration(data.configuration);
       });
     });
-
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -1098,6 +1092,7 @@ class V2SettingsNumber extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     this.#number = null;
     let number = null;
@@ -1210,8 +1205,6 @@ class V2SettingsNumber extends V2SettingsModule {
 
       update(this.getConfiguration(data.configuration));
     }
-
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -1242,6 +1235,7 @@ class V2SettingsPulse extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 4);
+    Object.seal(this);
 
     if (setting.limit?.watts)
       this.#watts.limit = setting.limit.watts;
@@ -1401,7 +1395,6 @@ class V2SettingsPulse extends V2SettingsModule {
     this.#watts.setRange(pulse.watts);
     this.#seconds.setNumber(pulse.seconds);
     this.#seconds.setRange(pulse.seconds);
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -1421,6 +1414,7 @@ class V2SettingsText extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 3);
+    Object.seal(this);
 
     new V2AppMenu(canvas, (menu) => {
       menu.element.classList.add('full');
@@ -1438,8 +1432,6 @@ class V2SettingsText extends V2SettingsModule {
         e.value = this.getConfiguration(data.configuration);
       });
     });
-
-    return Object.seal(this);
   }
 
   save(configuration) {
@@ -1454,6 +1446,7 @@ class V2SettingsTitle extends V2SettingsModule {
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
     super.addSetting(canvas, setting, 3);
+    Object.seal(this);
   }
 }
 
@@ -1469,6 +1462,7 @@ class V2SettingsUSB extends V2SettingsModule {
 
   constructor(device, settings, canvas, setting, data) {
     super(device, settings, setting);
+    Object.seal(this);
 
     V2App.addElement(canvas, 'hgroup', (hg) => {
       V2App.addElement(hg, 'h3', (e) => {
@@ -1576,9 +1570,6 @@ class V2SettingsUSB extends V2SettingsModule {
         });
       });
     }
-
-
-    return Object.seal(this);
   }
 
   save(configuration) {

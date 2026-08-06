@@ -5,13 +5,9 @@ class V2Connection extends V2AppSection {
   select = null;
   device = null;
   version = null;
-  notifiers = Object.seal({
-    show: [],
-    reset: []
-  });
 
-  constructor(log, connect) {
-    super('connection');
+  constructor(app, log, connect) {
+    super(app, 'connection');
     this.addSection();
 
     this.log = log;
@@ -160,10 +156,6 @@ class V2Connection extends V2AppSection {
         ' target="software">' + document.querySelector('meta[name="name"]').content +
         '</a>, version ' + Number(document.querySelector('meta[name="version"]').content);
     });
-  }
-
-  addNotifier(type, handler) {
-    this.notifiers[type].push(handler);
   }
 
   print(line) {

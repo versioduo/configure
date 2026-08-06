@@ -29,8 +29,9 @@ class V2Device extends V2Connection {
   #sequence = 0;
   #token = null;
 
-  constructor(log, connect) {
-    super(log, connect);
+  constructor(app, log, connect) {
+    super(app, log, connect);
+    Object.seal(this);
 
     V2App.addElement(this.canvas, 'div', (e) => {
       e.id = this.id + '.node';
@@ -62,8 +63,6 @@ class V2Device extends V2Connection {
 
       this.#handleReply(device);
     });
-
-    return Object.seal(this);
   }
 
   getData() {
@@ -105,9 +104,7 @@ class V2Device extends V2Connection {
     this.#token = null;
     this.#reset();
 
-    for (const notifier of this.notifiers.reset)
-      notifier();
-
+    this.app.callSections('reset');
     window.scroll(0, 0);
   }
 
@@ -464,9 +461,7 @@ class V2Device extends V2Connection {
     }
 
     this.#show(data);
-
-    for (const notifier of this.notifiers.show)
-      notifier(data);
+    this.app.callSections('show', data);
   }
 
   // Connect or switch to a device.
@@ -573,8 +568,7 @@ class V2Device extends V2Connection {
         if (this.#tabs.data.metadata.version > updates[updateIndex].version)
           this.#tabs.firmware.notify.info('A more recent firmware is already installed.');
 
-        while (this.#tabs.firmware.elementSelect.firstChild)
-          this.#tabs.firmware.elementSelect.firstChild.remove();
+        this.#tabs.firmware.elementSelect.replaceChildren();
 
         new V2AppMenu(this.#tabs.firmware.elementSelect, (menu) => {
           menu.addElement('button', (e) => {
@@ -659,8 +653,7 @@ class V2Device extends V2Connection {
   // Present a new firmware image to update the current one.
   #showFirmware(bytes) {
     this.#tabs.firmware.notify.clear();
-    while (this.#tabs.firmware.elementNewFirmware.firstChild)
-      this.#tabs.firmware.elementNewFirmware.firstChild.remove();
+    this.#tabs.firmware.elementNewFirmware.replaceChildren();
 
     // Read the metadata in the image; the very end of the image contains
     // the the JSON metadata record with a leading and trailing NUL character.

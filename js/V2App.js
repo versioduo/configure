@@ -12,23 +12,24 @@ class V2App {
 
     if (handler)
       handler(this);
-
-    return Object.seal(this);
   }
 
-  addSection(s, handler) {
-    this.#sections.push(s);
+  addSection(section, args, handler) {
+    const s = new section(this, ...(args || []));
 
     if (handler)
       handler(s);
+
+    this.#sections.push(s);
+    return s;
   }
 
-  call(action, data) {
+  callSections(action, ...args) {
     for (const s of this.#sections) {
       if (typeof s[action] !== 'function')
         continue;
 
-      s[action](data);
+      s[action](...args);
     }
   }
 
@@ -163,6 +164,7 @@ class V2App {
 }
 
 class V2AppSection {
+  app = null;
   id = null;
   canvas = null;
 
@@ -173,12 +175,16 @@ class V2AppSection {
     subtitle: null
   });
 
-  constructor(id, icon, title, subtitle) {
+  constructor(app, id, icon, title, subtitle) {
+    if (!app)
+      throw Error('V2AppSection: Missing app.');
+
     if (!id)
       throw Error('V2AppSection: Missing section identifier.');
 
-    this.title(icon, title, subtitle);
+    this.app = app;
     this.id = id;
+    this.title(icon, title, subtitle);
     this.canvas = document.createElement('section');
     this.canvas.id = this.id;
   }
@@ -261,44 +267,43 @@ class V2AppSection {
 }
 
 class V2AppNotify {
-  #element = null;
-  #elementText = null;
+  element = null;
 
   constructor(canvas) {
-    V2App.addElement(canvas, 'div', (notify) => {
-      this.#element = notify;
-      this.#element.style.display = 'none';
-      this.#element.classList.add('notify');
-    });
+    Object.seal(this);
 
-    return Object.seal(this);
+    V2App.addElement(canvas, 'div', (e) => {
+      this.element = e;
+      this.element.classList.add('notify');
+    });
   }
 
-  clear(text) {
-    this.#element.style.display = 'none';
-    this.#element.classList.remove('--info', '--warn', '--error');
-    this.#element.innerHTML = '';
+  clear() {
+    this.element.replaceChildren();
   }
 
   info(text) {
-    this.clear();
-    this.#element.classList.add('--info');
-    this.#element.style.display = '';
-    this.#element.innerHTML = text;
+    this.element.replaceChildren();
+    V2App.addElement(this.element, 'p', (e) => {
+      e.classList.add('--info');
+      e.append(text);
+    });
   }
 
   warn(text) {
-    this.clear();
-    this.#element.classList.add('--warn');
-    this.#element.style.display = '';
-    this.#element.innerHTML = text;
+    this.element.replaceChildren();
+    V2App.addElement(this.element, 'p', (e) => {
+      e.classList.add('--warn');
+      e.append(text);
+    });
   }
 
   error(text) {
-    this.clear();
-    this.#element.classList.add('--error');
-    this.#element.style.display = '';
-    this.#element.innerHTML = text;
+    this.element.replaceChildren();
+    V2App.addElement(this.element, 'p', (e) => {
+      e.classList.add('--error');
+      e.append(text);
+    });
   }
 }
 
@@ -316,7 +321,7 @@ class V2AppMenu {
         handler(this);
     });
 
-    return Object.seal(this);
+    Object.seal(this);
   }
 
   addItem(handler) {
@@ -361,7 +366,7 @@ class V2AppTabs {
     if (handler)
       handler(this);
 
-    return Object.seal(this);
+    Object.seal(this);
   }
 
   addNotifier(handler) {

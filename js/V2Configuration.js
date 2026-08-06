@@ -1,5 +1,4 @@
 class V2Configuration extends V2AppSection {
-  #device = null;
   #tabs = Object.seal({
     object: null,
     current: null,
@@ -8,33 +7,27 @@ class V2Configuration extends V2AppSection {
     }),
     edit: Object.seal({
       element: null,
-      object: null
+      object: null,
+      notify: null,
+      timeout: null
     }),
     file: Object.seal({
       element: null,
-      object: null
+      object: null,
+      notify: null,
+      timeout: null
     })
   });
 
-  constructor(device) {
-    super('configuration', '--gear', 'Configuration', 'Edit, Backup, Restore, Reset');
-    this.#device = device;
-
-    this.#device.addNotifier('show', (data) => {
-      this.removeSection();
-      this.addSection();
-      this.#show(data);
-    });
-
-    this.#device.addNotifier('reset', () => {
-      this.#tabs.current = null;
-      this.removeSection();
-    });
-
-    return Object.seal(this);
+  constructor(app) {
+    super(app, 'configuration', '--gear', 'Configuration', 'Edit, Backup, Restore, Reset');
+    Object.seal(this);
   }
 
-  #show(data) {
+  show(data) {
+    this.removeSection();
+    this.addSection();
+
     new V2AppTabs(this.canvas, (tabs) => {
       this.#tabs.object = tabs;
       tabs.element.id = this.id + '.tabs';
@@ -46,13 +39,13 @@ class V2Configuration extends V2AppSection {
 
       tabs.add('edit', '--sliders', 'Edit', (e) => {
         this.#tabs.edit.element = e;
-        this.#tabs.edit.object = new V2ConfigurationEdit(this.#device, this.#tabs.edit.element);
+        this.#tabs.edit.object = new V2ConfigurationEdit(this.app.device, this.#tabs.edit);
         e.id = tabs.element.id + '.edit';
       });
 
       tabs.add('file', '--file-code', 'File', (e) => {
         this.#tabs.file.element = e;
-        this.#tabs.file.object = new V2ConfigurationFile(this.#device, this.#tabs.file.element);
+        this.#tabs.file.object = new V2ConfigurationFile(this.app.device, this.#tabs.file);
         e.id = tabs.element.id + '.file';
       });
 
@@ -80,6 +73,13 @@ class V2Configuration extends V2AppSection {
     this.#tabs.object.switch(this.#tabs.current || 'overview');
   }
 
+  reset() {
+    this.#tabs.edit.object.clear();
+    this.#tabs.file.object.clear();
+    this.#tabs.current = null;
+    this.removeSection();
+  }
+
   register(module) {
     this.#tabs.edit.object.register(module);
   }
@@ -87,20 +87,14 @@ class V2Configuration extends V2AppSection {
 
 class V2ConfigurationEdit {
   #device = null;
-  #canvas = null;
-
-  // List of all available/registered modules.
+  #tab = null;
   #modules = {};
-
-  // List of all instantiated modules/sections.
   #sections = [];
 
-  #notify = null;
-  #timeout = null;
-
-  constructor(device, canvas) {
+  constructor(device, tab) {
+    Object.seal(this);
     this.#device = device;
-    this.#canvas = canvas;
+    this.#tab = tab;
 
     this.register(V2SettingsCalibration);
     this.register(V2SettingsColour);
@@ -115,8 +109,6 @@ class V2ConfigurationEdit {
     this.register(V2SettingsText);
     this.register(V2SettingsTitle);
     this.register(V2SettingsUSB);
-
-    return Object.seal(this);
   }
 
   register(module) {
@@ -124,9 +116,7 @@ class V2ConfigurationEdit {
   }
 
   show(data) {
-    const notify = this.#timeout !== null;
-
-    new V2AppMenu(this.#canvas, (menu) => {
+    new V2AppMenu(this.#tab.element, (menu) => {
       menu.addElement('button', (e) => {
         e.classList.add('danger');
         e.textContent = 'Erase';
@@ -145,6 +135,7 @@ class V2ConfigurationEdit {
       menu.addElement('button', (e) => {
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
+          this.#tab.notify.clear();
           this.#device.sendGetAll();
         });
       });
@@ -158,19 +149,22 @@ class V2ConfigurationEdit {
       });
     });
 
-    this.#notify = new V2AppNotify(this.#canvas);
+    if (this.#tab.notify)
+      this.#tab.element.appendChild(this.#tab.notify.element);
+    else
+      this.#tab.notify = new V2AppNotify(this.#tab.element);
 
-    if (this.#timeout !== null) {
-      this.#notify.info('Settings updated.');
-      clearTimeout(this.#timeout);
-      this.#timeout = null;
+    if (this.#tab.timeout !== null) {
+      this.#tab.notify.info('The configuration was updated.');
+      clearTimeout(this.#tab.timeout);
+      this.#tab.timeout = null;
     }
 
-    V2App.addElement(this.#canvas, 'ul', (cards) => {
+    V2App.addElement(this.#tab.element, 'ul', (cards) => {
       cards.classList.add('cards');
 
       V2App.addElement(cards, 'li', (c) => {
-        // USB is a core part of V2Device, and not explicitley exported in the settings array.
+        // USB is a core part of V2Device, and not explicitly exported in the settings array.
         const section = new this.#modules['usb'](this.#device, this, c, null, data);
         this.#sections.push(section);
       });
@@ -196,15 +190,14 @@ class V2ConfigurationEdit {
         }
       }
     });
-
-    if (notify)
-      this.#notify.info('Configuration updated.');
   }
 
   clear() {
-    if (this.#timeout) {
-      clearTimeout(this.#timeout);
-      this.#timeout = null;
+    this.#tab.notify.clear();
+
+    if (this.#tab.timeout) {
+      clearTimeout(this.#tab.timeout);
+      this.#tab.timeout = null;
     }
 
     for (const section of this.#sections)
@@ -227,9 +220,9 @@ class V2ConfigurationEdit {
       'configuration': configuration
     });
 
-    this.#timeout = setTimeout(() => {
-      this.#timeout = null;
-      this.#notify.error('No reply from device. Changes might not be not saved.');
+    this.#tab.timeout = setTimeout(() => {
+      this.#tab.timeout = null;
+      this.#tab.notify.error('No reply from device. Changes might not be not saved.');
       this.#device.printDevice('No reply from device');
     }, 1000);
   }
@@ -247,37 +240,33 @@ class V2ConfigurationEdit {
 
 class V2ConfigurationFile {
   #device = null;
-  #canvas = null;
-  #notify = null;
+  #tab = null;
   #elementJSON = null;
-  #timeout = null;
 
-  constructor(device, canvas) {
+  constructor(device, tab) {
+    Object.seal(this);
     this.#device = device;
-    this.#canvas = canvas;
-
-    return Object.seal(this);
+    this.#tab = tab;
   }
 
   show(data) {
-    const notify = this.#timeout !== null;
-    this.clear();
-
-    new V2AppMenu(this.#canvas, (menu) => {
+    new V2AppMenu(this.#tab.element, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Backup';
         e.addEventListener('click', () => {
-          this.#save();
+          this.#saveFile();
         });
       });
 
       menu.addElement('button', (e) => {
         e.textContent = 'Restore';
         e.addEventListener('click', () => {
+          this.#tab.notify.clear();
           this.#openFile();
         });
 
-        V2App.addFileDrop(e, this.#canvas, ['warn'], (file) => {
+        V2App.addFileDrop(e, this.#tab.element, ['warn'], (file) => {
+          this.#tab.notify.clear();
           this.#readFile(file);
         });
       });
@@ -286,14 +275,24 @@ class V2ConfigurationFile {
         e.classList.add('primary');
         e.textContent = 'Save';
         e.addEventListener('click', () => {
+          this.#tab.notify.clear();
           this.#send();
         });
       });
     });
 
-    this.#notify = new V2AppNotify(this.#canvas);
+    if (this.#tab.notify)
+      this.#tab.element.appendChild(this.#tab.notify.element);
+    else
+      this.#tab.notify = new V2AppNotify(this.#tab.element);
 
-    V2App.addElement(this.#canvas, 'textarea', (e) => {
+    if (this.#tab.timeout !== null) {
+      this.#tab.notify.info('The configuration was updated.');
+      clearTimeout(this.#tab.timeout);
+      this.#tab.timeout = null;
+    }
+
+    V2App.addElement(this.#tab.element, 'textarea', (e) => {
       this.#elementJSON = e;
       e.placeholder = 'No configuration loaded';
       e.disabled = true;
@@ -302,15 +301,14 @@ class V2ConfigurationFile {
     this.#elementJSON.value = JSON.stringify(data, null, '  ');
     this.#elementJSON.rows = this.#elementJSON.value.split('\n').length + 1;
     this.#elementJSON.disabled = false;
-
-    if (notify)
-      this.#notify.info('Configuration updated.');
   }
 
   clear() {
-    if (this.#timeout) {
-      clearTimeout(this.#timeout);
-      this.#timeout = null;
+    this.#tab.notify?.clear();
+
+    if (this.#tab.timeout) {
+      clearTimeout(this.#tab.timeout);
+      this.#tab.timeout = null;
     }
   }
 
@@ -322,7 +320,7 @@ class V2ConfigurationFile {
       configuration = JSON.parse(this.#elementJSON.value);
 
     } catch (error) {
-      this.#notify.warn(error.toString());
+      this.#tab.notify.warn(error.toString());
 
       // Try to find the position in the error string and place the cursor.
       const match = error.toString().match(/position (\d+)/);
@@ -339,7 +337,8 @@ class V2ConfigurationFile {
   }
 
   // Save the current JSON text field to a file.
-  #save() {
+  #saveFile() {
+    this.#tab.notify.clear();
     const configuration = this.#parse();
     if (!configuration)
       return;
@@ -384,13 +383,12 @@ class V2ConfigurationFile {
   #readFile(file) {
     const reader = new FileReader();
     reader.onload = (element) => {
-      this.#notify.clear();
 
       try {
         const config = JSON.parse(reader.result);
 
         if (!config.configuration) {
-          this.#notify.warn('No valid configuration found in file');
+          this.#tab.notify.warn('No valid configuration found in file');
           return;
         }
 
@@ -399,7 +397,7 @@ class V2ConfigurationFile {
         this.#parse();
 
       } catch (error) {
-        this.#notify.warn('Unable to parse JSON from file');
+        this.#tab.notify.warn('Unable to parse JSON from file');
       }
     };
 
@@ -430,9 +428,9 @@ class V2ConfigurationFile {
         'configuration': data
       });
 
-      this.#timeout = setTimeout(() => {
-        this.#timeout = null;
-        this.#notify.error('No reply from device. Configuration might not be not saved.');
+      this.#tab.timeout = setTimeout(() => {
+        this.#tab.timeout = null;
+        this.#tab.notify.error('No reply from device. Configuration might not be not saved.');
         this.#device.printDevice('No reply from device');
       }, 1000);
     }

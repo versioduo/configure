@@ -15,7 +15,7 @@
   --colour-warn: light-dark(hsl(25deg 70% 80%), hsl(35deg 50% 50%));
   --colour-danger: light-dark(hsl(350deg 40% 80%), hsl(350deg 40% 50%));
   --colour-highlight: light-dark(hsl(210deg 80% 80%), hsl(210, 80%, 80%));
-  --content-width: 24rem;
+  --content-width: 23rem;
 }
 
 * {
@@ -159,7 +159,7 @@ html {
 
     >section {
       background-color: var(--colour-background-section);
-      border-top-left-radius: 1rem;
+      border-top-left-radius: 1.25rem;
       box-shadow: hsl(from black h s l / 5%) -0.1rem 0.1rem 0.2rem 0.1rem;
       container-name: section;
       container-type: inline-size;
@@ -714,10 +714,10 @@ html {
         }
       }
 
-      div.notify {
+      div.notify>p {
         box-shadow: hsl(from black h s l / 5%) -0.1rem 0.1rem 0.2rem 0.1rem;
-        padding: 1rem;
         margin-bottom: 1rem;
+        padding: 1rem;
 
         &.--info {
           background-color: hsl(from var(--colour-info) h s l / 60%);
