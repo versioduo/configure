@@ -1,30 +1,29 @@
 class V2Connection extends V2AppSection {
+  connection = Object.seal({
+    element: null,
+    select: null
+  });
   log = null;
   midi = null;
   notify = null;
-  select = null;
   device = null;
-  version = null;
 
   constructor(app, log, connect) {
     super(app, 'connection');
-    this.addSection();
-
-    this.log = log;
-    this.midi = new V2MIDI();
-    this.notify = new V2AppNotify(this.canvas);
 
     new V2AppMenu(this.canvas, (menu) => {
+      this.connection.element = menu.element;
+
       menu.addElement('span', (e) => {
         e.textContent = 'Device';
       });
 
       let reset = null;
       menu.addItem((li) => {
-        this.select = new V2MIDISelect(li);
-        this.select.element.classList.add('primary');
+        this.connection.select = new V2MIDISelect(li);
+        this.connection.select.element.classList.add('primary');
 
-        this.select.addNotifier('select', (device) => {
+        this.connection.select.addNotifier('select', (device) => {
           if (device) {
             this.connect(device);
             reset.disabled = false;
@@ -35,11 +34,11 @@ class V2Connection extends V2AppSection {
           }
         });
 
-        this.select.addNotifier('disconnect', () => {
+        this.connection.select.addNotifier('disconnect', () => {
           reset.disabled = true;
         });
 
-        this.select.addNotifier('add', () => {
+        this.connection.select.addNotifier('add', () => {
           if (this.device.input)
             return;
 
@@ -62,12 +61,14 @@ class V2Connection extends V2AppSection {
       });
     });
 
+    this.log = log;
+    this.midi = new V2MIDI();
+    this.notify = new V2AppNotify(this.canvas);
     this.device = new V2MIDIDevice();
     this.device.addNotifier('note', (channel, note, velocity) => {
       if (velocity > 0)
-        this.print('Received <b>Note</b> <i>' +
-          V2MIDI.Note.getName(note) + '(' + note + ')</i> with velocity <i>' + velocity + '</i> on channel <i>#' + (channel + 1)) + '</i>';
-
+        this.print('Received <b>Note</b> <i>' + V2MIDI.Note.getName(note) + '(' + note +
+          ')</i> with velocity <i>' + velocity + '</i> on channel <i>#' + (channel + 1)) + '</i>';
       else
         this.print('Received <b>NoteOff</b> <i>' +
           V2MIDI.Note.getName(note) + '(' + note + ')</i> on channel #' + (channel + 1));
@@ -79,7 +80,8 @@ class V2Connection extends V2AppSection {
     });
 
     this.device.addNotifier('aftertouch', (channel, note, pressure) => {
-      this.print('Received <b>Aftertouch</b> for note <i>' + V2MIDI.Note.getName(note) + '(' + note + ')</i>' + ' with pressure <i>' + pressure + '</i> on channel <i>#' + (channel + 1) + '</i>');
+      this.print('Received <b>Aftertouch</b> for note <i>' + V2MIDI.Note.getName(note) + '(' + note +
+        ')</i>' + ' with pressure <i>' + pressure + '</i> on channel <i>#' + (channel + 1) + '</i>');
     });
 
     this.device.addNotifier('controlChange', (channel, controller, value) => {
@@ -116,7 +118,7 @@ class V2Connection extends V2AppSection {
             this.disconnect();
         }
 
-        this.select.update(this.midi.getDevices('both'));
+        this.connection.select.update(this.midi.getDevices('both'));
       });
 
       // Adding '?connect=<device name>' to the URL will try to connect to a device with the given name.
@@ -129,8 +131,8 @@ class V2Connection extends V2AppSection {
             return false;
 
           this.log.print('Trying to connect to <b>' + name + '</b> ...');
-          this.select.update(this.midi.getDevices('both'));
-          this.select.select(device);
+          this.connection.select.update(this.midi.getDevices('both'));
+          this.connection.select.select(device);
           return true;
         };
 
@@ -147,14 +149,6 @@ class V2Connection extends V2AppSection {
             break;
         }
       }
-    });
-
-    V2App.addElement(this.canvas, 'p', (e) => {
-      this.version = e;
-      e.classList.add('center');
-      e.innerHTML = '<a href=' + document.querySelector('link[rel="source"]').href +
-        ' target="software">' + document.querySelector('meta[name="name"]').content +
-        '</a>, version ' + Number(document.querySelector('meta[name="version"]').content);
     });
   }
 
@@ -174,8 +168,7 @@ class V2Connection extends V2AppSection {
     return this.midi;
   }
 
-  // Print available MIDI ports. Their names might be different on different
-  // operating systems.
+  // Print available MIDI ports. Their names might be different on different operating systems.
   printStatus() {
     this.log.print(document.querySelector('meta[name="name"]').content + ', version <b>' + Number(document.querySelector('meta[name="version"]').content) + '</b>');
 

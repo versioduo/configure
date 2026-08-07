@@ -5,6 +5,7 @@ function isNull(value) {
 
 class V2App {
   nav = null;
+  url = null;
   #sections = [];
 
   constructor(handler) {
@@ -12,7 +13,7 @@ class V2App {
     if (!this.nav)
       throw Error('V2App: Cannot find <nav>.');
 
-    // Always scroll to the top at page reload.
+    this.url = new URL(window.location);
     history.scrollRestoration = 'manual';
 
     if (handler)
@@ -38,7 +39,70 @@ class V2App {
     }
   }
 
-  registerServiceWorker(worker, handler) {
+  preserveScrollPosition(handler) {
+    const behaviour = document.querySelector('html').style.scrollBehavior;
+    document.querySelector('html').style.scrollBehavior = 'auto';
+    const position = window.scrollY;
+
+    handler();
+
+    window.scrollTo(0, position);
+    document.querySelector('html').style.scrollBehavior = behaviour;
+  }
+
+  serviceWorker(file) {
+    this.#registerServiceWorker(file, (state, worker) => {
+      // There is no worker during the intial setup.
+      if (!navigator.serviceWorker.controller)
+        return;
+
+      switch (state) {
+        case 'installed':
+          // A new version was installed into the cache and a new worker is waiting to take control.
+          V2App.addElementAdjacent(document.querySelector('body'), 'afterbegin', 'header', (header) => {
+            V2App.addElement(header, 'hgroup', (hg) => {
+              V2App.addElement(hg, 'h2', (e) => {
+                V2App.addElement(e, 'i', (i) => {
+                  i.classList.add('icon', '--rotate');
+                });
+                e.append('Update');
+              });
+
+              V2App.addElement(hg, 'p', (e) => {
+                e.textContent = 'A fresh version is available';
+              });
+            });
+
+            new V2AppMenu(header, (menu) => {
+              menu.addElement('button', (e) => {
+                e.textContent = 'Close';
+                e.addEventListener('click', () => {
+                  header.remove();
+                });
+              });
+
+              menu.addElement('button', (e) => {
+                e.classList.add('primary');
+                e.textContent = 'Reload';
+                e.addEventListener('click', () => {
+                  worker.postMessage({
+                    type: 'skipWaiting'
+                  });
+                });
+              });
+            });
+          });
+          break;
+
+        case 'activated':
+          // A new worker took control over the page.
+          location.reload();
+          break;
+      }
+    });
+  }
+
+  #registerServiceWorker(worker, handler) {
     if (!('serviceWorker' in navigator))
       return;
 
@@ -54,37 +118,6 @@ class V2App {
             });
           });
         }, () => { });
-    });
-  }
-
-  notifyUpdate(text, handler) {
-    V2App.addElementAdjacent(document.querySelector('main'), 'afterbegin', 'section', (section) => {
-      V2App.addElement(section, 'hgroup', (hg) => {
-        V2App.addElement(hg, 'h2', (e) => {
-          e.textContent = 'Update';
-        });
-
-        V2App.addElement(hg, 'p', (e) => {
-          e.textContent = text;
-        });
-      });
-
-      new V2AppMenu(section, (menu) => {
-        menu.addElement('button', (e) => {
-          e.textContent = 'Close';
-          e.addEventListener('click', () => {
-            section.remove();
-          });
-        });
-
-        menu.addElement('button', (e) => {
-          e.classList.add('primary');
-          e.textContent = 'Reload';
-          e.addEventListener('click', () => {
-            handler();
-          });
-        });
-      });
     });
   }
 
@@ -409,10 +442,12 @@ class V2AppTabs {
   }
 
   switch(name) {
+    if (this.current === name)
+      return;
+
     this.current = null;
 
     for (const id of Object.keys(this.#tabs)) {
-
       if (id === name) {
         this.#tabs[id].tab.classList.add('info');
         this.#tabs[id].canvas.style.display = '';

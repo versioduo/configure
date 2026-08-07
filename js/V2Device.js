@@ -1,15 +1,14 @@
 class V2Device extends V2Connection {
-  #device = null;
-  #node = Object.seal({
-    element: null,
-    menu: null,
-    controller: null
-  });
   #tabs = Object.seal({
     object: null,
     current: null,
     data: null,
-    statistics: null,
+    device: Object.seal({
+      element: null
+    }),
+    statistics: Object.seal({
+      element: null
+    }),
     firmware: Object.seal({
       element: null,
       elementSelect: null,
@@ -33,9 +32,14 @@ class V2Device extends V2Connection {
     super(app, log, connect);
     Object.seal(this);
 
-    V2App.addElement(this.canvas, 'div', (e) => {
-      e.id = this.id + '.node';
-      this.#node.element = e;
+    this.addSection();
+    this.canvas.appendChild(this.connection.element);
+
+    V2App.addElement(this.canvas, 'p', (e) => {
+      e.classList.add('center');
+      e.innerHTML = '<a href=' + document.querySelector('link[rel="source"]').href +
+        ' target="software">' + document.querySelector('meta[name="name"]').content +
+        '</a>, version ' + Number(document.querySelector('meta[name="version"]').content);
     });
 
     this.device.addNotifier('systemExclusive', (message) => {
@@ -110,7 +114,7 @@ class V2Device extends V2Connection {
 
   disconnect() {
     this.#disconnectDevice();
-    this.select.setDisconnected();
+    this.connection.select.setDisconnected();
   }
 
   sendReset(mode) {
@@ -138,77 +142,58 @@ class V2Device extends V2Connection {
     this.disconnect();
   }
 
-  #showNode() {
-    if (!this.#tabs.data || !this.#tabs.data.system.midi.passthrough || this.#tabs.data.system.midi.transport !== "usb") {
-      this.#removeNode();
-      return;
-    }
-
-    if (this.#node.menu)
-      return;
-
-    new V2AppMenu(this.#node.element, (menu) => {
-      this.#node.menu = menu;
-
-      menu.addElement('span', (e) => {
-        e.textContent = 'Node';
-      });
-
-      menu.addElement('select', (s) => {
-        s.classList.add('primary');
-
-        for (let i = 0; i < 16; i++) {
-          V2App.addElement(s, 'option', (e) => {
-            e.value = i;
-            e.text = (i === 0) ? '–' : '#' + i;
-          });
-        }
-
-        s.addEventListener('change', () => {
-          this.sendControlChange(0, this.#node.controller, Number(s.value));
-          this.#token = null;
-          this.sendGetAll();
-
-          this.#timeout = setTimeout(() => {
-            this.#timeout = null;
-            this.printDevice('Unable to connect to node address <b>#' + Number(s.value) + '</b>. Disconnecting ...');
-            this.#reset();
-            this.app.callSections('reset');
-          }, 1000);
-        });
-      });
-
-      this.#node.controller = this.#tabs.data.system.midi.passthrough.controller;
-    });
-  }
-
-  #removeNode() {
-    if (!this.#node.menu)
-      return;
-
-    this.#node.menu.remove();
-    this.#node.menu = null;
-    this.#node.controller = null;
-  }
-
   #show(data) {
-    this.#clear();
+    this.removeSection();
+    this.addSection();
+    this.canvas.appendChild(this.connection.element);
 
     this.#tabs.data = data;
+    this.canvas.appendChild(this.connection.element);
     this.title(null, data.metadata.product, data.metadata.description);
-    this.#showNode();
+
+    if (data.system.midi.passthrough && data.system.midi.transport === "usb") {
+      new V2AppMenu(this.canvas, (menu) => {
+        menu.addElement('span', (e) => {
+          e.textContent = 'Node';
+        });
+
+        menu.addElement('select', (s) => {
+          s.classList.add('primary');
+
+          for (let i = 0; i < 16; i++) {
+            V2App.addElement(s, 'option', (e) => {
+              e.value = i;
+              e.text = (i === 0) ? '–' : '#' + i;
+            });
+          }
+
+          s.addEventListener('change', () => {
+            this.sendControlChange(0, this.#tabs.data.system.midi.passthrough.controller, Number(s.value));
+            this.#token = null;
+            this.sendGetAll();
+
+            this.#timeout = setTimeout(() => {
+              this.#timeout = null;
+              this.printDevice('Unable to connect to node address <b>#' + Number(s.value) + '</b>. Disconnecting ...');
+              this.#reset();
+              this.app.callSections('reset');
+            }, 1000);
+          });
+        });
+      });
+    }
 
     new V2AppTabs(this.canvas, (tabs) => {
       this.#tabs.object = tabs;
       tabs.element.id = this.id + '.tabs';
 
       tabs.add('device', '--plug', 'Device', (e) => {
-        this.#device = e;
+        this.#tabs.device.element = e;
         e.id = tabs.element.id + '.device';
       });
 
       tabs.add('statistics', '--magnifying-glass-chart', 'Statistics', (e) => {
-        this.#tabs.statistics = e;
+        this.#tabs.statistics.element = e;
         e.id = tabs.element.id + '.statistics';
       });
 
@@ -227,7 +212,7 @@ class V2Device extends V2Connection {
 
     // The Information tab.
     if (data.help?.device) {
-      V2App.addElement(this.#device, 'header', (e) => {
+      V2App.addElement(this.#tabs.device.element, 'header', (e) => {
         const paragraphs = data.help.device.split("\n");
         for (const p of paragraphs) {
           V2App.addElement(e, 'p', (e) => {
@@ -237,7 +222,7 @@ class V2Device extends V2Connection {
       });
     }
 
-    V2App.addElement(this.#device, 'table', (e) => {
+    V2App.addElement(this.#tabs.device.element, 'table', (e) => {
       V2App.addElement(e, 'tbody', (body) => {
         for (const key of Object.keys(data.metadata)) {
           if (key === 'product' || key === 'description')
@@ -267,7 +252,7 @@ class V2Device extends V2Connection {
     });
 
     for (const link of data.links) {
-      new V2AppMenu(this.#device, (menu) => {
+      new V2AppMenu(this.#tabs.device.element, (menu) => {
         menu.addElement('span', (e) => {
           e.textContent = link.description;
         });
@@ -282,7 +267,7 @@ class V2Device extends V2Connection {
     }
 
     // The Statistics tab.
-    new V2AppMenu(this.#tabs.statistics, (menu) => {
+    new V2AppMenu(this.#tabs.statistics.element, (menu) => {
       menu.addElement('button', (e) => {
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
@@ -291,49 +276,47 @@ class V2Device extends V2Connection {
       });
     });
 
-    V2App.addElement(this.#tabs.statistics, 'div', (scroll) => {
-      scroll.id = this.id + '.statistics';
-      scroll.style.overflowX = 'auto';
-      scroll.style.hyphens = 'none';
-      scroll.style.width = '100%';
-      scroll.style.whiteSpace = 'nowrap';
+    this.#tabs.statistics.element.id = this.id + '.statistics';
+    this.#tabs.statistics.element.style.overflowX = 'auto';
+    this.#tabs.statistics.element.style.hyphens = 'none';
+    this.#tabs.statistics.element.style.width = '100%';
+    this.#tabs.statistics.element.style.whiteSpace = 'nowrap';
 
-      V2App.addElement(scroll, 'table', (e) => {
-        V2App.addElement(e, 'tbody', (body) => {
-          const printObject = (parent, object) => {
-            for (const key of Object.keys(object)) {
-              let name = key;
-              if (parent)
-                name = parent + '.' + name;
+    V2App.addElement(this.#tabs.statistics.element, 'table', (e) => {
+      V2App.addElement(e, 'tbody', (body) => {
+        const printObject = (parent, object) => {
+          for (const key of Object.keys(object)) {
+            let name = key;
+            if (parent)
+              name = parent + '.' + name;
 
-              const value = object[key];
-              if (!isNull(value) && (typeof value === 'object')) {
-                printObject(name, value);
+            const value = object[key];
+            if (!isNull(value) && (typeof value === 'object')) {
+              printObject(name, value);
 
-              } else {
-                V2App.addElement(body, 'tr', (row) => {
+            } else {
+              V2App.addElement(body, 'tr', (row) => {
 
-                  V2App.addElement(row, 'td', (e) => {
-                    e.textContent = name;
-                  });
-
-                  V2App.addElement(row, 'td', (e) => {
-                    e.textContent = value;
-                  });
+                V2App.addElement(row, 'td', (e) => {
+                  e.textContent = name;
                 });
-              }
-            }
-          };
-          printObject(null, data.system);
 
-        });
+                V2App.addElement(row, 'td', (e) => {
+                  e.textContent = value;
+                });
+              });
+            }
+          }
+        };
+        printObject(null, data.system);
+
       });
     });
 
     // The Firmware tab.
     new V2AppMenu(this.#tabs.firmware.element, (menu) => {
       menu.addElement('button', (e) => {
-        e.textContent = 'Boot';
+        e.textContent = 'Reboot';
         e.addEventListener('click', () => {
           this.sendReboot();
         });
@@ -386,7 +369,7 @@ class V2Device extends V2Connection {
     });
 
     V2App.addElement(this.#tabs.firmware.element, 'div', (e) => {
-      e.id = this.id + '.firmware.seclect';
+      e.id = this.id + '.firmware.select';
       this.#tabs.firmware.elementSelect = e;
     });
 
@@ -400,29 +383,21 @@ class V2Device extends V2Connection {
     this.#tabs.object.switch(this.#tabs.current || 'device');
   }
 
-  #clear() {
-    if (this.#tabs.object) {
-      this.#tabs.object.element.remove();
-      this.#tabs.object = null;
-    }
-
-    this.title();
-
+  #reset() {
     if (this.#timeout) {
       clearTimeout(this.#timeout);
       this.#timeout = null;
     }
 
     this.#tabs.data = null;
-    this.#removeNode();
+    this.#tabs.current = null;
     this.#tabs.firmware.update.bytes = null;
     this.#tabs.firmware.update.hash = null;
-  }
 
-  #reset() {
-    this.#tabs.current = null;
-
-    this.#clear();
+    this.title();
+    this.removeSection();
+    this.addSection();
+    this.canvas.appendChild(this.connection.element);
   }
 
   // Process the com.versioduo.device message reply message.
@@ -455,20 +430,17 @@ class V2Device extends V2Connection {
     // If this is the first reply, update the interface;
     if (!this.#tabs.data) {
       this.printDevice('Device is connected');
-      this.select.setConnected();
+      this.connection.select.setConnected();
     }
 
-    this.#show(data);
-    this.app.callSections('show', data);
+    this.app.preserveScrollPosition(() => {
+      this.#show(data);
+      this.app.callSections('show', data);
+    });
   }
 
   // Connect or switch to a device.
   connect(device) {
-    if (this.version) {
-      this.version.remove();
-      this.version = null;
-    }
-
     this.#disconnectDevice();
 
     // Give this connection attempt a #sequence number, so we can 'cancel'
