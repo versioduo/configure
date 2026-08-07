@@ -74,8 +74,8 @@ class V2Configuration extends V2AppSection {
   }
 
   reset() {
-    this.#tabs.edit.object.clear();
-    this.#tabs.file.object.clear();
+    this.#tabs.edit.object?.clear();
+    this.#tabs.file.object?.clear();
     this.#tabs.current = null;
     this.removeSection();
   }
