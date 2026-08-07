@@ -89,7 +89,7 @@ class V2ConfigurationEdit {
   #device = null;
   #tab = null;
   #modules = {};
-  #sections = [];
+  #entries = [];
 
   constructor(device, tab) {
     Object.seal(this);
@@ -163,10 +163,9 @@ class V2ConfigurationEdit {
     V2App.addElement(this.#tab.element, 'ul', (cards) => {
       cards.classList.add('cards');
 
+      // USB is a core part of V2Device, and not explicitly exported in the settings array.
       V2App.addElement(cards, 'li', (c) => {
-        // USB is a core part of V2Device, and not explicitly exported in the settings array.
-        const section = new this.#modules['usb'](this.#device, this, c, null, data);
-        this.#sections.push(section);
+        this.#entries.push(new this.#modules['usb'](this.#device, this, c, null, data));
       });
 
       // Iterate over the device's 'settings' entries. If we find a matching module,
@@ -185,8 +184,7 @@ class V2ConfigurationEdit {
           if (!card || setting.type === 'title')
             card = V2App.addElement(cards, 'li');
 
-          const section = new module(this.#device, this, card, setting, data);
-          this.#sections.push(section);
+          this.#entries.push(new module(this.#device, this, card, setting, data));
         }
       }
     });
@@ -200,19 +198,19 @@ class V2ConfigurationEdit {
       this.#tab.timeout = null;
     }
 
-    for (const section of this.#sections)
-      if (section.clear)
-        section.clear();
+    for (const entry of this.#entries)
+      if (entry.clear)
+        entry.clear();
 
-    this.#sections = [];
+    this.#entries = [];
   }
 
   save() {
     const configuration = {};
 
-    for (const section of this.#sections)
-      if (section.save)
-        section.save(configuration);
+    for (const entry of this.#entries)
+      if (entry.save)
+        entry.save(configuration);
 
     this.#device.printDevice('Calling <b>writeConfiguration()</b> ');
     this.#device.sendRequest({

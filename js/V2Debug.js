@@ -3,7 +3,7 @@ class V2Debug extends V2AppSection {
   #element = null;
 
   constructor(app) {
-    super('debug', '--bug', 'Debug', 'Show the Device Reply');
+    super(app, 'debug', '--bug', 'Debug', 'Show the Device Reply');
     Object.seal(this);
   }
 

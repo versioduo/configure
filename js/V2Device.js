@@ -173,9 +173,7 @@ class V2Device extends V2Connection {
             this.#timeout = null;
             this.printDevice('Unable to connect to node address <b>#' + Number(s.value) + '</b>. Disconnecting ...');
             this.#reset();
-
-            for (const notifier of this.notifiers.reset)
-              notifier();
+            this.app.callSections('reset');
           }, 1000);
         });
       });

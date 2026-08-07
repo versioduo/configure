@@ -118,6 +118,7 @@ class V2Input extends V2AppSection {
 
       V2App.addElement(cards, 'li', (e) => {
         this.#controllers.element = e;
+        this.#controllers.element.id = this.id + '.controllers';
         e.style.display = 'none';
 
         V2App.addElement(e, 'hgroup', (hg) => {
@@ -132,6 +133,7 @@ class V2Input extends V2AppSection {
 
       V2App.addElement(cards, 'li', (e) => {
         this.#notes.element = e;
+        this.#notes.element.id = this.id + '.notes';
         e.style.display = 'none';
 
         V2App.addElement(e, 'hgroup', (hg) => {

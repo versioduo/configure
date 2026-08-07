@@ -4,9 +4,14 @@ function isNull(value) {
 }
 
 class V2App {
+  nav = null;
   #sections = [];
 
   constructor(handler) {
+    this.nav = document.querySelector('nav details ul');
+    if (!this.nav)
+      throw Error('V2App: Cannot find <nav>.');
+
     // Always scroll to the top at page reload.
     history.scrollRestoration = 'manual';
 
@@ -166,6 +171,10 @@ class V2App {
 class V2AppSection {
   app = null;
   id = null;
+  nav = Object.seal({
+    entry: null,
+    cards: null
+  });
   canvas = null;
 
   header = Object.seal({
@@ -176,7 +185,7 @@ class V2AppSection {
   });
 
   constructor(app, id, icon, title, subtitle) {
-    if (!app)
+    if (!app || typeof app !== 'object')
       throw Error('V2AppSection: Missing app.');
 
     if (!id)
@@ -227,42 +236,40 @@ class V2AppSection {
 
     if (this.header.title) {
       this.title(this.header.icon, this.header.title, this.header.subtitle);
-      this.#addNavigation(this.id, this.header.icon, this.header.title);
+      V2App.addElement(this.app.nav, 'li', (li) => {
+        this.nav.entry = li;
+
+        V2App.addElement(li, 'a', (e) => {
+          e.href = '#' + this.id;
+
+          if (this.header.icon)
+            V2App.addElement(e, 'i', (i) => {
+              i.classList.add('icon', this.header.icon);
+            });
+
+          e.append(this.header.title);
+        });
+
+        V2App.addElement(li, 'ul', (e) => {
+          this.nav.cards = e;
+        });
+      });
     }
 
     document.querySelector('main').appendChild(this.canvas);
   }
 
   removeSection() {
-    this.#removeNavigation(this.id);
+    this.nav.entry?.remove();
     this.canvas.replaceChildren();
     this.canvas.remove();
   }
 
-  #addNavigation(id, icon, title) {
-    if (!title)
-      return;
-
-    V2App.addElement(document.querySelector('nav details ul'), 'li', (li) => {
-      li.id = 'nav-' + id;
-
-      V2App.addElement(li, 'a', (e) => {
-        e.href = '#' + id;
-
-        if (icon)
-          V2App.addElement(e, 'i', (i) => {
-            i.classList.add('icon', icon);
-          });
-
-        e.append(title);
-      });
+  addCard(title, id) {
+    V2App.addElement(this.nav.cards, 'a', (e) => {
+      e.href = '#' + id;
+      e.append(title);
     });
-  }
-
-  #removeNavigation(id) {
-    const e = document.querySelector('#nav-' + id);
-    if (e)
-      e.remove();
   }
 }
 
