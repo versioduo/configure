@@ -5,14 +5,12 @@ class V2Output extends V2AppSection {
     addEntry: null
   });
   #controllers = Object.seal({
-    element: null,
     list: null
   });
   #aftertouch = Object.seal({
     update: null
   });
   #notes = Object.seal({
-    element: null,
     list: null
   });
 
@@ -142,78 +140,46 @@ class V2Output extends V2AppSection {
       });
     });
 
-    V2App.addElement(this.canvas, 'ul', (cards) => {
-      cards.classList.add('cards');
+    this.#controllers.list = {};
+    this.#notes.list = {};
 
-      V2App.addElement(cards, 'li', (e) => {
-        this.#controllers.element = e;
-        e.style.display = 'none';
+    if (data.output.channels) {
+      // Find the currently selected channel number.
+      data.output.channels.find((channel) => {
+        if (!channel.selected)
+          return false;
 
-        V2App.addElement(e, 'hgroup', (hg) => {
-          V2App.addElement(hg, 'h3', (e) => {
-            e.textContent = 'Controllers';
-          });
-          V2App.addElement(hg, 'p', (e) => {
-            e.textContent = 'Receive Control Messages';
-          });
-        });
+        this.#channel.value = channel.number;
+        return true;
       });
 
-      V2App.addElement(cards, 'li', (e) => {
-        this.#notes.element = e;
-        e.style.display = 'none';
+      // Use the first entry.
+      if (this.#channel.value === null)
+        this.#channel.value = data.output.channels[0].number;
 
-        V2App.addElement(e, 'hgroup', (hg) => {
-          V2App.addElement(hg, 'h3', (e) => {
-            e.textContent = 'Notes';
-          });
-          V2App.addElement(hg, 'p', (e) => {
-            e.textContent = 'Receive Notes';
-          });
-        });
+      // Update the channel selector.
+      for (const channel of data.output.channels)
+        this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
+
+      // Add the currently selected channel.
+      data.output.channels.find((channel) => {
+        if (channel.number !== this.#channel.value)
+          return false;
+
+        this.#addChannel(channel);
+        return true;
       });
 
-      this.#controllers.list = {};
-      this.#notes.list = {};
+    } else {
+      if (!isNull(data.output.channel))
+        this.#channel.value = data.output.channel;
 
-      if (data.output.channels) {
-        // Find the currently selected channel number.
-        data.output.channels.find((channel) => {
-          if (!channel.selected)
-            return false;
+      else
+        this.#channel.value = 0;
 
-          this.#channel.value = channel.number;
-          return true;
-        });
-
-        // Use the first entry.
-        if (this.#channel.value === null)
-          this.#channel.value = data.output.channels[0].number;
-
-        // Update the channel selector.
-        for (const channel of data.output.channels)
-          this.#channel.addEntry(channel.number, channel.name, this.#channel.value === channel.number);
-
-        // Add the currently selected channel.
-        data.output.channels.find((channel) => {
-          if (channel.number !== this.#channel.value)
-            return false;
-
-          this.#addChannel(channel);
-          return true;
-        });
-
-      } else {
-        if (!isNull(data.output.channel))
-          this.#channel.value = data.output.channel;
-
-        else
-          this.#channel.value = 0;
-
-        this.#channel.addEntry(this.#channel.value);
-        this.#addChannel(data.output);
-      }
-    });
+      this.#channel.addEntry(this.#channel.value);
+      this.#addChannel(data.output);
+    }
   }
 
   reset() {
@@ -221,164 +187,187 @@ class V2Output extends V2AppSection {
     this.#channel.value = null;
   }
 
-  #addController(controller) {
-    const type = controller.type || 'range';
-    const fine = !isNull(controller.valueFine);
+  #addChannel(channel) {
+    V2App.addElement(this.canvas, 'ul', (cards) => {
+      cards.classList.add('cards');
 
-    new V2AppMenu(this.#controllers.element, (menu) => {
-      menu.element.classList.add('full');
+      if (channel.controllers) {
+        V2App.addElement(cards, 'li', (card) => {
+          card.id = this.id + '.controllers';
+          this.addNavigation('Controllers', card.id);
 
-      menu.addElement('span', (e) => {
-        e.classList.add('label');
-        e.textContent = 'CC ' + controller.number + (fine ? ' / ' + (controller.number + V2MIDI.CC.controllerLSB) : '');
-      });
-
-      menu.addElement('span', (e) => {
-        e.classList.add('grow');
-        e.textContent = controller.name;
-      });
-
-      switch (type) {
-        case 'range':
-          menu.addElement('span', (e) => {
-            e.classList.add('field');
-            e.textContent = controller.value || 0;
-            this.#controllers.list[controller.number] = {
-              'input': e
-            };
+          V2App.addElement(card, 'hgroup', (hg) => {
+            V2App.addElement(hg, 'h3', (e) => {
+              e.textContent = 'Controllers';
+            });
+            V2App.addElement(hg, 'p', (e) => {
+              e.textContent = 'Receive Control Messages';
+            });
           });
 
-          // Support high-resolution, 14 bits controllers. Controllers 0-31 (MSB)
-          // have matching high-resolution values with controllers 32-63 (LSB).
-          if (fine) {
-            menu.addElement('span', (e) => {
-              e.classList.add('field');
-              e.textContent = controller.valueFine;
-              this.#controllers.list[controller.number + V2MIDI.CC.controllerLSB] = {
-                'input': e
-              };
+          for (const controller of channel.controllers) {
+            const type = controller.type || 'range';
+            const fine = !isNull(controller.valueFine);
+
+            new V2AppMenu(card, (menu) => {
+              menu.element.classList.add('full');
+
+              menu.addElement('span', (e) => {
+                e.classList.add('label');
+                e.textContent = 'CC ' + controller.number + (fine ? ' / ' + (controller.number + V2MIDI.CC.controllerLSB) : '');
+              });
+
+              menu.addElement('span', (e) => {
+                e.classList.add('grow');
+                e.textContent = controller.name;
+              });
+
+              switch (type) {
+                case 'range':
+                  menu.addElement('span', (e) => {
+                    e.classList.add('field');
+                    e.textContent = controller.value || 0;
+                    this.#controllers.list[controller.number] = {
+                      'input': e
+                    };
+                  });
+
+                  // Support high-resolution, 14 bits controllers. Controllers 0-31 (MSB)
+                  // have matching high-resolution values with controllers 32-63 (LSB).
+                  if (fine) {
+                    menu.addElement('span', (e) => {
+                      e.classList.add('field');
+                      e.textContent = controller.valueFine;
+                      this.#controllers.list[controller.number + V2MIDI.CC.controllerLSB] = {
+                        'input': e
+                      };
+                    });
+                  }
+
+                  // The range progress bar is added after the menu.
+                  break;
+
+                case 'toggle':
+                  menu.addElement('input', (e) => {
+                    e.disabled = true;
+                    e.type = 'checkbox';
+                    e.checked = controller.value > 63;
+                    this.#controllers.list[controller.number] = {
+                      'switch': e
+                    };
+                  });
+                  break;
+
+                case 'momentary':
+                  menu.addElement('button', (e) => {
+                    e.disabled = true;
+                    e.classList.add('momentary');
+                    if (controller.value > 63)
+                      e.classList.add('primary');
+                    this.#controllers.list[controller.number] = {
+                      'button': e
+                    };
+                  });
+                  break;
+              }
             });
+
+            if (type === 'range') {
+              V2App.addElement(card, 'progress', (e) => {
+                e.value = controller.value || 0;
+                e.min = controller.min ?? 0;
+                e.max = controller.max ?? 127;
+                this.#controllers.list[controller.number].progress = e;
+              });
+            }
+          }
+        });
+      }
+
+      if (channel.notes) {
+        V2App.addElement(cards, 'li', (card) => {
+          card.id = this.id + '.notes';
+          this.addNavigation('Notes', card.id);
+
+          V2App.addElement(card, 'hgroup', (hg) => {
+            V2App.addElement(hg, 'h3', (e) => {
+              e.textContent = 'Notes';
+            });
+            V2App.addElement(hg, 'p', (e) => {
+              e.textContent = 'Receive Notes';
+            });
+          });
+
+
+          // Aftertouch Channel.
+          if (channel.aftertouch) {
+            let input = null;
+            let progress = null;
+
+            new V2AppMenu(card, (menu) => {
+              menu.addElement('span', (e) => {
+                e.textContent = 'Aftertouch';
+              });
+
+              menu.addElement('span', (e) => {
+                input = e;
+                e.type = 'number';
+                e.classList.add('field');
+                e.textContent = channel.aftertouch.value;
+              });
+            });
+
+            V2App.addElement(card, 'progress', (e) => {
+              progress = e;
+              e.value = channel.aftertouch.value;
+              e.max = '127';
+            });
+
+            this.#aftertouch.update = (pressure) => {
+              input.value = pressure;
+              progress.value = pressure;
+            };
           }
 
-          // The range progress bar is added after the menu.
-          break;
+          for (const note of channel.notes) {
+            new V2AppMenu(card, (menu) => {
+              menu.element.classList.add('full');
 
-        case 'toggle':
-          menu.addElement('input', (e) => {
-            e.disabled = true;
-            e.type = 'checkbox';
-            e.checked = controller.value > 63;
-            this.#controllers.list[controller.number] = {
-              'switch': e
-            };
-          });
-          break;
+              menu.addElement('span', (e) => {
+                e.classList.add('label');
+                e.textContent = V2MIDI.Note.getName(note.number) + ' (' + note.number + ')';
+                e.classList.add(V2MIDI.Note.isBlack(note.number) ? 'dark' : 'light');
+              });
 
-        case 'momentary':
-          menu.addElement('button', (e) => {
-            e.disabled = true;
-            e.classList.add('momentary');
-            if (controller.value > 63)
-              e.classList.add('primary');
-            this.#controllers.list[controller.number] = {
-              'button': e
-            };
-          });
-          break;
+              menu.addElement('span', (e) => {
+                e.classList.add('grow');
+                e.textContent = note.name;
+              });
+
+              menu.addElement('span', (e) => {
+                e.classList.add('field');
+                this.#notes.list[note.number] = {
+                  'input': e,
+                };
+              });
+            });
+
+            V2App.addElement(card, 'progress', (e) => {
+              e.value = '0';
+              e.max = '127';
+              this.#notes.list[note.number].progress = e;
+            });
+
+            if (note.aftertouch) {
+              V2App.addElement(card, 'progress', (e) => {
+                e.value = '0';
+                e.max = '127';
+                this.#notes.list[note.number].aftertouch = e;
+              });
+            }
+          }
+        });
       }
     });
-
-    if (type === 'range') {
-      V2App.addElement(this.#controllers.element, 'progress', (e) => {
-        e.value = controller.value || 0;
-        e.min = controller.min ?? 0;
-        e.max = controller.max ?? 127;
-        this.#controllers.list[controller.number].progress = e;
-      });
-    }
-  }
-
-  #addNote(name, note, hasAftertouch) {
-    new V2AppMenu(this.#notes.element, (menu) => {
-      menu.element.classList.add('full');
-
-      menu.addElement('span', (e) => {
-        e.classList.add('label');
-        e.textContent = V2MIDI.Note.getName(note) + ' (' + note + ')';
-        e.classList.add(V2MIDI.Note.isBlack(note) ? 'dark' : 'light');
-      });
-
-      menu.addElement('span', (e) => {
-        e.classList.add('grow');
-        e.textContent = name;
-      });
-
-      menu.addElement('span', (e) => {
-        e.classList.add('field');
-        this.#notes.list[note] = {
-          'input': e,
-        };
-      });
-    });
-
-    V2App.addElement(this.#notes.element, 'progress', (e) => {
-      e.value = '0';
-      e.max = '127';
-      this.#notes.list[note].progress = e;
-    });
-
-    if (hasAftertouch) {
-      V2App.addElement(this.#notes.element, 'progress', (e) => {
-        e.value = '0';
-        e.max = '127';
-        this.#notes.list[note].aftertouch = e;
-      });
-    }
-  }
-
-  #addChannel(channel) {
-    if (channel.controllers) {
-      for (const controller of channel.controllers)
-        this.#addController(controller);
-
-      this.#controllers.element.style.display = '';
-    }
-
-    if (channel.notes) {
-      // Aftertouch Channel.
-      if (channel.aftertouch) {
-        let input = null;
-        let progress = null;
-
-        new V2AppMenu(this.#notes.element, (menu) => {
-          menu.addElement('span', (e) => {
-            e.textContent = 'Aftertouch';
-          });
-
-          menu.addElement('span', (e) => {
-            input = e;
-            e.type = 'number';
-            e.classList.add('field');
-            e.textContent = channel.aftertouch.value;
-          });
-        });
-
-        V2App.addElement(this.#notes.element, 'progress', (e) => {
-          progress = e;
-          e.value = channel.aftertouch.value;
-          e.max = '127';
-        });
-
-        this.#aftertouch.update = (pressure) => {
-          input.value = pressure;
-          progress.value = pressure;
-        };
-      }
-
-      for (const note of channel.notes)
-        this.#addNote(note.name, note.number, note.aftertouch);
-
-      this.#notes.element.style.display = '';
-    }
   }
 }

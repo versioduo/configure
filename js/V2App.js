@@ -16,6 +16,19 @@ class V2App {
     this.url = new URL(window.location);
     history.scrollRestoration = 'manual';
 
+    // Intercept hash navigation to switch tabs.
+    navigation.addEventListener("navigate", (e) => {
+      const target = new URL(e.destination.url).hash;
+      if (!target)
+        return;
+
+      const id = document.getElementById(target.substr(1));
+      if (!id)
+        return;
+
+      id.click();
+    });
+
     if (handler)
       handler(this);
   }
@@ -298,7 +311,7 @@ class V2AppSection {
     this.canvas.remove();
   }
 
-  addCard(title, id) {
+  addNavigation(title, id) {
     V2App.addElement(this.nav.cards, 'a', (e) => {
       e.href = '#' + id;
       e.append(title);
@@ -386,21 +399,22 @@ class V2AppMenu {
 }
 
 class V2AppTabs {
-  current = null;
   element = null;
+  menu = null;
+  current = null;
 
-  #elementsTabs = null;
   #tabs = {};
   #notifiers = [];
 
-  constructor(element, handler) {
+  constructor(element, id, handler) {
+    new V2AppMenu(element, (menu) => {
+      menu.element.classList.add('bar');
+      this.menu = menu;
+      this.menu.element.id = id + '.tabs';
+    });
+
     V2App.addElement(element, 'ul', (tabs) => {
       this.element = tabs;
-
-      new V2AppMenu(tabs, (menu) => {
-        menu.element.classList.add('bar');
-        this.#elementsTabs = menu;
-      });
     });
 
     if (handler)
@@ -416,7 +430,9 @@ class V2AppTabs {
   add(name, icon, text, handler) {
     this.#tabs[name] = {};
 
-    this.#elementsTabs.addElement('button', (e) => {
+    this.menu.addElement('button', (e) => {
+      e.id = this.menu.element.id + '.' + name;
+
       e.addEventListener('click', () => {
         // Do not switch inactive tabs.
         if (!this.current)

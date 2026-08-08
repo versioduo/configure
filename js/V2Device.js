@@ -183,23 +183,19 @@ class V2Device extends V2Connection {
       });
     }
 
-    new V2AppTabs(this.canvas, (tabs) => {
+    new V2AppTabs(this.canvas, this.id, (tabs) => {
       this.#tabs.object = tabs;
-      tabs.element.id = this.id + '.tabs';
 
       tabs.add('device', '--plug', 'Device', (e) => {
         this.#tabs.device.element = e;
-        e.id = tabs.element.id + '.device';
       });
 
       tabs.add('statistics', '--magnifying-glass-chart', 'Statistics', (e) => {
         this.#tabs.statistics.element = e;
-        e.id = tabs.element.id + '.statistics';
       });
 
       tabs.add('firmware', '--microchip', 'Firmware', (e) => {
         this.#tabs.firmware.element = e;
-        e.id = tabs.element.id + '.firmware';
       });
 
       tabs.addNotifier((name) => {
