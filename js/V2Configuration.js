@@ -33,20 +33,20 @@ class V2Configuration extends V2AppSection {
 
       tabs.add('overview', '--book-open-reader', 'Overview', (e) => {
         this.#tabs.overview.element = e;
-        this.addNavigation('Overview', 'configuration.tabs.overview');
       });
 
       tabs.add('edit', '--sliders', 'Edit', (e) => {
         this.#tabs.edit.element = e;
         this.#tabs.edit.object = new V2ConfigurationEdit(this.app.device, this.#tabs.edit);
-        this.addNavigation('Edit', 'configuration.tabs.edit');
       });
 
       tabs.add('file', '--file-code', 'File', (e) => {
         this.#tabs.file.element = e;
         this.#tabs.file.object = new V2ConfigurationFile(this.app.device, this.#tabs.file);
-        this.addNavigation('File', 'configuration.tabs.file');
       });
+
+      for (const [name, tab] of Object.entries(tabs.tabs))
+        this.addNavigation(tab.text, tab.id);
 
       tabs.addNotifier((name) => {
         this.#tabs.current = name;

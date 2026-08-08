@@ -8,15 +8,11 @@ class V2Connection extends V2AppSection {
   notify = null;
   device = null;
 
-  constructor(app, log, connect) {
-    super(app, 'connection');
+  constructor(app, id, icon, title, subtitle, log) {
+    super(app, id, icon, title, subtitle);
 
     new V2AppMenu(this.canvas, (menu) => {
       this.connection.element = menu.element;
-
-      menu.addElement('span', (e) => {
-        e.textContent = 'Device';
-      });
 
       let reset = null;
       menu.addItem((li) => {
@@ -122,11 +118,11 @@ class V2Connection extends V2AppSection {
       });
 
       // Adding '?connect=<device name>' to the URL will try to connect to a device with the given name.
-      if (connect) {
-        this.log.print('Found URL request to auto-connect to device: <b>' + connect + '</b>');
+      if (app.url.connect) {
+        this.log.print('Found URL request to auto-connect to device: <b>' + app.url.connect + '</b>');
 
         const tryConnect = (device, portName = '') => {
-          const name = connect + portName;
+          const name = app.url.connect + portName;
           if (name !== device.name)
             return false;
 

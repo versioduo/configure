@@ -5,8 +5,8 @@
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <meta name="name" content="configure">
     <meta name="description" content="MIDI Device Configuration">
-    <meta name="version" content="496">
-    <meta name="revised" content="2026-08-08">
+    <meta name="version" content="499">
+    <meta name="revised" content="2026-08-09">
     <meta name="copyright" content="Anyone can use this public domain work without having to seek authorisation, no one can ever own it.">
     <meta name="rating" content="safe for kids">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -49,22 +49,14 @@
           app.device = null;
           Object.seal(app);
 
-          // WebUSB exports the link to this site with the USB device name to connect to.
-          const connect = app.url.searchParams.get('connect');
-          if (connect) {
-            // Remove the command, it is only used for the first connection.
-            app.url.searchParams.delete('connect');
-            window.history.pushState({}, '', app.url);
-          }
-
           // Early log init, but added as last section. We don't have a device but we already log messages.
           app.addSection(V2Log, [], (log) => {
-            app.device = new V2Device(app, log, connect);
+            app.device = new V2Device(app, log);
 
             app.addSection(V2Configuration);
             app.addSection(V2Input);
             app.addSection(V2Output);
-            if (app.url.searchParams.get('debug'))
+            if (app.url.debug)
               app.addSection(V2Debug);
           });
 

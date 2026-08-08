@@ -1,9 +1,9 @@
 class V2Device extends V2Connection {
+  #data = null;
   #tabs = Object.seal({
     object: null,
     current: null,
-    data: null,
-    device: Object.seal({
+    information: Object.seal({
       element: null
     }),
     statistics: Object.seal({
@@ -28,9 +28,10 @@ class V2Device extends V2Connection {
   #sequence = 0;
   #token = null;
 
-  constructor(app, log, connect) {
-    super(app, log, connect);
+  constructor(app, log) {
+    super(app, 'device', '--plug', 'Device', 'MIDI Connection', log);
     Object.seal(this);
+    this.log = log;
 
     this.addSection();
     this.canvas.appendChild(this.connection.element);
@@ -70,7 +71,7 @@ class V2Device extends V2Connection {
   }
 
   getData() {
-    return this.#tabs.data;
+    return this.#data;
   }
 
   sendRequest(request) {
@@ -147,19 +148,16 @@ class V2Device extends V2Connection {
     this.addSection();
     this.canvas.appendChild(this.connection.element);
 
-    this.#tabs.data = data;
+    this.#data = data;
     this.canvas.appendChild(this.connection.element);
-    this.title(null, data.metadata.product, data.metadata.description);
 
     if (data.system.midi.passthrough && data.system.midi.transport === "usb") {
       new V2AppMenu(this.canvas, (menu) => {
         menu.addElement('span', (e) => {
-          e.textContent = 'Node';
+          e.textContent = 'Passthrough';
         });
 
         menu.addElement('select', (s) => {
-          s.classList.add('primary');
-
           for (let i = 0; i < 16; i++) {
             V2App.addElement(s, 'option', (e) => {
               e.value = i;
@@ -168,7 +166,7 @@ class V2Device extends V2Connection {
           }
 
           s.addEventListener('change', () => {
-            this.sendControlChange(0, this.#tabs.data.system.midi.passthrough.controller, Number(s.value));
+            this.sendControlChange(0, this.#data.system.midi.passthrough.controller, Number(s.value));
             this.#token = null;
             this.sendGetAll();
 
@@ -186,8 +184,8 @@ class V2Device extends V2Connection {
     new V2AppTabs(this.canvas, this.id, (tabs) => {
       this.#tabs.object = tabs;
 
-      tabs.add('device', '--plug', 'Device', (e) => {
-        this.#tabs.device.element = e;
+      tabs.add('information', '--circle-info', 'Information', (e) => {
+        this.#tabs.information.element = e;
       });
 
       tabs.add('statistics', '--magnifying-glass-chart', 'Statistics', (e) => {
@@ -198,6 +196,9 @@ class V2Device extends V2Connection {
         this.#tabs.firmware.element = e;
       });
 
+      for (const [name, tab] of Object.entries(tabs.tabs))
+        this.addNavigation(tab.text, tab.id);
+
       tabs.addNotifier((name) => {
         this.#tabs.current = this.#tabs.object.current || null;
 
@@ -207,8 +208,18 @@ class V2Device extends V2Connection {
     });
 
     // The Information tab.
+    V2App.addElement(this.#tabs.information.element, 'hgroup', (hg) => {
+      V2App.addElement(hg, 'h3', (e) => {
+        e.textContent = data.metadata.product;
+      });
+
+      V2App.addElement(hg, 'p', (e) => {
+        e.textContent = data.metadata.description;
+      });
+    });
+
     if (data.help?.device) {
-      V2App.addElement(this.#tabs.device.element, 'header', (e) => {
+      V2App.addElement(this.#tabs.information.element, 'header', (e) => {
         const paragraphs = data.help.device.split("\n");
         for (const p of paragraphs) {
           V2App.addElement(e, 'p', (e) => {
@@ -218,7 +229,7 @@ class V2Device extends V2Connection {
       });
     }
 
-    V2App.addElement(this.#tabs.device.element, 'table', (e) => {
+    V2App.addElement(this.#tabs.information.element, 'table', (e) => {
       V2App.addElement(e, 'tbody', (body) => {
         for (const key of Object.keys(data.metadata)) {
           if (key === 'product' || key === 'description')
@@ -248,7 +259,7 @@ class V2Device extends V2Connection {
     });
 
     for (const link of data.links) {
-      new V2AppMenu(this.#tabs.device.element, (menu) => {
+      new V2AppMenu(this.#tabs.information.element, (menu) => {
         menu.addElement('span', (e) => {
           e.textContent = link.description;
         });
@@ -376,7 +387,7 @@ class V2Device extends V2Connection {
       this.#tabs.firmware.elementNewFirmware = e;
     });
 
-    this.#tabs.object.switch(this.#tabs.current || 'device');
+    this.#tabs.object.switch(this.#tabs.current || 'information');
   }
 
   #reset() {
@@ -385,12 +396,11 @@ class V2Device extends V2Connection {
       this.#timeout = null;
     }
 
-    this.#tabs.data = null;
+    this.#data = null;
     this.#tabs.current = null;
     this.#tabs.firmware.update.bytes = null;
     this.#tabs.firmware.update.hash = null;
 
-    this.title();
     this.removeSection();
     this.addSection();
     this.canvas.appendChild(this.connection.element);
@@ -424,7 +434,7 @@ class V2Device extends V2Connection {
     }
 
     // If this is the first reply, update the interface;
-    if (!this.#tabs.data) {
+    if (!this.#data) {
       this.printDevice('Device is connected');
       this.connection.select.setConnected();
     }
@@ -476,12 +486,12 @@ class V2Device extends V2Connection {
 
   // Load 'index.json' and from the 'download' URL and check if there is a firmware update available.
   #loadFirmwareIndex() {
-    if (!this.#tabs.data.system?.firmware?.download)
+    if (!this.#data.system?.firmware?.download)
       return;
 
-    this.printDevice('Requesting firmware info: <b>' + this.#tabs.data.system.firmware.download + '/index.json</b>');
+    this.printDevice('Requesting firmware info: <b>' + this.#data.system.firmware.download + '/index.json</b>');
 
-    fetch(this.#tabs.data.system.firmware.download + '/index.json', {
+    fetch(this.#data.system.firmware.download + '/index.json', {
       cache: 'no-cache'
     })
       .then((response) => {
@@ -493,7 +503,7 @@ class V2Device extends V2Connection {
       .then((json) => {
         this.printDevice('Retrieved firmware update index');
 
-        let updates = json[this.#tabs.data.system.firmware.id];
+        let updates = json[this.#data.system.firmware.id];
         if (!updates) {
           this.#tabs.firmware.notify.info('No firmware update found for this device.');
           this.printDevice('No firmware update found for this device.');
@@ -501,9 +511,9 @@ class V2Device extends V2Connection {
         }
 
         // Remove firmware images for different boards.
-        if (this.#tabs.data.system.hardware?.board) {
+        if (this.#data.system.hardware?.board) {
           updates = updates.filter((update) => {
-            return update.board === this.#tabs.data.system.hardware.board;
+            return update.board === this.#data.system.hardware.board;
           });
         }
 
@@ -528,10 +538,10 @@ class V2Device extends V2Connection {
         // number which is not tagged as release is manually installed, will continue to update
         // with newer versions ignoring the older release tag. The device stays in "beta releases"
         // until the next release.
-        const useRelease = releaseIndex >= 0 && this.#tabs.data.metadata.version <= updates[releaseIndex].version;
+        const useRelease = releaseIndex >= 0 && this.#data.metadata.version <= updates[releaseIndex].version;
         const updateIndex = useRelease ? releaseIndex : 0;
 
-        if (this.#tabs.data.metadata.version > updates[updateIndex].version)
+        if (this.#data.metadata.version > updates[updateIndex].version)
           this.#tabs.firmware.notify.info('A more recent firmware is already installed.');
 
         this.#tabs.firmware.elementSelect.replaceChildren();
@@ -554,15 +564,15 @@ class V2Device extends V2Connection {
             }
 
             select.addEventListener('change', () => {
-              this.#loadFirmware(this.#tabs.data.system.firmware.download + '/' + updates[select.value].file);
+              this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[select.value].file);
             });
           });
         });
 
-        if (this.#tabs.data.system.firmware.hash === updates[updateIndex].hash)
+        if (this.#data.system.firmware.hash === updates[updateIndex].hash)
           this.#tabs.firmware.notify.info('The firmware is up-to-date.');
 
-        this.#loadFirmware(this.#tabs.data.system.firmware.download + '/' + updates[updateIndex].file);
+        this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[updateIndex].file);
       })
       .catch((error) => {
         this.printDevice('Error requesting firmware info: ' + error.message);
@@ -702,18 +712,18 @@ class V2Device extends V2Connection {
       }).join('');
       this.#tabs.firmware.update.hash = hex;
       elementHash.textContent = hex;
-      const backup = this.#tabs.data.system.hardware?.eeprom?.used ? ' Please backup the configuration before the installation.' : '';
+      const backup = this.#data.system.hardware?.eeprom?.used ? ' Please backup the configuration before the installation.' : '';
 
-      if (this.#tabs.data.system.hardware?.board && firmware.board !== this.#tabs.data.system.hardware.board)
+      if (this.#data.system.hardware?.board && firmware.board !== this.#data.system.hardware.board)
         this.#tabs.firmware.notify.error('The firmware update is for a different board which has the name <b>' + firmware.board + '</b>.');
 
-      else if (firmware.id !== this.#tabs.data.system.firmware.id)
+      else if (firmware.id !== this.#data.system.firmware.id)
         this.#tabs.firmware.notify.warn('The firmware update appears to provide a different functionality, it has the name <b>' + firmware.id + '</b>.');
 
-      else if (firmware.version < this.#tabs.data.metadata.version)
+      else if (firmware.version < this.#data.metadata.version)
         this.#tabs.firmware.notify.warn('The firmware is older than the currently installed version.' + backup);
 
-      else if (this.#tabs.firmware.update.hash === this.#tabs.data.system.firmware.hash)
+      else if (this.#tabs.firmware.update.hash === this.#data.system.firmware.hash)
         this.#tabs.firmware.notify.info('This firmware is currently installed.');
 
       else
