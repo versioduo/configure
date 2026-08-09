@@ -37,12 +37,12 @@ class V2Configuration extends V2AppSection {
 
       tabs.add('edit', '--sliders', 'Edit', (e) => {
         this.#tabs.edit.element = e;
-        this.#tabs.edit.object = new V2ConfigurationEdit(this.app.device, this.#tabs.edit);
+        this.#tabs.edit.object = new V2ConfigurationEdit(this.app.main, this.#tabs.edit);
       });
 
       tabs.add('file', '--file-code', 'File', (e) => {
         this.#tabs.file.element = e;
-        this.#tabs.file.object = new V2ConfigurationFile(this.app.device, this.#tabs.file);
+        this.#tabs.file.object = new V2ConfigurationFile(this.app.main, this.#tabs.file);
       });
 
       for (const [name, tab] of Object.entries(tabs.tabs))
@@ -211,7 +211,7 @@ class V2ConfigurationEdit {
       if (entry.save)
         entry.save(configuration);
 
-    this.#device.printDevice('Calling <b>writeConfiguration()</b> ');
+    this.#device.printDevice('Calling «writeConfiguration()» ');
     this.#device.sendRequest({
       'method': 'writeConfiguration',
       'configuration': configuration
@@ -226,7 +226,7 @@ class V2ConfigurationEdit {
 
   // Factory reset.
   #erase() {
-    this.#device.printDevice('Calling <b>eraseConfiguration()</b> command');
+    this.#device.printDevice('Calling «eraseConfiguration()» command');
     this.#device.sendRequest({
       'method': 'eraseConfiguration'
     });
@@ -419,7 +419,7 @@ class V2ConfigurationFile {
   #send() {
     const data = this.#parse();
     if (data) {
-      this.#device.printDevice('Calling <b>writeConfiguration()</b>');
+      this.#device.printDevice('Calling «writeConfiguration()»');
       this.#device.sendRequest({
         'method': 'writeConfiguration',
         'configuration': data

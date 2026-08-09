@@ -1,5 +1,5 @@
 const name = 'configure';
-const version = 499;
+const version = 522;
 const files = [
   './',
   'css/fonts.css',
@@ -9,7 +9,6 @@ const files = [
   'icons/logo.svg',
   'js/V2App.js',
   'js/V2Configuration.js',
-  'js/V2Connection.js',
   'js/V2Debug.js',
   'js/V2Device.js',
   'js/V2Input.js',
@@ -17,6 +16,7 @@ const files = [
   'js/V2Log.js',
   'js/V2MIDI.js',
   'js/V2MIDISelect.js',
+  'js/V2Main.js',
   'js/V2Output.js',
   'js/V2Settings.js',
   'manifest.json',

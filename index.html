@@ -5,8 +5,8 @@
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <meta name="name" content="configure">
     <meta name="description" content="MIDI Device Configuration">
-    <meta name="version" content="499">
-    <meta name="revised" content="2026-08-09">
+    <meta name="version" content="522">
+    <meta name="revised" content="2026-08-18">
     <meta name="copyright" content="Anyone can use this public domain work without having to seek authorisation, no one can ever own it.">
     <meta name="rating" content="safe for kids">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="css/style.css">
   </head>
   <body>
-    <nav>
+    <nav class="--grid">
       <h1>
         <a href="#">V2 configure</a>
       </h1>
@@ -31,11 +31,11 @@
     <main class="--grid"></main>
     <script src="js/V2App.js"></script>
     <script src="js/V2Configuration.js"></script>
-    <script src="js/V2Connection.js"></script>
     <script src="js/V2Debug.js"></script>
     <script src="js/V2Device.js"></script>
     <script src="js/V2Input.js"></script>
     <script src="js/V2Log.js"></script>
+    <script src="js/V2Main.js"></script>
     <script src="js/V2MIDI.js"></script>
     <script src="js/V2MIDISelect.js"></script>
     <script src="js/V2Output.js"></script>
@@ -46,12 +46,11 @@
 
       try {
         new V2App((app) => {
-          app.device = null;
           Object.seal(app);
 
           // Early log init, but added as last section. We don't have a device but we already log messages.
           app.addSection(V2Log, [], (log) => {
-            app.device = new V2Device(app, log);
+            new V2Main(app, log);
 
             app.addSection(V2Configuration);
             app.addSection(V2Input);
