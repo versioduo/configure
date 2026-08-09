@@ -1,808 +1,232 @@
-class V2Device extends V2Connection {
-  #data = null;
-  #tabs = Object.seal({
-    object: null,
-    current: null,
-    information: Object.seal({
-      element: null
-    }),
-    statistics: Object.seal({
-      element: null
-    }),
-    firmware: Object.seal({
-      element: null,
-      elementSelect: null,
-      notify: null,
-      elementNewFirmware: null,
-      elementUpload: null,
-      elementProgress: null,
-      update: Object.seal({
-        bytes: null,
-        hash: null,
-        current: null
-      })
-    })
+class V2Device extends V2AppSection {
+  connection = Object.seal({
+    element: null,
+    select: null
   });
-
-  #timeout = null;
-  #sequence = 0;
-  #token = null;
+  log = null;
+  midi = null;
+  notify = null;
+  device = null;
 
   constructor(app, log) {
-    super(app, 'device', '--plug', 'Device', 'MIDI Connection', log);
-    Object.seal(this);
+    super(app, 'device', '--plug', 'Device');
     this.log = log;
 
-    this.addSection();
-    this.canvas.appendChild(this.connection.element);
+    new V2AppMenu(this.canvas, (menu) => {
+      this.connection.element = menu.element;
 
-    V2App.addElement(this.canvas, 'p', (e) => {
-      e.classList.add('center');
-      e.innerHTML = '<a href=' + document.querySelector('link[rel="source"]').href +
-        ' target="software">' + document.querySelector('meta[name="name"]').content +
-        '</a>, version ' + Number(document.querySelector('meta[name="version"]').content);
+      let reset = null;
+      menu.addItem((li) => {
+        this.connection.select = new V2MIDISelect(li);
+        this.connection.select.element.classList.add('primary');
+
+        this.connection.select.addNotifier('select', (device) => {
+          if (device) {
+            this.connect(device);
+            reset.disabled = false;
+
+          } else {
+            this.disconnect();
+            reset.disabled = true;
+          }
+        });
+
+        this.connection.select.addNotifier('disconnect', () => {
+          reset.disabled = true;
+        });
+
+        this.connection.select.addNotifier('add', () => {
+          if (this.device.input)
+            return;
+
+          window.scroll(0, 0);
+        });
+      });
+
+      menu.addElement('button', (e) => {
+        reset = e;
+        e.disabled = true;
+        e.classList.add('icon', 'field');
+
+        V2App.addElement(e, 'i', (i) => {
+          i.classList.add('icon', '--rotate', '--nospace');
+        });
+
+        e.addEventListener('click', () => {
+          this.sendReset('token');
+        });
+      });
+    });
+
+    this.log = log;
+    this.midi = new V2MIDI();
+    this.notify = new V2AppNotify(this.canvas);
+    this.device = new V2MIDIDevice();
+    this.device.addNotifier('note', (channel, note, velocity) => {
+      if (velocity > 0)
+        this.print('Received NoteOn ' + V2MIDI.Note.getName(note) + '(' + note + ') with velocity ' + velocity + ' on channel #' + (channel + 1));
+      else
+        this.print('Received NoteOff ' + V2MIDI.Note.getName(note) + '(' + note + ') on channel #' + (channel + 1));
+    });
+
+    this.device.addNotifier('noteOff', (channel, note, velocity) => {
+      this.print('Received NoteOff ' + V2MIDI.Note.getName(note) + '(' + note + ') with velocity ' + velocity + ' on channel #' + (channel + 1));
+    });
+
+    this.device.addNotifier('aftertouch', (channel, note, pressure) => {
+      this.print('Received Aftertouch for note ' + V2MIDI.Note.getName(note) + '(' + note + ')' + ' with pressure «' + pressure + '» on channel #' + (channel + 1));
+    });
+
+    this.device.addNotifier('controlChange', (channel, controller, value) => {
+      this.print('Received ControlChange ' + controller + ' with value ' + value + ' on channel #' + (channel + 1));
+    });
+
+    this.device.addNotifier('aftertouchChannel', (channel, pressure) => {
+      this.print('Received AftertouchChannel with value ' + pressure + ' on channel #' + (channel + 1));
     });
 
     this.device.addNotifier('systemExclusive', (message) => {
-      const json = new TextDecoder().decode(message);
-      let data;
+      this.printDevice('Received SystemExclusive length=' + message.length);
+    });
 
-      try {
-        data = JSON.parse(json);
-
-      } catch (error) {
-        this.printDevice('Received unknown message format');
+    this.midi.setup((error) => {
+      if (error) {
+        this.log.print(error);
+        this.notify.error(error);
         return;
       }
 
-      const device = data['com.versioduo.device'];
-      if (!device) {
-        this.printDevice('Received data for unknown interface');
-        return;
-      }
+      // Subscribe to device connect/disconnect events.
+      this.midi.addNotifier('state', (event) => {
+        if (event) {
+          if (event.port.type === 'input')
+            this.log.print('«' + event.port.name + '» (' + event.port.id + ':): Port is ' + event.port.state);
 
-      if (this.#timeout) {
-        clearTimeout(this.#timeout);
-        this.#timeout = null;
-      }
+          else if (event.port.type === 'output')
+            this.log.print('«' + event.port.name + '» (:' + event.port.id + '): Port is ' + event.port.state);
 
-      this.#handleReply(device);
-    });
-  }
-
-  getData() {
-    return this.#data;
-  }
-
-  sendRequest(request) {
-    // Requests and replies contain the device's current bootID.
-    if (this.#token);
-    request.token = this.#token;
-
-    this.sendSystemExclusive({
-      'com.versioduo.device': request
-    });
-  }
-
-  sendGetAll() {
-    this.printDevice('Calling <b>getAll()</b>');
-    this.sendRequest({
-      'method': 'getAll'
-    });
-  }
-
-  #disconnectDevice() {
-    this.#reset();
-
-    if (!this.device.input)
-      return;
-
-    this.printDevice('Disconnecting');
-
-    if (this.#timeout) {
-      clearTimeout(this.#timeout);
-      this.#timeout = null;
-    }
-
-    this.notify.clear();
-    this.device.disconnect();
-    this.#token = null;
-    this.#reset();
-
-    this.app.callSections('reset');
-    window.scroll(0, 0);
-  }
-
-  disconnect() {
-    this.#disconnectDevice();
-    this.connection.select.setDisconnected();
-  }
-
-  sendReset(mode) {
-    if (mode === 'token')
-      this.#token = null;
-
-    this.sendSystemReset();
-    this.sendGetAll();
-  }
-
-  sendReboot(ports = false) {
-    const method = ports ? 'rebootWithPorts' : 'reboot';
-    this.printDevice('Calling <b>' + method + '()</b>');
-    this.sendRequest({
-      'method': method
-    });
-    this.disconnect();
-  }
-
-  sendBootloader() {
-    this.printDevice('Calling <b>bootloader()</b>');
-    this.sendRequest({
-      'method': 'bootloader'
-    });
-    this.disconnect();
-  }
-
-  #show(data) {
-    this.removeSection();
-    this.addSection();
-    this.canvas.appendChild(this.connection.element);
-
-    this.#data = data;
-    this.canvas.appendChild(this.connection.element);
-
-    if (data.system.midi.passthrough && data.system.midi.transport === "usb") {
-      new V2AppMenu(this.canvas, (menu) => {
-        menu.addElement('span', (e) => {
-          e.textContent = 'Passthrough';
-        });
-
-        menu.addElement('select', (s) => {
-          for (let i = 0; i < 16; i++) {
-            V2App.addElement(s, 'option', (e) => {
-              e.value = i;
-              e.text = (i === 0) ? '–' : '#' + i;
-            });
-          }
-
-          s.addEventListener('change', () => {
-            this.sendControlChange(0, this.#data.system.midi.passthrough.controller, Number(s.value));
-            this.#token = null;
-            this.sendGetAll();
-
-            this.#timeout = setTimeout(() => {
-              this.#timeout = null;
-              this.printDevice('Unable to connect to node address <b>#' + Number(s.value) + '</b>. Disconnecting ...');
-              this.#reset();
-              this.app.callSections('reset');
-            }, 1000);
-          });
-        });
-      });
-    }
-
-    new V2AppTabs(this.canvas, this.id, (tabs) => {
-      this.#tabs.object = tabs;
-
-      tabs.add('information', '--circle-info', 'Information', (e) => {
-        this.#tabs.information.element = e;
-      });
-
-      tabs.add('statistics', '--magnifying-glass-chart', 'Statistics', (e) => {
-        this.#tabs.statistics.element = e;
-      });
-
-      tabs.add('firmware', '--microchip', 'Firmware', (e) => {
-        this.#tabs.firmware.element = e;
-      });
-
-      for (const [name, tab] of Object.entries(tabs.tabs))
-        this.addNavigation(tab.text, tab.id);
-
-      tabs.addNotifier((name) => {
-        this.#tabs.current = this.#tabs.object.current || null;
-
-        if (name === 'firmware')
-          this.#loadFirmwareIndex();
-      });
-    });
-
-    // The Information tab.
-    V2App.addElement(this.#tabs.information.element, 'hgroup', (hg) => {
-      V2App.addElement(hg, 'h3', (e) => {
-        e.textContent = data.metadata.product;
-      });
-
-      V2App.addElement(hg, 'p', (e) => {
-        e.textContent = data.metadata.description;
-      });
-    });
-
-    if (data.help?.device) {
-      V2App.addElement(this.#tabs.information.element, 'header', (e) => {
-        const paragraphs = data.help.device.split("\n");
-        for (const p of paragraphs) {
-          V2App.addElement(e, 'p', (e) => {
-            e.textContent = p;
-          });
+          // Disconnect if the current device is unplugged.
+          if (this.device.input === event.port && event.port.state === 'disconnected')
+            this.disconnect();
         }
+
+        this.connection.select.update(this.midi.getDevices('both'));
       });
-    }
 
-    V2App.addElement(this.#tabs.information.element, 'table', (e) => {
-      V2App.addElement(e, 'tbody', (body) => {
-        for (const key of Object.keys(data.metadata)) {
-          if (key === 'product' || key === 'description')
-            continue;
+      // Adding '?connect=<device name>' to the URL will try to connect to a device with the given name.
+      if (app.url.connect) {
+        this.log.print('Found URL request to auto-connect to device: «' + app.url.connect + '»');
 
-          const name = key.charAt(0).toUpperCase() + key.slice(1);
-          const value = data.metadata[key];
+        const tryConnect = (device, portName = '') => {
+          const name = app.url.connect + portName;
+          if (name !== device.name)
+            return false;
 
-          V2App.addElement(body, 'tr', (row) => {
-            V2App.addElement(row, 'td', (e) => {
-              e.textContent = name;
-            });
-
-            V2App.addElement(row, 'td', (e) => {
-              if (typeof value === 'string' && value.match(/^https?:\/\//)) {
-                V2App.addElement(e, 'a', (a) => {
-                  a.href = value;
-                  a.target = 'home';
-                  a.textContent = value.replace(/^https?:\/\//, '');
-                });
-              } else
-                e.textContent = value;
-            });
-          });
-        }
-      });
-    });
-
-    for (const link of data.links) {
-      new V2AppMenu(this.#tabs.information.element, (menu) => {
-        menu.addElement('span', (e) => {
-          e.textContent = link.description;
-        });
-
-        menu.addElement('a', (e) => {
-          e.href = link.target;
-          e.target = 'links';
-          const target = link.target.replace(/^https?:\/\//, '');
-          e.innerText = target.split("?")[0];
-        });
-      });
-    }
-
-    // The Statistics tab.
-    new V2AppMenu(this.#tabs.statistics.element, (menu) => {
-      menu.addElement('button', (e) => {
-        e.textContent = 'Refresh';
-        e.addEventListener('click', () => {
-          this.sendGetAll();
-        });
-      });
-    });
-
-    this.#tabs.statistics.element.id = this.id + '.statistics';
-    this.#tabs.statistics.element.style.overflowX = 'auto';
-    this.#tabs.statistics.element.style.hyphens = 'none';
-    this.#tabs.statistics.element.style.width = '100%';
-    this.#tabs.statistics.element.style.whiteSpace = 'nowrap';
-
-    V2App.addElement(this.#tabs.statistics.element, 'table', (e) => {
-      V2App.addElement(e, 'tbody', (body) => {
-        const printObject = (parent, object) => {
-          for (const key of Object.keys(object)) {
-            let name = key;
-            if (parent)
-              name = parent + '.' + name;
-
-            const value = object[key];
-            if (!isNull(value) && (typeof value === 'object')) {
-              printObject(name, value);
-
-            } else {
-              V2App.addElement(body, 'tr', (row) => {
-
-                V2App.addElement(row, 'td', (e) => {
-                  e.textContent = name;
-                });
-
-                V2App.addElement(row, 'td', (e) => {
-                  e.textContent = value;
-                });
-              });
-            }
-          }
+          this.log.print('Trying to connect to «' + name + '» ...');
+          this.connection.select.update(this.midi.getDevices('both'));
+          this.connection.select.select(device);
+          return true;
         };
-        printObject(null, data.system);
 
-      });
-    });
+        for (const device of this.midi.getDevices().values()) {
+          if (tryConnect(device))
+            break;
 
-    // The Firmware tab.
-    new V2AppMenu(this.#tabs.firmware.element, (menu) => {
-      menu.addElement('button', (e) => {
-        e.textContent = 'Reboot';
-        e.addEventListener('click', () => {
-          this.sendReboot();
-        });
-      });
+          // First MIDI port on MacOS.
+          if (tryConnect(device, ' Port 1'))
+            break;
 
-      menu.addElement('button', (e) => {
-        e.textContent = 'Ports';
-        if (!data.system.hardware?.usb?.ports?.access && !data.system.usb?.ports?.access)
-          e.disabled = true;
-
-        e.addEventListener('click', () => {
-          this.sendReboot(true);
-        });
-      });
-
-      menu.addElement('button', (e) => {
-        e.textContent = 'Loader';
-
-        e.addEventListener('click', () => {
-          this.sendBootloader(true);
-        });
-      });
-
-      menu.addElement('button', (e) => {
-        e.textContent = 'File';
-        e.addEventListener('click', () => {
-          this.#openFirmware();
-        });
-
-        V2App.addFileDrop(e, this.#tabs.firmware.element, ['warn'], (file) => {
-          this.#readFirmware(file);
-        });
-      });
-
-      menu.addElement('button', (e) => {
-        this.#tabs.firmware.elementUpload = e;
-        e.classList.add('primary');
-        e.disabled = true;
-        e.textContent = 'Install';
-        e.addEventListener('click', () => {
-          this.#uploadFirmware();
-        });
-      });
-    });
-
-    V2App.addElement(this.#tabs.firmware.element, 'progress', (e) => {
-      this.#tabs.firmware.elementProgress = e;
-      e.style.display = 'none';
-      e.value = 0;
-    });
-
-    V2App.addElement(this.#tabs.firmware.element, 'div', (e) => {
-      e.id = this.id + '.firmware.select';
-      this.#tabs.firmware.elementSelect = e;
-    });
-
-    this.#tabs.firmware.notify = new V2AppNotify(this.#tabs.firmware.element);
-
-    V2App.addElement(this.#tabs.firmware.element, 'div', (e) => {
-      e.id = this.id + '.firmware.list';
-      this.#tabs.firmware.elementNewFirmware = e;
-    });
-
-    this.#tabs.object.switch(this.#tabs.current || 'information');
-  }
-
-  #reset() {
-    if (this.#timeout) {
-      clearTimeout(this.#timeout);
-      this.#timeout = null;
-    }
-
-    this.#data = null;
-    this.#tabs.current = null;
-    this.#tabs.firmware.update.bytes = null;
-    this.#tabs.firmware.update.hash = null;
-
-    this.removeSection();
-    this.addSection();
-    this.canvas.appendChild(this.connection.element);
-  }
-
-  // Process the com.versioduo.device message reply message.
-  #handleReply(data) {
-    this.printDevice('Received <b>com.versioduo.device</b> message');
-
-    // Remember the token from the first reply.
-    if (!this.#token && data['token'])
-      this.#token = data['token'];
-
-    if (!isNull(data['token']) && (data['token'] !== this.#token)) {
-      this.notify.error('The device context changed. Please disconnect and reconnect.');
-      this.printDevice('The device context changed. Please disconnect and reconnect.');
-      return;
-    }
-
-    this.notify.clear();
-
-    if (data.firmware?.status) {
-      this.#uploadFirmwareBlock(data.firmware.status);
-      return;
-    }
-
-    if (!data.metadata) {
-      this.printDevice('Missing device info');
-      this.disconnect();
-      return;
-    }
-
-    // If this is the first reply, update the interface;
-    if (!this.#data) {
-      this.printDevice('Device is connected');
-      this.connection.select.setConnected();
-    }
-
-    this.app.preserveScrollPosition(() => {
-      this.#show(data);
-      this.app.callSections('show', data);
-    });
-  }
-
-  // Connect or switch to a device.
-  connect(device) {
-    this.#disconnectDevice();
-
-    // Give this connection attempt a #sequence number, so we can 'cancel'
-    // the promise which might be resolved later, when a new connection
-    // attempt is already submitted from the user interface.
-    this.#sequence++;
-    let sequence = this.#sequence;
-
-    // Try to open the input device.
-    device.in.open().then(() => {
-      if (sequence !== this.#sequence)
-        return;
-
-      // We got the input, try to open the corresponding output device.
-      device.out.open().then(() => {
-        if (sequence !== this.#sequence)
-          return;
-
-        // We have input and output.
-        this.device.input = device.in;
-        this.device.output = device.out;
-
-        // Dispatch incoming messages to V2MIDIDevice.
-        this.device.input.onmidimessage = this.device.handleMessage.bind(this.device);
-
-        // Request info from device.
-        this.printDevice('Device is ready');
-        this.sendGetAll();
-      });
-    });
-
-    this.#timeout = setTimeout(() => {
-      this.#timeout = null;
-      this.log.print('Unable to connect to device <b>' + device.name + '</b>');
-    }, 1000);
-  }
-
-  // Load 'index.json' and from the 'download' URL and check if there is a firmware update available.
-  #loadFirmwareIndex() {
-    if (!this.#data.system?.firmware?.download)
-      return;
-
-    this.printDevice('Requesting firmware info: <b>' + this.#data.system.firmware.download + '/index.json</b>');
-
-    fetch(this.#data.system.firmware.download + '/index.json', {
-      cache: 'no-cache'
-    })
-      .then((response) => {
-        if (!response.ok)
-          throw new Error('Status=' + response.status);
-
-        return response.json();
-      })
-      .then((json) => {
-        this.printDevice('Retrieved firmware update index');
-
-        let updates = json[this.#data.system.firmware.id];
-        if (!updates) {
-          this.#tabs.firmware.notify.info('No firmware update found for this device.');
-          this.printDevice('No firmware update found for this device.');
-          return;
+          // First MIDI port on Linux.
+          if (tryConnect(device, ' MIDI 1'))
+            break;
         }
-
-        // Remove firmware images for different boards.
-        if (this.#data.system.hardware?.board) {
-          updates = updates.filter((update) => {
-            return update.board === this.#data.system.hardware.board;
-          });
-        }
-
-        if (updates.length === 0) {
-          this.#tabs.firmware.notify.info('No firmware update found for this board.');
-          this.printDevice('No firmware update found for this board.');
-          return;
-        }
-
-        // Sort by version number.
-        updates.sort((a, b) => {
-          return b.version - a.version;
-        });
-
-        // Find the first update with a release flag.
-        const releaseIndex = updates.findIndex((update) => {
-          return update.release;
-        });
-
-        // Select the highest version number if no version tagged as release is found, or a higher
-        // version number than the last release is already installed. This way, a higher version
-        // number which is not tagged as release is manually installed, will continue to update
-        // with newer versions ignoring the older release tag. The device stays in "beta releases"
-        // until the next release.
-        const useRelease = releaseIndex >= 0 && this.#data.metadata.version <= updates[releaseIndex].version;
-        const updateIndex = useRelease ? releaseIndex : 0;
-
-        if (this.#data.metadata.version > updates[updateIndex].version)
-          this.#tabs.firmware.notify.info('A more recent firmware is already installed.');
-
-        this.#tabs.firmware.elementSelect.replaceChildren();
-
-        new V2AppMenu(this.#tabs.firmware.elementSelect, (menu) => {
-          menu.addElement('button', (e) => {
-            e.textContent = 'Version';
-          });
-
-          menu.addElement('select', (select) => {
-            if (updates.length === 1)
-              select.disabled = true;
-
-            for (let i = 0; i < updates.length; i++) {
-              V2App.addElement(select, 'option', (e) => {
-                e.value = i;
-                e.text = updates[i].version + (i < releaseIndex ? ' (preview)' : '');
-                e.selected = i === updateIndex;
-              });
-            }
-
-            select.addEventListener('change', () => {
-              this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[select.value].file);
-            });
-          });
-        });
-
-        if (this.#data.system.firmware.hash === updates[updateIndex].hash)
-          this.#tabs.firmware.notify.info('The firmware is up-to-date.');
-
-        this.#loadFirmware(this.#data.system.firmware.download + '/' + updates[updateIndex].file);
-      })
-      .catch((error) => {
-        this.printDevice('Error requesting firmware info: ' + error.message);
-      });
-  }
-
-  #loadFirmware(filename) {
-    this.printDevice('Requesting firmware image: <b>' + filename + '</b>');
-
-    fetch(filename, {
-      cache: 'no-cache'
-    })
-      .then((response) => {
-        if (!response.ok)
-          throw new Error('Status=' + response.status);
-
-        return response.arrayBuffer();
-      })
-      .then((buffer) => {
-        this.printDevice('Retrieved firmware image, length=' + buffer.byteLength);
-        this.#showFirmware(new Uint8Array(buffer));
-      })
-      .catch((error) => {
-        this.printDevice('Error requesting firmware image: ' + error.message);
-      });
-  }
-
-  #readFirmware(file) {
-    const reader = new FileReader();
-    reader.onload = (element) => {
-      this.#showFirmware(new Uint8Array(reader.result));
-    };
-
-    reader.readAsArrayBuffer(file);
-  }
-
-  // Load a firmware image from the local disk.
-  #openFirmware() {
-    this.#tabs.firmware.update.bytes = null;
-    this.#tabs.firmware.update.hash = null;
-
-    // Create a temporary 'browse button' and trigger a file upload.
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.bin';
-
-    input.addEventListener('change', () => {
-      this.#readFirmware(input.files[0]);
-    }, false);
-
-    input.click();
-  }
-
-  // Present a new firmware image to update the current one.
-  #showFirmware(bytes) {
-    this.#tabs.firmware.notify.clear();
-    this.#tabs.firmware.elementNewFirmware.replaceChildren();
-
-    // Read the metadata in the image; the very end of the image contains
-    // the the JSON metadata record with a leading and trailing NUL character.
-    let metaStart = bytes.length - 2;
-    while (bytes[metaStart] !== 0) {
-      metaStart--;
-      if (metaStart < 4) {
-        this.#tabs.firmware.notify.warn('Unknown file type. No valid device metadata found.');
-        return;
       }
+    });
+  }
+
+  print(line) {
+    this.log.print('«' + this.device.getName() + '»: ' + line);
+  }
+
+  printDevice(line) {
+    this.log.print('«' + this.device.getName() + '» (' + this.device.getID() + '): ' + line);
+  }
+
+  getDevice() {
+    return this.device;
+  }
+
+  getMIDI() {
+    return this.midi;
+  }
+
+  // Print available MIDI ports. Their names might be different on different operating systems.
+  printStatus() {
+    this.log.print(document.querySelector('meta[name="name"]').content + ', version ' + Number(document.querySelector('meta[name="version"]').content));
+
+    for (const device of this.midi.getDevices().values()) {
+      let what = (device.in && device.in === this.device.input) ? 'Connected to' : 'Found';
+      if (device.in && device.out)
+        this.log.print(what + ' «' + device.in.name + '» (' + device.in.id + ':' + device.out.id + ')');
+
+      else if (device.in)
+        this.log.print(what + ' «' + device.in.name + '» (' + device.in.id + ':)');
+
+      else if (device.out)
+        this.log.print(what + ' «' + device.out.name + '» (:' + device.out.id + ')');
     }
+  }
 
-    const metaBytes = bytes.slice(metaStart + 1, bytes.length - 1);
-    const metaString = new TextDecoder().decode(metaBytes);
+  sendNote(channel, note, velocity) {
+    this.device.sendNote(channel, note, velocity);
+    this.print('Sending NoteOn ' + V2MIDI.Note.getName(note) + '(' + note + ') with velocity ' + velocity + ' on channel #' + (channel + 1));
+  }
 
-    let meta;
+  sendNoteOff(channel, note, velocity = 64) {
+    this.device.sendNoteOff(channel, note, velocity);
+    this.print('Sending NoteOff ' + V2MIDI.Note.getName(note) + '(' + note + ') with velocity ' + velocity + ' on channel #' + (channel + 1));
+  }
+
+  sendControlChange(channel, controller, value) {
+    this.device.sendControlChange(channel, controller, value);
+    this.print('Sending ControlChange #' + controller + ' with value ' + value + ' on channel #' + (channel + 1));
+  }
+
+  sendProgramChange(channel, value) {
+    this.device.sendProgramChange(channel, value);
+    this.print('Sending ProgramChange #' + (value + 1) + ' on channel #' + (channel + 1));
+  }
+
+  sendAftertouchChannel(channel, value) {
+    this.device.sendAftertouchChannel(channel, value);
+    this.print('Sending AftertouchChannel #' + value + ' on channel #' + (channel + 1));
+  }
+
+  sendPitchBend(channel, value) {
+    this.device.sendPitchBend(channel, value);
+    this.print('Sending PitchBend #' + value + ' on channel #' + (channel + 1));
+  }
+
+  sendSystemReset() {
+    this.device.sendSystemReset();
+    this.print('Sending SystemReset');
+  }
+
+  sendSystemExclusive(message) {
+    const length = this.device.sendSystemExclusive(message);
+    this.printDevice('Sending SystemExclusive length=' + length);
+  }
+
+  sendJSON(json) {
+    let request;
     try {
-      meta = JSON.parse(metaString);
+      request = JSON.parse(json);
 
     } catch (error) {
-      this.#tabs.firmware.notify.error('Unknown file type. Unable to parse metadata.');
+      this.printDevice('Unable to parse JSON string: «' + error.toString() + '»');
       return;
     }
 
-    const firmware = meta['com.versioduo.firmware'];
-    if (!firmware) {
-      this.#tabs.firmware.notify.error('Unknown file type. Missing metadata.');
-      return;
-    }
-
-    // We found metadata in the loaded image.
-    this.#tabs.firmware.update.bytes = bytes;
-
-    let elementHash = null;
-
-    V2App.addElement(this.#tabs.firmware.elementNewFirmware, 'table', (table) => {
-      V2App.addElement(table, 'tbody', (body) => {
-        V2App.addElement(body, 'tr', (row) => {
-          V2App.addElement(row, 'td', (e) => {
-            e.textContent = 'Version';
-          });
-          V2App.addElement(row, 'td', (e) => {
-            e.textContent = firmware.version;
-          });
-        });
-
-        V2App.addElement(body, 'tr', (row) => {
-          V2App.addElement(row, 'td', (e) => {
-            e.textContent = 'Id';
-          });
-          V2App.addElement(row, 'td', (e) => {
-            e.textContent = firmware.id;
-          });
-        });
-
-        V2App.addElement(body, 'tr', (row) => {
-          V2App.addElement(row, 'td', (e) => {
-            e.textContent = 'Board';
-          });
-          V2App.addElement(row, 'td', (e) => {
-            e.textContent = firmware.board;
-          });
-        });
-
-        V2App.addElement(body, 'tr', (row) => {
-          V2App.addElement(row, 'td', (e) => {
-            e.textContent = 'Hash';
-          });
-          V2App.addElement(row, 'td', (e) => {
-            elementHash = e;
-          });
-        });
-      });
-    });
-
-    crypto.subtle.digest('SHA-1', this.#tabs.firmware.update.bytes).then((hash) => {
-      const array = Array.from(new Uint8Array(hash));
-      const hex = array.map((b) => {
-        return b.toString(16).padStart(2, '0');
-      }).join('');
-      this.#tabs.firmware.update.hash = hex;
-      elementHash.textContent = hex;
-      const backup = this.#data.system.hardware?.eeprom?.used ? ' Please backup the configuration before the installation.' : '';
-
-      if (this.#data.system.hardware?.board && firmware.board !== this.#data.system.hardware.board)
-        this.#tabs.firmware.notify.error('The firmware update is for a different board which has the name <b>' + firmware.board + '</b>.');
-
-      else if (firmware.id !== this.#data.system.firmware.id)
-        this.#tabs.firmware.notify.warn('The firmware update appears to provide a different functionality, it has the name <b>' + firmware.id + '</b>.');
-
-      else if (firmware.version < this.#data.metadata.version)
-        this.#tabs.firmware.notify.warn('The firmware is older than the currently installed version.' + backup);
-
-      else if (this.#tabs.firmware.update.hash === this.#data.system.firmware.hash)
-        this.#tabs.firmware.notify.info('This firmware is currently installed.');
-
-      else
-        this.#tabs.firmware.notify.warn('A firmware update is available.' + backup);
-
-      this.#tabs.firmware.elementUpload.disabled = false;
-    });
-  }
-
-  // Transfer the loded image to the device.
-  #uploadFirmware() {
-    this.#tabs.firmware.elementProgress.value = 0;
-    this.#tabs.firmware.elementProgress.max = this.#tabs.firmware.update.bytes.length;
-    this.#tabs.firmware.elementProgress.style.display = '';
-
-    // Send the first block; the reply messages will trigger the remaining blocks.
-    this.#tabs.firmware.update.current = 0;
-    this.#uploadFirmwareBlock();
-  }
-
-  // Send one block of our firmware image. This will be called from
-  // the incoming message handler, when the previous block was sucessfully written.
-  #uploadFirmwareBlock(status) {
-    if (status) {
-      switch (status) {
-        case 'success':
-          break;
-
-        case 'hashMismatch':
-          this.#tabs.firmware.notify.error('Error while verifying the transferred firmware.');
-          return;
-
-        case 'invalidOffset':
-          this.#tabs.firmware.notify.error('Invalid parameters for firmware update.');
-          return;
-
-        default:
-          this.#tabs.firmware.notify.error('Error while updating the firmware: ' + status);
-          return;
-      }
-    }
-
-    // The last update packet was successful. If the device is connected
-    // over USB we will notice the automatic reboot, we will not detect the reboot
-    // of a children device, so disconnect it here.
-    if (this.#tabs.firmware.update.current === null) {
-      this.printDevice('Firmware update successful. Disconnecting device');
-      this.disconnect();
-      return;
-    }
-
-    const offset = this.#tabs.firmware.update.current;
-    // The block size is fixed to 8k. Daisy-chained devices might not be able to forward larger packets.
-    const block = this.#tabs.firmware.update.bytes.slice(offset, offset + 0x2000);
-    const data = btoa(String.fromCharCode.apply(null, block));
-    let request = {
-      'method': 'writeFirmware',
-      'firmware': {
-        'offset': offset,
-        'data': data
-      }
-    };
-
-    if (this.#tabs.firmware.update.current + 0x2000 <= this.#tabs.firmware.update.bytes.length) {
-      // Prepare for next block.
-      this.#tabs.firmware.elementProgress.value = offset;
-      this.#tabs.firmware.update.current += 0x2000;
-
-    } else {
-      // Last block.
-      this.#tabs.firmware.elementProgress.value = this.#tabs.firmware.update.bytes.length;
-      this.#tabs.firmware.update.current = null;
-
-      // Add our hash to the request; if the device has received
-      // the correct image it copies it over and reboots.
-      this.printDevice('Firmware submitted. Requesting device update with hash <b>' + this.#tabs.firmware.update.hash + '</b>');
-      request.firmware.hash = this.#tabs.firmware.update.hash;
-    }
-
-    this.sendRequest(request);
+    this.sendSystemExclusive(request);
   }
 }

@@ -21,6 +21,7 @@ class V2Debug extends V2AppSection {
     });
 
     V2App.addElement(this.canvas, 'pre', (e) => {
+      this.#element = e;
       e.style.overflowX = 'auto';
       e.style.paddingRight = '0.5rem';
       e.style.width = '100%';

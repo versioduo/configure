@@ -1166,11 +1166,10 @@ class V2SettingsNumber extends V2SettingsModule {
             });
           });
         }
-
       } else {
         this.#number = this.getConfiguration(data.configuration);
 
-        menu.addElement('select', (select) => {
+        const select = menu.addElement('select', (select) => {
           for (let i = min; i < max + 1; i++) {
             V2App.addElement(select, 'option', (e) => {
               e.value = i;
@@ -1185,6 +1184,32 @@ class V2SettingsNumber extends V2SettingsModule {
 
           select.addEventListener('change', () => {
             this.#number = Number(select.value);
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2App.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--minus');
+          });
+          e.addEventListener('click', () => {
+            if (select.selectedIndex === 0)
+              return;
+
+            select.selectedIndex--;
+            select.dispatchEvent(new Event('change'));
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2App.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--plus');
+          });
+          e.addEventListener('click', () => {
+            if (select.selectedIndex === select.options.length - 1)
+              return;
+
+            select.selectedIndex++;
+            select.dispatchEvent(new Event('change'));
           });
         });
       }
@@ -1472,8 +1497,6 @@ class V2SettingsUSB extends V2SettingsModule {
 
 
     new V2AppMenu(canvas, (menu) => {
-      menu.element.classList.add('full');
-
       menu.addElement('span', (e) => {
         e.classList.add('label');
         e.textContent = 'Name';
@@ -1482,7 +1505,6 @@ class V2SettingsUSB extends V2SettingsModule {
       menu.addElement('input', (e) => {
         this.#name = e;
         e.type = 'text';
-        e.classList.add('grow');
         e.maxLength = 31;
         if (data.system.name)
           e.value = data.system.name;
@@ -1499,8 +1521,6 @@ class V2SettingsUSB extends V2SettingsModule {
 
     if (!isNull(data.configuration.usb.vid)) {
       new V2AppMenu(canvas, (menu) => {
-        menu.element.classList.add('full');
-
         menu.addElement('span', (e) => {
           e.classList.add('label');
           e.textContent = 'Vendor';
@@ -1509,7 +1529,6 @@ class V2SettingsUSB extends V2SettingsModule {
         menu.addElement('input', (e) => {
           this.#vid = e;
           e.type = 'text';
-          e.classList.add('grow');
           e.maxLength = 4;
           if (data.configuration.usb.vid > 0)
             e.value = usbID(data.configuration.usb.vid);
@@ -1521,8 +1540,6 @@ class V2SettingsUSB extends V2SettingsModule {
 
     if (!isNull(data.configuration.usb.pid)) {
       new V2AppMenu(canvas, (menu) => {
-        menu.element.classList.add('full');
-
         menu.addElement('span', (e) => {
           e.classList.add('label');
           e.textContent = 'Product';
@@ -1531,7 +1548,6 @@ class V2SettingsUSB extends V2SettingsModule {
         menu.addElement('input', (e) => {
           this.#pid = e;
           e.type = 'text';
-          e.classList.add('grow');
           e.maxLength = 4;
           if (data.configuration.usb.pid > 0)
             e.value = usbID(data.configuration.usb.pid);
@@ -1544,19 +1560,11 @@ class V2SettingsUSB extends V2SettingsModule {
     // The number of MIDI ports.
     if (!data.system.hardware?.usb?.ports?.fixed && data.system.hardware?.usb?.ports?.standard > 0) {
       new V2AppMenu(canvas, (menu) => {
-        menu.element.classList.add('full');
-
         menu.addElement('span', (e) => {
-          e.classList.add('label');
-          e.textContent = 'MIDI';
+          e.textContent = 'Ports';
         });
 
-        menu.addElement('span', (e) => {
-          e.classList.add('grow');
-          e.textContent = 'Virtual Ports';
-        });
-
-        menu.addElement('select', (select) => {
+        const select = menu.addElement('select', (select) => {
           this.#ports = select;
 
           for (let i = 0; i < 17; i++) {
@@ -1567,6 +1575,32 @@ class V2SettingsUSB extends V2SettingsModule {
                 e.selected = true;
             });
           }
+        });
+
+        menu.addElement('button', (e) => {
+          V2App.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--minus');
+          });
+          e.addEventListener('click', () => {
+            if (select.selectedIndex === 0)
+              return;
+
+            select.selectedIndex--;
+            select.dispatchEvent(new Event('change'));
+          });
+        });
+
+        menu.addElement('button', (e) => {
+          V2App.addElement(e, 'i', (i) => {
+            i.classList.add('icon', '--nospace', '--plus');
+          });
+          e.addEventListener('click', () => {
+            if (select.selectedIndex === select.options.length - 1)
+              return;
+
+            select.selectedIndex++;
+            select.dispatchEvent(new Event('change'));
+          });
         });
       });
     }

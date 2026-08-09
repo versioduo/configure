@@ -50,7 +50,7 @@ class V2Input extends V2AppSection {
       menu.addElement('button', (e) => {
         e.textContent = 'Notes Off';
         e.addEventListener('click', () => {
-          this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.allNotesOff, 0);
+          this.app.main.sendControlChange(this.#channel.value, V2MIDI.CC.allNotesOff, 0);
         });
       });
 
@@ -58,14 +58,14 @@ class V2Input extends V2AppSection {
         e.textContent = 'Reset';
         e.addEventListener('click', () => {
           this.#channel.value = null;
-          this.app.device.sendReset();
+          this.app.main.sendReset();
         });
       });
 
       menu.addElement('button', (e) => {
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
-          this.app.device.sendGetAll();
+          this.app.main.sendGetAll();
         });
       });
     });
@@ -75,30 +75,58 @@ class V2Input extends V2AppSection {
         e.textContent = 'Channel';
       });
 
-      menu.addElement('select', (select) => {
-        this.#channel.addEntry = (channel, name, selected) => {
-          V2App.addElement(select, 'option', (e) => {
-            e.text = channel + 1;
-            if (name)
-              e.text += ' - ' + name;
+      const select = menu.addElement('select', (select) => {
+        select.addEventListener('change', () => {
+          this.#channel.value = data.input.channels[select.selectedIndex].number;
 
-            if (selected)
-              e.selected = true;
+          // Request a refresh with the values of the selected channel.
+          this.app.main.sendRequest({
+            'method': 'switchChannel',
+            'channel': this.#channel.value
           });
-
-          select.disabled = select.options.length === 1;
-
-          select.addEventListener('change', () => {
-            this.#channel.value = data.input.channels[select.selectedIndex].number;
-
-            // Request a refresh with the values of the selected channel.
-            this.app.device.sendRequest({
-              'method': 'switchChannel',
-              'channel': this.#channel.value
-            });
-          });
-        };
+        });
       });
+
+      const minus = menu.addElement('button', (e) => {
+        V2App.addElement(e, 'i', (i) => {
+          i.classList.add('icon', '--nospace', '--minus');
+        });
+        e.addEventListener('click', () => {
+          if (select.selectedIndex === 0)
+            return;
+
+          select.selectedIndex--;
+          select.dispatchEvent(new Event('change'));
+        });
+      });
+
+      const plus = menu.addElement('button', (e) => {
+        V2App.addElement(e, 'i', (i) => {
+          i.classList.add('icon', '--nospace', '--plus');
+        });
+        e.addEventListener('click', () => {
+          if (select.selectedIndex === select.options.length - 1)
+            return;
+
+          select.selectedIndex++;
+          select.dispatchEvent(new Event('change'));
+        });
+      });
+
+      this.#channel.addEntry = (channel, name, selected) => {
+        V2App.addElement(select, 'option', (e) => {
+          e.text = channel + 1;
+          if (name)
+            e.text += ' - ' + name;
+
+          if (selected)
+            e.selected = true;
+        });
+
+        select.disabled = select.options.length === 1;
+        minus.disabled = select.disabled;
+        plus.disabled = select.disabled;
+      };
     });
 
     if (data.input.channels) {
@@ -174,8 +202,8 @@ class V2Input extends V2AppSection {
         menu.addElement('select', (select) => {
           for (const [index, program] of channel.programs.entries())
             V2App.addElement(select, 'option', (e) => {
-              if (this.#controls.bank) {
-                const bankNumber = this.#controls.bank ? ' Bank ' + (program.bank + 1) : '';
+              if (!isNull(this.#controls.bank)) {
+                const bankNumber = !isNull(this.#controls.bank) ? ' – Bank ' + (program.bank + 1) : '';
                 e.text = (program.number + 1) + bankNumber + ' – ' + program.name;
                 e.selected = (program.number === this.#controls.program) && (program.bank === this.#controls.bank);
 
@@ -191,13 +219,13 @@ class V2Input extends V2AppSection {
 
               const msb = (channel.programs[select.selectedIndex].bank >> 7) & 0x7f;
               const lsb = channel.programs[select.selectedIndex].bank & 0x7f;
-              this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.bankSelect, msb);
-              this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.bankSelectLSB, lsb);
+              this.app.main.sendControlChange(this.#channel.value, V2MIDI.CC.bankSelect, msb);
+              this.app.main.sendControlChange(this.#channel.value, V2MIDI.CC.bankSelectLSB, lsb);
             }
 
             this.#controls.program = channel.programs[select.selectedIndex].number;
-            this.app.device.sendProgramChange(this.#channel.value, channel.programs[select.selectedIndex].number);
-            this.app.device.sendGetAll();
+            this.app.main.sendProgramChange(this.#channel.value, channel.programs[select.selectedIndex].number);
+            this.app.main.sendGetAll();
           });
         });
       });
@@ -206,7 +234,7 @@ class V2Input extends V2AppSection {
     V2App.addElement(this.canvas, 'ul', (cards) => {
       cards.classList.add('cards');
 
-      if (channel.controllers) {
+      if (channel.controllers?.length > 0) {
         V2App.addElement(cards, 'li', (card) => {
           card.id = this.id + '.controllers';
           this.addNavigation('Controllers', card.id);
@@ -253,12 +281,12 @@ class V2Input extends V2AppSection {
                     e.addEventListener('input', () => {
                       if (!inputFine) {
                         range.value = input.value;
-                        this.app.device.sendControlChange(this.#channel.value, controller.number, e.value);
+                        this.app.main.sendControlChange(this.#channel.value, controller.number, e.value);
 
                       } else {
                         range.value = (e.value << 7) | inputFine.value;
-                        this.app.device.sendControlChange(this.#channel.value, controller.number, e.value);
-                        this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, inputFine.value);
+                        this.app.main.sendControlChange(this.#channel.value, controller.number, e.value);
+                        this.app.main.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, inputFine.value);
                       }
                     });
                   });
@@ -274,8 +302,8 @@ class V2Input extends V2AppSection {
                       e.value = value;
                       e.addEventListener('input', () => {
                         range.value = (input.value << 7) | e.value;
-                        this.app.device.sendControlChange(this.#channel.value, controller.number, input.value);
-                        this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, e.value);
+                        this.app.main.sendControlChange(this.#channel.value, controller.number, input.value);
+                        this.app.main.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, e.value);
                       });
                     });
                   }
@@ -288,7 +316,7 @@ class V2Input extends V2AppSection {
                     e.type = 'checkbox';
                     e.checked = value > 63;
                     e.addEventListener('input', () => {
-                      this.app.device.sendControlChange(this.#channel.value, controller.number, e.checked ? 127 : 0);
+                      this.app.main.sendControlChange(this.#channel.value, controller.number, e.checked ? 127 : 0);
                     });
                   });
                   break;
@@ -298,10 +326,10 @@ class V2Input extends V2AppSection {
                     e.classList.add('momentary');
 
                     e.addEventListener('mousedown', () => {
-                      this.app.device.sendControlChange(this.#channel.value, controller.number, 127);
+                      this.app.main.sendControlChange(this.#channel.value, controller.number, 127);
                     });
                     e.addEventListener('mouseup', () => {
-                      this.app.device.sendControlChange(this.#channel.value, controller.number, 0);
+                      this.app.main.sendControlChange(this.#channel.value, controller.number, 0);
                     });
                     e.addEventListener('touchstart', (event) => {
                       e.dispatchEvent(new MouseEvent('mousedown'));
@@ -336,15 +364,15 @@ class V2Input extends V2AppSection {
                 e.addEventListener('input', () => {
                   if (!inputFine) {
                     input.value = e.value;
-                    this.app.device.sendControlChange(this.#channel.value, controller.number, e.value);
+                    this.app.main.sendControlChange(this.#channel.value, controller.number, e.value);
 
                   } else {
                     const msb = (e.value >> 7) & 0x7f;
                     const lsb = e.value & 0x7f;
                     input.value = msb;
                     inputFine.value = lsb;
-                    this.app.device.sendControlChange(this.#channel.value, controller.number, msb);
-                    this.app.device.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, lsb);
+                    this.app.main.sendControlChange(this.#channel.value, controller.number, msb);
+                    this.app.main.sendControlChange(this.#channel.value, V2MIDI.CC.controllerLSB + controller.number, lsb);
                   }
                 });
               });
@@ -353,7 +381,7 @@ class V2Input extends V2AppSection {
         });
       }
 
-      if (channel.chromatic || channel.notes) {
+      if (channel.chromatic || channel.notes?.length > 0) {
         V2App.addElement(cards, 'li', (card) => {
           card.id = this.id + '.notes';
           this.addNavigation('Notes', card.id);
@@ -509,7 +537,7 @@ class V2Input extends V2AppSection {
                 e.value = channel.aftertouch.value;
                 e.addEventListener('input', () => {
                   update(e.value);
-                  this.app.device.sendAftertouchChannel(this.#channel.value, input.value);
+                  this.app.main.sendAftertouchChannel(this.#channel.value, input.value);
                 });
               });
             });
@@ -521,12 +549,12 @@ class V2Input extends V2AppSection {
               e.value = channel.aftertouch.value;
               e.addEventListener('input', () => {
                 update(e.value);
-                this.app.device.sendAftertouchChannel(this.#channel.value, input.value);
+                this.app.main.sendAftertouchChannel(this.#channel.value, input.value);
               });
 
               e.addEventListener('mouseup', () => {
                 update(0);
-                this.app.device.sendAftertouchChannel(this.#channel.value, 0);
+                this.app.main.sendAftertouchChannel(this.#channel.value, 0);
               });
 
               e.addEventListener('touchend', (event) => {
@@ -577,7 +605,7 @@ class V2Input extends V2AppSection {
                 e.value = channel.pitchbend.value;
                 e.addEventListener('input', () => {
                   update(e.value);
-                  this.app.device.sendPitchBend(this.#channel.value, input.value);
+                  this.app.main.sendPitchBend(this.#channel.value, input.value);
                 });
               });
             });
@@ -590,7 +618,7 @@ class V2Input extends V2AppSection {
               e.value = channel.pitchbend.value;
               e.addEventListener('input', () => {
                 update(e.value);
-                this.app.device.sendPitchBend(this.#channel.value, input.value);
+                this.app.main.sendPitchBend(this.#channel.value, input.value);
               });
 
               e.addEventListener('mouseup', () => {
@@ -600,7 +628,7 @@ class V2Input extends V2AppSection {
 
                 e.value = 0;
                 input.value = 0;
-                this.app.device.sendPitchBend(this.#channel.value, 0);
+                this.app.main.sendPitchBend(this.#channel.value, 0);
               });
 
               e.addEventListener('touchend', (event) => {
@@ -621,11 +649,11 @@ class V2Input extends V2AppSection {
 
             this.#notes.chromatic.keyboard = new V2Keyboard(card, this.#notes.chromatic.start, this.#notes.chromatic.count);
             this.#notes.chromatic.keyboard.handler.down = (note) => {
-              this.app.device.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
+              this.app.main.sendNote(this.#channel.value, note, this.#notes.controls.velocity.value);
             };
 
             this.#notes.chromatic.keyboard.handler.up = (note) => {
-              this.app.device.sendNoteOff(this.#channel.value, note, this.#notes.controls.release.value);
+              this.app.main.sendNoteOff(this.#channel.value, note, this.#notes.controls.release.value);
             };
 
             this.#notes.chromatic.keyboard.handler.velocity.down = () => {
@@ -663,10 +691,10 @@ class V2Input extends V2AppSection {
                 menu.addElement('button', (e) => {
                   e.classList.add('momentary');
                   e.addEventListener('mousedown', () => {
-                    this.app.device.sendNote(this.#channel.value, note.number, this.#notes.controls.velocity.value);
+                    this.app.main.sendNote(this.#channel.value, note.number, this.#notes.controls.velocity.value);
                   });
                   e.addEventListener('mouseup', () => {
-                    this.app.device.sendNoteOff(this.#channel.value, note.number, this.#notes.controls.release.value);
+                    this.app.main.sendNoteOff(this.#channel.value, note.number, this.#notes.controls.release.value);
                   });
                   e.addEventListener('touchstart', (event) => {
                     e.dispatchEvent(new MouseEvent('mousedown'));

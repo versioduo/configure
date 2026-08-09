@@ -41,15 +41,15 @@ class V2Output extends V2AppSection {
       }
     };
 
-    this.app.device.getDevice().addNotifier('note', (channel, note, velocity) => {
+    this.app.main.getDevice().addNotifier('note', (channel, note, velocity) => {
       updateNote(channel, note, velocity);
     });
 
-    this.app.device.getDevice().addNotifier('noteOff', (channel, note, velocity) => {
+    this.app.main.getDevice().addNotifier('noteOff', (channel, note, velocity) => {
       updateNote(channel, note, 0);
     });
 
-    this.app.device.getDevice().addNotifier('aftertouch', (channel, note, pressure) => {
+    this.app.main.getDevice().addNotifier('aftertouch', (channel, note, pressure) => {
       if (this.#channel.value !== channel)
         return;
 
@@ -59,7 +59,7 @@ class V2Output extends V2AppSection {
       this.#notes.list[note].aftertouch.value = pressure;
     });
 
-    this.app.device.getDevice().addNotifier('aftertouchChannel', (channel, pressure) => {
+    this.app.main.getDevice().addNotifier('aftertouchChannel', (channel, pressure) => {
       if (this.#channel.value !== channel)
         return;
 
@@ -67,7 +67,7 @@ class V2Output extends V2AppSection {
         this.#aftertouch.update(pressure);
     });
 
-    this.app.device.getDevice().addNotifier('controlChange', (channel, controller, value) => {
+    this.app.main.getDevice().addNotifier('controlChange', (channel, controller, value) => {
       if (this.#channel.value !== channel)
         return;
 
@@ -103,7 +103,7 @@ class V2Output extends V2AppSection {
       menu.addElement('button', (e) => {
         e.textContent = 'Refresh';
         e.addEventListener('click', () => {
-          this.app.device.sendGetAll();
+          this.app.main.sendGetAll();
         });
       });
     });
@@ -114,30 +114,58 @@ class V2Output extends V2AppSection {
         e.textContent = 'Channel';
       });
 
-      menu.addElement('select', (select) => {
-        this.#channel.addEntry = (channel, name, selected) => {
-          V2App.addElement(select, 'option', (e) => {
-            e.text = channel + 1;
-            if (name)
-              e.text += ' - ' + name;
-
-            if (selected)
-              e.selected = true;
-          });
-
-          select.disabled = select.options.length === 1;
-        };
-
+      const select = menu.addElement('select', (select) => {
         select.addEventListener('change', () => {
           this.#channel.value = data.output.channels[select.selectedIndex].number;
 
           // Request a refresh with the values of the selected channel.
-          this.app.device.sendRequest({
+          this.app.main.sendRequest({
             'method': 'switchChannel',
             'channel': this.#channel.value
           });
         });
       });
+
+      const minus = menu.addElement('button', (e) => {
+        V2App.addElement(e, 'i', (i) => {
+          i.classList.add('icon', '--nospace', '--minus');
+        });
+        e.addEventListener('click', () => {
+          if (select.selectedIndex === 0)
+            return;
+
+          select.selectedIndex--;
+          select.dispatchEvent(new Event('change'));
+        });
+      });
+
+      const plus = menu.addElement('button', (e) => {
+        V2App.addElement(e, 'i', (i) => {
+          i.classList.add('icon', '--nospace', '--plus');
+        });
+        e.addEventListener('click', () => {
+          if (select.selectedIndex === select.options.length - 1)
+            return;
+
+          select.selectedIndex++;
+          select.dispatchEvent(new Event('change'));
+        });
+      });
+
+      this.#channel.addEntry = (channel, name, selected) => {
+        V2App.addElement(select, 'option', (e) => {
+          e.text = channel + 1;
+          if (name)
+            e.text += ' - ' + name;
+
+          if (selected)
+            e.selected = true;
+        });
+
+        select.disabled = select.options.length === 1;
+        minus.disabled = select.disabled;
+        plus.disabled = select.disabled;
+      };
     });
 
     this.#controllers.list = {};
@@ -191,7 +219,7 @@ class V2Output extends V2AppSection {
     V2App.addElement(this.canvas, 'ul', (cards) => {
       cards.classList.add('cards');
 
-      if (channel.controllers) {
+      if (channel.controllers?.length > 0) {
         V2App.addElement(cards, 'li', (card) => {
           card.id = this.id + '.controllers';
           this.addNavigation('Controllers', card.id);
@@ -284,7 +312,7 @@ class V2Output extends V2AppSection {
         });
       }
 
-      if (channel.notes) {
+      if (channel.notes?.length > 0) {
         V2App.addElement(cards, 'li', (card) => {
           card.id = this.id + '.notes';
           this.addNavigation('Notes', card.id);

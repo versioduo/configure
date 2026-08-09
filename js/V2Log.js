@@ -24,7 +24,7 @@ class V2Log extends V2AppSection {
       menu.addElement('button', (e) => {
         e.textContent = 'Status';
         e.addEventListener('click', () => {
-          this.app.device.printStatus();
+          this.app.main.printStatus();
         });
       });
 
