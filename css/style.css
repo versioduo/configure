@@ -29,7 +29,6 @@ html {
   background-color: var(--colour-background);
   color: var(--colour);
   font-family: 'DIN 1451', sans-serif;
-  hyphens: auto;
   scroll-behavior: smooth;
   scroll-padding-top: 3rem;
   text-rendering: optimizeLegibility;
@@ -50,6 +49,8 @@ html {
     }
 
     p {
+      hyphens: auto;
+
       &:not(:last-child) {
         margin-bottom: 1rem;
       }
@@ -548,10 +549,14 @@ html {
       >h2,
       >h3,
       >h4 {
+        >a:not(:hover) {
+          text-decoration: none;
+        }
+
         font-size: 1.5rem;
       }
 
-      p {
+      >p {
         margin-top: 0.5rem;
       }
     }
@@ -584,6 +589,14 @@ html {
           >td {
             padding: 0.25rem 0.5rem;
             vertical-align: top;
+          }
+
+          >td:has(>a) {
+            max-width: 0;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
         }
       }
@@ -737,7 +750,7 @@ html {
         >ul {
           column-gap: 0.5rem;
           display: grid;
-          max-height: calc(100vh - 3rem);
+          max-height: calc(100svh - 3rem);
           width: 100%;
           overflow-y: auto;
           padding-left: 0.5rem;

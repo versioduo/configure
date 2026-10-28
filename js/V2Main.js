@@ -258,7 +258,7 @@ class V2Main extends V2Device {
       });
     });
 
-    for (const link of data.links) {
+    for (const link of data.links || []) {
       new V2AppMenu(this.#tabs.information.element, (menu) => {
         menu.addElement('span', (e) => {
           e.textContent = link.description;
